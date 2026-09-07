@@ -25,7 +25,6 @@ class _LoginpageState extends State<Loginpage> {
     _loadRememberedData();
   }
 
-  // Mengambil data Remember Me
   Future<void> _loadRememberedData() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -43,7 +42,6 @@ class _LoginpageState extends State<Loginpage> {
     });
   }
 
-  // Menyimpan data Remember Me
   Future<void> _saveRememberedData() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -89,7 +87,6 @@ class _LoginpageState extends State<Loginpage> {
               Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-
                   child: Image.network(
                     "https://i.pinimg.com/1200x/c8/3d/0a/c83d0a804b5194e8352e44fa0383c09b.jpg",
                     width: 260,
@@ -137,13 +134,27 @@ class _LoginpageState extends State<Loginpage> {
 
               TextField(
                 controller: _usernameController,
-
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: "Masukan Username",
-
-                  prefixIcon: Icon(
+                  hintStyle: const TextStyle(
+                    color: Colors.grey,
+                  ),
+                  prefixIcon: const Icon(
                     Icons.person_outline,
                     color: Color(0xFFE10600),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F8F8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE10600),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -165,18 +176,31 @@ class _LoginpageState extends State<Loginpage> {
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: "Masukan Password",
-
-                  prefixIcon: Icon(
+                  hintStyle: const TextStyle(
+                    color: Colors.grey,
+                  ),
+                  prefixIcon: const Icon(
                     Icons.lock_outline,
                     color: Color(0xFFE10600),
                   ),
-
-                  suffixIcon: Icon(
+                  suffixIcon: const Icon(
                     Icons.remove_red_eye_outlined,
                     color: Colors.grey,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F8F8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE10600),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -186,11 +210,8 @@ class _LoginpageState extends State<Loginpage> {
               // Remember Me
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
-
                 activeColor: const Color(0xFFE10600),
-
                 checkColor: Colors.white,
-
                 title: const Text(
                   "Remember Me",
                   style: TextStyle(
@@ -198,15 +219,12 @@ class _LoginpageState extends State<Loginpage> {
                     color: Colors.black87,
                   ),
                 ),
-
                 value: rememberMe,
-
                 onChanged: (value) {
                   setState(() {
                     rememberMe = value ?? false;
                   });
                 },
-
                 controlAffinity:
                     ListTileControlAffinity.leading,
               ),
@@ -217,7 +235,6 @@ class _LoginpageState extends State<Loginpage> {
               SizedBox(
                 width: double.infinity,
                 height: 52,
-
                 child: ElevatedButton(
                   onPressed: () async {
                     await _saveRememberedData();
@@ -227,22 +244,18 @@ class _LoginpageState extends State<Loginpage> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            const HomePage(),
+                        builder: (context) => const HomePage(),
                       ),
                     );
                   },
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE10600),
                     foregroundColor: Colors.white,
                     elevation: 0,
-
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-
                   child: const Text(
                     "Sign In",
                     style: TextStyle(
@@ -257,9 +270,7 @@ class _LoginpageState extends State<Loginpage> {
 
               // Sign Up
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
-
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
                     "Don't Have Account?",
@@ -267,7 +278,6 @@ class _LoginpageState extends State<Loginpage> {
                       color: Colors.grey,
                     ),
                   ),
-
                   TextButton(
                     onPressed: () {
                       Navigator.push(
@@ -278,7 +288,6 @@ class _LoginpageState extends State<Loginpage> {
                         ),
                       );
                     },
-
                     child: const Text(
                       "Sign Up",
                       style: TextStyle(

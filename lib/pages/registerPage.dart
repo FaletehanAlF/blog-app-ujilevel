@@ -10,10 +10,18 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   bool rememberMe = false;
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  final TextEditingController _usernameController =
+      TextEditingController();
+
+  final TextEditingController _phoneController =
+      TextEditingController();
+
+  final TextEditingController _passwordController =
+      TextEditingController();
+
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -23,12 +31,19 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _loadRememberedData() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedRememberMe = prefs.getBool('registerRememberMe') ?? false;
-    final savedUsername = prefs.getString('registerUsername') ?? '';
-    final savedPhone = prefs.getString('registerPhone') ?? '';
+
+    final savedRememberMe =
+        prefs.getBool('registerRememberMe') ?? false;
+
+    final savedUsername =
+        prefs.getString('registerUsername') ?? '';
+
+    final savedPhone =
+        prefs.getString('registerPhone') ?? '';
 
     setState(() {
       rememberMe = savedRememberMe;
+
       if (savedRememberMe) {
         _usernameController.text = savedUsername;
         _phoneController.text = savedPhone;
@@ -38,12 +53,22 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _saveRememberedData() async {
     final prefs = await SharedPreferences.getInstance();
+
     if (rememberMe) {
       await prefs.setBool('registerRememberMe', true);
-      await prefs.setString('registerUsername', _usernameController.text);
-      await prefs.setString('registerPhone', _phoneController.text);
+
+      await prefs.setString(
+        'registerUsername',
+        _usernameController.text,
+      );
+
+      await prefs.setString(
+        'registerPhone',
+        _phoneController.text,
+      );
     } else {
       await prefs.setBool('registerRememberMe', false);
+
       await prefs.remove('registerUsername');
       await prefs.remove('registerPhone');
     }
@@ -55,23 +80,29 @@ class _RegisterPageState extends State<RegisterPage> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 30),
 
+              // Image
               Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
+
                   child: Image.network(
                     "https://i.pinimg.com/1200x/c8/3d/0a/c83d0a804b5194e8352e44fa0383c09b.jpg",
                     width: 260,
@@ -83,6 +114,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
               const SizedBox(height: 35),
 
+              // Title
               const Text(
                 "Register",
                 style: TextStyle(
@@ -104,12 +136,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
               const SizedBox(height: 30),
 
+              // Username
               const Text(
                 "Username",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white70,
+                  color: Colors.black87,
                 ),
               ),
 
@@ -117,23 +150,40 @@ class _RegisterPageState extends State<RegisterPage> {
 
               TextField(
                 controller: _usernameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: "Masukan Username",
-                  prefixIcon: Icon(
+                  hintStyle: const TextStyle(
+                    color: Colors.grey,
+                  ),
+                  prefixIcon: const Icon(
                     Icons.person_outline,
                     color: Color(0xFFE10600),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F8F8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE10600),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 18),
 
+              // Telepon
               const Text(
                 "Telepon",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white70,
+                  color: Colors.black87,
                 ),
               ),
 
@@ -142,23 +192,40 @@ class _RegisterPageState extends State<RegisterPage> {
               TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: "Masukan Telepon",
-                  prefixIcon: Icon(
+                  hintStyle: const TextStyle(
+                    color: Colors.grey,
+                  ),
+                  prefixIcon: const Icon(
                     Icons.phone_outlined,
                     color: Color(0xFFE10600),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F8F8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE10600),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 18),
 
+              // Password
               const Text(
                 "Password",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white70,
+                  color: Colors.black87,
                 ),
               ),
 
@@ -167,27 +234,44 @@ class _RegisterPageState extends State<RegisterPage> {
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: "Masukan Password",
-                  prefixIcon: Icon(
+                  hintStyle: const TextStyle(
+                    color: Colors.grey,
+                  ),
+                  prefixIcon: const Icon(
                     Icons.lock_outline,
                     color: Color(0xFFE10600),
                   ),
-                  suffixIcon: Icon(
+                  suffixIcon: const Icon(
                     Icons.remove_red_eye_outlined,
                     color: Colors.grey,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F8F8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE10600),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 18),
 
+              // Confirm Password
               const Text(
                 "Confirm Password",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white70,
+                  color: Colors.black87,
                 ),
               ),
 
@@ -196,21 +280,38 @@ class _RegisterPageState extends State<RegisterPage> {
               TextField(
                 controller: _confirmPasswordController,
                 obscureText: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: "Konfirmasi Password",
-                  prefixIcon: Icon(
+                  hintStyle: const TextStyle(
+                    color: Colors.grey,
+                  ),
+                  prefixIcon: const Icon(
                     Icons.lock_outline,
                     color: Color(0xFFE10600),
                   ),
-                  suffixIcon: Icon(
+                  suffixIcon: const Icon(
                     Icons.remove_red_eye_outlined,
                     color: Colors.grey,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F8F8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE10600),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 8),
 
+              // Remember Me
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 activeColor: const Color(0xFFE10600),
@@ -219,7 +320,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   "Remember Me",
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.white70,
+                    color: Colors.black87,
                   ),
                 ),
                 value: rememberMe,
@@ -228,14 +329,17 @@ class _RegisterPageState extends State<RegisterPage> {
                     rememberMe = value ?? false;
                   });
                 },
-                controlAffinity: ListTileControlAffinity.leading,
+                controlAffinity:
+                    ListTileControlAffinity.leading,
               ),
 
               const SizedBox(height: 15),
 
+              // Sign Up
               SizedBox(
                 width: double.infinity,
                 height: 52,
+
                 child: ElevatedButton(
                   onPressed: () async {
                     if (_usernameController.text.isEmpty ||
@@ -244,31 +348,53 @@ class _RegisterPageState extends State<RegisterPage> {
                         _confirmPasswordController.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Semua field harus diisi"),
+                          content: Text(
+                            "Semua field harus diisi",
+                          ),
                         ),
                       );
+
                       return;
                     }
+
                     if (_passwordController.text !=
                         _confirmPasswordController.text) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Password tidak cocok"),
+                          content: Text(
+                            "Password tidak cocok",
+                          ),
                         ),
                       );
+
                       return;
                     }
-                    final messenger = ScaffoldMessenger.of(context);
-                    final nav = Navigator.of(context);
+
                     await _saveRememberedData();
+
                     if (!mounted) return;
-                    messenger.showSnackBar(
+
+                    ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("Register berhasil"),
+                        content: Text(
+                          "Register berhasil",
+                        ),
                       ),
                     );
-                    nav.pop();
+
+                    Navigator.pop(context);
                   },
+
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE10600),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+
                   child: const Text(
                     "Sign Up",
                     style: TextStyle(
@@ -281,8 +407,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
               const SizedBox(height: 22),
 
+              // Sign In
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+
                 children: [
                   const Text(
                     "Already Have Account?",
@@ -290,10 +418,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       color: Colors.grey,
                     ),
                   ),
+
                   TextButton(
                     onPressed: () {
                       Navigator.pop(context);
                     },
+
                     child: const Text(
                       "Sign In",
                       style: TextStyle(

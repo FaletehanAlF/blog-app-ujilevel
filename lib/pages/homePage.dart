@@ -223,7 +223,7 @@ class HomePage extends StatelessWidget {
           Container(
             width: 55,
             height: 55,
-            decoration: BoxDecoration(
+            decoration: BoxDecoration(    
               color: const Color(0xFFD32F2F),
               borderRadius: BorderRadius.circular(12),
             ),

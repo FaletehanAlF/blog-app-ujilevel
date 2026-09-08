@@ -10,12 +10,25 @@ class HomePageextends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<dynamic> _posts = [];
+  List product = [];
 
   @override
-  void initState() {
-    super.initState();
-    fetchPosts();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Product List'),
+      ),
+      body: ListView.builder(
+        itemCount: product.length,
+        itemBuilder: (context, index) {
+          final productItem = product[index];
+          return ListTile(
+            title: Text(productItem['name']),
+            subtitle: Text(productItem['description']),
+          );
+        },
+      ),
+    );
   }
 
   Future<void> fetchPosts() async {

@@ -20,6 +20,7 @@ class _HomePageState extends State<HomePage> {
       throw Exception('Failed to load products');
     }
   }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -52,21 +53,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Blog App'),
-      ),
-      body: ListView.builder(
-        itemCount: _posts.length,
-        itemBuilder: (context, index) {
-          final post = _posts[index];
-          return ListTile(
-            title: Text(post['title']),
-            subtitle: Text(post['body']),
-          );
-        },
-      ),
-    );
+  void initState() {
+    super.initState();
+    fetchPosts();
   }
-}

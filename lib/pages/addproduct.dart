@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import 'package:belajar_flutter/services/api_service.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -9,96 +9,20 @@ class AddProductPage extends StatefulWidget {
 }
 
 class _AddProductPageState extends State<AddProductPage> {
+  final ApiService apiService = ApiService();
+
   final titleController = TextEditingController();
   final contentController = TextEditingController();
 
-  final ApiService apiService = ApiService();
-  final formKey = GlobalKey<FormState>();
-
-  List categories = [];
-  int? selectedCategoryId;
-
-  bool isSaving = false;
+  List<dynamic> categories = [];
+  int? selectedCategory;
+  bool isLoading = false;
   bool isLoadingCategories = true;
 
   @override
   void initState() {
     super.initState();
     fetchCategories();
-  }
-
-  Future<void> fetchCategories() async {
-    try {
-      final data = await apiService.getCategories();
-
-      setState(() {
-        categories = data;
-        isLoadingCategories = false;
-      });
-    } catch (error) {
-      setState(() {
-        isLoadingCategories = false;
-      });
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-        ),
-      );
-    }
-  }
-
-  Future<void> addPost() async {
-    if (!formKey.currentState!.validate()) {
-      return;
-    }
-
-    if (selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Kategori harus dipilih'),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      isSaving = true;
-    });
-
-    try {
-      await apiService.createPost(
-        titleController.text.trim(),
-        contentController.text.trim(),
-        selectedCategoryId!,
-      );
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Artikel berhasil ditambahkan'),
-        ),
-      );
-
-      Navigator.pop(context);
-    } catch (error) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal menambahkan artikel: $error'),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          isSaving = false;
-        });
-      }
-    }
   }
 
   @override
@@ -108,166 +32,354 @@ class _AddProductPageState extends State<AddProductPage> {
     super.dispose();
   }
 
+  Future<void> fetchCategories() async {
+    try {
+      final data = await apiService.getCategories();
+
+      if (!mounted) return;
+
+      setState(() {
+        categories = data;
+        isLoadingCategories = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoadingCategories = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengambil kategori: $error'),
+        ),
+      );
+    }
+  }
+
+  Future<void> createPost() async {
+    final title = titleController.text.trim();
+    final content = contentController.text.trim();
+
+    if (title.isEmpty) {
+      _showMessage('Judul artikel wajib diisi');
+      return;
+    }
+
+    if (title.length < 3) {
+      _showMessage('Judul minimal 3 karakter');
+      return;
+    }
+
+    if (content.isEmpty) {
+      _showMessage('Konten artikel wajib diisi');
+      return;
+    }
+
+    if (content.length < 10) {
+      _showMessage('Konten minimal 10 karakter');
+      return;
+    }
+
+    if (selectedCategory == null) {
+      _showMessage('Silakan pilih kategori');
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      await apiService.createPost(
+        title,
+        content,
+        selectedCategory!,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Artikel berhasil ditambahkan'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      _showMessage(error.toString());
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0D0D0D),
+        foregroundColor: Colors.white,
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(
+            Icons.close_rounded,
+            size: 22,
+          ),
+        ),
         title: const Text(
-          'Tambah Artikel',
+          'New Article',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
-      body: Form(
-        key: formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(22, 24, 22, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Buat Artikel Baru',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Isi informasi artikel yang ingin ditambahkan.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: titleController,
-                      decoration: InputDecoration(
-                        labelText: 'Judul Artikel',
-                        hintText: 'Masukkan judul artikel',
-                        prefixIcon: const Icon(Icons.title),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Judul artikel harus diisi';
-                        }
-
-                        if (value.trim().length < 3) {
-                          return 'Judul minimal 3 karakter';
-                        }
-
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: contentController,
-                      maxLines: 7,
-                      decoration: InputDecoration(
-                        labelText: 'Konten Artikel',
-                        hintText: 'Masukkan isi artikel',
-                        alignLabelWithHint: true,
-                        prefixIcon: const Padding(
-                          padding: EdgeInsets.only(bottom: 100),
-                          child: Icon(Icons.article_outlined),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Konten artikel harus diisi';
-                        }
-
-                        if (value.trim().length < 10) {
-                          return 'Konten minimal 10 karakter';
-                        }
-
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    isLoadingCategories
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(12),
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : DropdownButtonFormField<int>(
-                            value: selectedCategoryId,
-                            decoration: InputDecoration(
-                              labelText: 'Kategori',
-                              prefixIcon: const Icon(
-                                Icons.category_outlined,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            items: categories.map<DropdownMenuItem<int>>(
-                              (category) {
-                                return DropdownMenuItem<int>(
-                                  value: category['id'],
-                                  child: Text(category['name']),
-                                );
-                              },
-                            ).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedCategoryId = value;
-                              });
-                            },
-                          ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        onPressed: isSaving ? null : addPost,
-                        icon: isSaving
-                            ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.save_outlined),
-                        label: Text(
-                          isSaving ? 'Menyimpan...' : 'Simpan Artikel',
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildHeader(),
+            const SizedBox(height: 36),
+            _buildTitleField(),
+            const SizedBox(height: 22),
+            _buildCategoryField(),
+            const SizedBox(height: 22),
+            _buildContentField(),
+            const SizedBox(height: 34),
+            _buildSubmitButton(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'CREATE',
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2.5,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          'Write something\nworth reading.',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 32,
+            height: 1.08,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTitleField() {
+    return _buildFieldContainer(
+      label: 'TITLE',
+      child: TextField(
+        controller: titleController,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        cursorColor: Colors.white,
+        textInputAction: TextInputAction.next,
+        decoration: _inputDecoration(
+          hint: 'Enter article title',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryField() {
+    return _buildFieldContainer(
+      label: 'CATEGORY',
+      child: isLoadingCategories
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 15),
+              child: SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: selectedCategory,
+                isExpanded: true,
+                dropdownColor: const Color(0xFF1A1A1A),
+                icon: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF888888),
+                ),
+                hint: const Text(
+                  'Select category',
+                  style: TextStyle(
+                    color: Color(0xFF666666),
+                    fontSize: 14,
+                  ),
+                ),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                items: categories.map<DropdownMenuItem<int>>((category) {
+                  return DropdownMenuItem<int>(
+                    value: category['id'],
+                    child: Text(category['name']),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedCategory = value;
+                  });
+                },
+              ),
+            ),
+    );
+  }
+
+  Widget _buildContentField() {
+    return _buildFieldContainer(
+      label: 'CONTENT',
+      child: TextField(
+        controller: contentController,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          height: 1.6,
+        ),
+        cursorColor: Colors.white,
+        maxLines: 9,
+        decoration: _inputDecoration(
+          hint: 'Start writing your article...',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldContainer({
+    required String label,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF777777),
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 9),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 3,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFF171717),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: const Color(0xFF292929),
+            ),
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String hint,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(
+        color: Color(0xFF555555),
+        fontSize: 14,
+      ),
+      border: InputBorder.none,
+      contentPadding: const EdgeInsets.symmetric(
+        vertical: 14,
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: FilledButton(
+        onPressed: isLoading ? null : createPost,
+        style: FilledButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          disabledBackgroundColor: const Color(0xFF333333),
+          disabledForegroundColor: const Color(0xFF777777),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.black,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'PUBLISH ARTICLE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.3,
+                    ),
+                  ),
+                  SizedBox(width: 9),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 17,
+                  ),
+                ],
+              ),
       ),
     );
   }

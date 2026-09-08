@@ -16,11 +16,14 @@ class EditProductPage extends StatefulWidget {
 class _EditProductPageState extends State<EditProductPage> {
   late final TextEditingController titleController;
   late final TextEditingController contentController;
-  late final TextEditingController categoryController;
 
   final ApiService apiService = ApiService();
 
+  List categories = [];
+  int? selectedCategoryId;
+
   bool isSaving = false;
+  bool isLoadingCategories = true;
 
   @override
   void initState() {
@@ -34,15 +37,36 @@ class _EditProductPageState extends State<EditProductPage> {
       text: widget.product['content'],
     );
 
-    categoryController = TextEditingController(
-      text: widget.product['category_id'].toString(),
-    );
+    selectedCategoryId = widget.product['category_id'];
+
+    fetchCategories();
+  }
+
+  Future<void> fetchCategories() async {
+    try {
+      final data = await apiService.getCategories();
+
+      setState(() {
+        categories = data;
+        isLoadingCategories = false;
+      });
+    } catch (error) {
+      setState(() {
+        isLoadingCategories = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+        ),
+      );
+    }
   }
 
   Future<void> updatePost() async {
     if (titleController.text.trim().isEmpty ||
         contentController.text.trim().isEmpty ||
-        categoryController.text.trim().isEmpty) {
+        selectedCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Semua data harus diisi'),
@@ -60,7 +84,7 @@ class _EditProductPageState extends State<EditProductPage> {
         widget.product['id'],
         titleController.text.trim(),
         contentController.text.trim(),
-        int.parse(categoryController.text.trim()),
+        selectedCategoryId!,
       );
 
       if (!mounted) return;
@@ -93,7 +117,6 @@ class _EditProductPageState extends State<EditProductPage> {
   void dispose() {
     titleController.dispose();
     contentController.dispose();
-    categoryController.dispose();
     super.dispose();
   }
 
@@ -122,13 +145,27 @@ class _EditProductPageState extends State<EditProductPage> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: categoryController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Category ID',
-              ),
-            ),
+            isLoadingCategories
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : DropdownButtonFormField<int>(
+                    value: selectedCategoryId,
+                    decoration: const InputDecoration(
+                      labelText: 'Kategori',
+                    ),
+                    items: categories.map<DropdownMenuItem<int>>((category) {
+                      return DropdownMenuItem<int>(
+                        value: category['id'],
+                        child: Text(category['name']),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedCategoryId = value;
+                      });
+                    },
+                  ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: isSaving ? null : updatePost,

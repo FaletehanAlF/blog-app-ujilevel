@@ -15,9 +15,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> getProduct() async {
     final response = await http.get(Uri.parse('https://fakestoreapi.com/products'));
     if (response.statusCode == 200) {
-      setState(() {
-        product = json.decode(response.body);
-      });
+      print(response.body);
     } else {
       throw Exception('Failed to load products');
     }

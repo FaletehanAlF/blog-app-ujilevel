@@ -49,9 +49,21 @@ class _HomePageState extends State<HomePage> {
         itemCount: product.length,
         itemBuilder: (context, index) {
           final itemProduct = product[index];
-          return ListTile(
-            title: Text(itemProduct['title']),
-            subtitle: Text(itemProduct['body']),
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditProductPage(product: itemProduct),
+                ),
+              );
+              // Handle item tap, e.g., navigate to edit page
+            },
+            child: ListTile(
+              leading: Image.network(itemProduct["image"]),
+              title: Text(itemProduct['title']),
+              subtitle: Text(itemProduct['body']),
+            ),
           );
         },
       ),

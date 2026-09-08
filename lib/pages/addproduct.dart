@@ -13,6 +13,7 @@ class _AddProductPageState extends State<AddProductPage> {
   final contentController = TextEditingController();
 
   final ApiService apiService = ApiService();
+  final formKey = GlobalKey<FormState>();
 
   List categories = [];
   int? selectedCategoryId;
@@ -48,12 +49,14 @@ class _AddProductPageState extends State<AddProductPage> {
   }
 
   Future<void> addPost() async {
-    if (titleController.text.trim().isEmpty ||
-        contentController.text.trim().isEmpty ||
-        selectedCategoryId == null) {
+    if (!formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (selectedCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Semua data harus diisi'),
+          content: Text('Kategori harus dipilih'),
         ),
       );
       return;
@@ -111,58 +114,83 @@ class _AddProductPageState extends State<AddProductPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Judul Artikel',
+        child: Form(
+          key: formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Judul Artikel',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Judul artikel harus diisi';
+                  }
+
+                  if (value.trim().length < 3) {
+                    return 'Judul minimal 3 karakter';
+                  }
+
+                  return null;
+                },
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: contentController,
-              maxLines: 6,
-              decoration: const InputDecoration(
-                labelText: 'Konten Artikel',
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: contentController,
+                maxLines: 6,
+                decoration: const InputDecoration(
+                  labelText: 'Konten Artikel',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Konten artikel harus diisi';
+                  }
+
+                  if (value.trim().length < 10) {
+                    return 'Konten minimal 10 karakter';
+                  }
+
+                  return null;
+                },
               ),
-            ),
-            const SizedBox(height: 16),
-            isLoadingCategories
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : DropdownButtonFormField<int>(
-                    value: selectedCategoryId,
-                    decoration: const InputDecoration(
-                      labelText: 'Kategori',
-                    ),
-                    items: categories.map<DropdownMenuItem<int>>((category) {
-                      return DropdownMenuItem<int>(
-                        value: category['id'],
-                        child: Text(category['name']),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedCategoryId = value;
-                      });
-                    },
-                  ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: isSaving ? null : addPost,
-              child: isSaving
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+              const SizedBox(height: 16),
+              isLoadingCategories
+                  ? const Center(
+                      child: CircularProgressIndicator(),
                     )
-                  : const Text('Simpan'),
-            ),
-          ],
+                  : DropdownButtonFormField<int>(
+                      value: selectedCategoryId,
+                      decoration: const InputDecoration(
+                        labelText: 'Kategori',
+                      ),
+                      items: categories.map<DropdownMenuItem<int>>((category) {
+                        return DropdownMenuItem<int>(
+                          value: category['id'],
+                          child: Text(category['name']),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedCategoryId = value;
+                        });
+                      },
+                    ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: isSaving ? null : addPost,
+                child: isSaving
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Simpan'),
+              ),
+            ],
+          ),
         ),
       ),
     );

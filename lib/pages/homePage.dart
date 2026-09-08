@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'addproduct.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -42,15 +43,6 @@ class _HomePageState extends State<HomePage> {
           return ListTile(
             title: Text(itemProduct['title']),
             subtitle: Text(itemProduct['body']),
-          );
-          FloatingActionButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AddProductPage()),
-              );
-            },
-            child: const Icon(Icons.add),
           );
         },
       ),

@@ -14,11 +14,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ApiService apiService = ApiService();
-  final TextEditingController searchController = TextEditingController();
 
   List<Post> posts = [];
-  List<Post> filteredPosts = [];
-
   bool isLoading = true;
 
   Future<void> fetchPosts() async {
@@ -29,7 +26,6 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         posts = data;
-        filteredPosts = data;
         isLoading = false;
       });
     } catch (error) {
@@ -47,51 +43,42 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void searchPosts(String query) {
-    final keyword = query.trim().toLowerCase();
-
-    setState(() {
-      if (keyword.isEmpty) {
-        filteredPosts = posts;
-      } else {
-        filteredPosts = posts.where((post) {
-          return post.title.toLowerCase().contains(keyword) ||
-              post.content.toLowerCase().contains(keyword) ||
-              post.category.toLowerCase().contains(keyword);
-        }).toList();
-      }
-    });
-  }
-
   Future<void> confirmDelete(Post post) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
           title: const Text(
-            'Hapus Artikel?',
+            'Delete article?',
             style: TextStyle(
+              color: Colors.white,
               fontWeight: FontWeight.w700,
             ),
           ),
           content: Text(
-            'Artikel "${post.title}" akan dihapus secara permanen.',
+            '“${post.title}” will be permanently deleted.',
+            style: const TextStyle(
+              color: Color(0xFFAAAAAA),
+              height: 1.5,
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
-              child: const Text('Batal'),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Color(0xFFAAAAAA),
+                ),
+              ),
             ),
             FilledButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
+              onPressed: () => Navigator.pop(context, true),
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFE5484D),
               ),
-              child: const Text('Hapus'),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -111,12 +98,11 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         posts.removeWhere((post) => post.id == id);
-        filteredPosts.removeWhere((post) => post.id == id);
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Artikel berhasil dihapus'),
+          content: Text('Article deleted successfully'),
         ),
       );
     } catch (error) {
@@ -148,167 +134,42 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F5),
-      floatingActionButton: FloatingActionButton.extended(
+      backgroundColor: const Color(0xFF0D0D0D),
+      floatingActionButton: FloatingActionButton(
         onPressed: openAddArticle,
-        elevation: 3,
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'Artikel',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(
+          Icons.add_rounded,
+          size: 28,
         ),
       ),
       body: SafeArea(
         child: RefreshIndicator(
+          color: Colors.black,
+          backgroundColor: Colors.white,
           onRefresh: fetchPosts,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'BLOG',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 2,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Your Stories.',
-                                style: TextStyle(
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -1.2,
-                                  color: Color(0xFF171717),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            width: 46,
-                            height: 46,
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(
-                              Icons.auto_stories_outlined,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Create, manage and explore your articles.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      TextField(
-                        controller: searchController,
-                        onChanged: searchPosts,
-                        decoration: InputDecoration(
-                          hintText: 'Search articles...',
-                          hintStyle: TextStyle(
-                            color: Colors.grey.shade500,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search_rounded,
-                            size: 21,
-                          ),
-                          suffixIcon: searchController.text.isNotEmpty
-                              ? IconButton(
-                                  onPressed: () {
-                                    searchController.clear();
-                                    searchPosts('');
-                                  },
-                                  icon: const Icon(Icons.close_rounded),
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                              color: Colors.grey.shade200,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                              width: 1.2,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'LATEST ARTICLES',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.4,
-                              color: Color(0xFF777777),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEAEAE7),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${filteredPosts.length}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
+                      _buildTopBar(),
+                      const SizedBox(height: 52),
+                      _buildHero(),
+                      const SizedBox(height: 54),
+                      _buildSectionHeader(),
+                      const SizedBox(height: 18),
                     ],
                   ),
                 ),
@@ -316,27 +177,27 @@ class _HomePageState extends State<HomePage> {
               if (isLoading)
                 const SliverFillRemaining(
                   child: Center(
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
                   ),
                 )
-              else if (filteredPosts.isEmpty)
+              else if (posts.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: _buildEmptyState(),
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 100),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final post = filteredPosts[index];
+                        final post = posts[index];
 
                         return PostCard(
                           post: post,
-                          onDelete: () {
-                            confirmDelete(post);
-                          },
+                          onDelete: () => confirmDelete(post),
                           onTap: () {
                             Navigator.push(
                               context,
@@ -349,7 +210,7 @@ class _HomePageState extends State<HomePage> {
                           },
                         );
                       },
-                      childCount: filteredPosts.length,
+                      childCount: posts.length,
                     ),
                   ),
                 ),
@@ -360,54 +221,163 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    final isSearching = searchController.text.trim().isNotEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.grey.shade200,
+  Widget _buildTopBar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: const Icon(
+                Icons.auto_stories_rounded,
+                color: Colors.black,
+                size: 19,
               ),
             ),
-            child: Icon(
-              isSearching
-                  ? Icons.search_off_rounded
-                  : Icons.auto_stories_outlined,
-              size: 30,
-              color: Colors.grey.shade500,
+            const SizedBox(width: 11),
+            const Text(
+              'BLOG',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2.5,
+              ),
             ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            isSearching ? 'No articles found' : 'No articles yet',
-            style: const TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.w700,
+          ],
+        ),
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: const Color(0xFF292929),
             ),
+            shape: BoxShape.circle,
           ),
-          const SizedBox(height: 7),
-          Text(
-            isSearching
-                ? 'Try searching with another keyword.'
-                : 'Start by creating your first article.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-              color: Colors.grey.shade600,
+          child: const Icon(
+            Icons.person_outline_rounded,
+            color: Color(0xFFBBBBBB),
+            size: 19,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHero() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'STORIES',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 3,
+            color: Colors.grey.shade500,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          'That\nMatter.',
+          style: TextStyle(
+            fontSize: 48,
+            height: 0.98,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -2.5,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 18),
+        Container(
+          width: 42,
+          height: 2,
+          color: Colors.white,
+        ),
+        const SizedBox(height: 18),
+        Text(
+          'Create and manage your ideas,\none article at a time.',
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.6,
+            color: Colors.grey.shade500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        const Text(
+          'LATEST',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2,
+            color: Colors.white,
+          ),
+        ),
+        Text(
+          '${posts.length.toString().padLeft(2, '0')} ARTICLES',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: const Color(0xFF292929),
             ),
+            borderRadius: BorderRadius.circular(18),
           ),
-        ],
-      ),
+          child: const Icon(
+            Icons.article_outlined,
+            color: Color(0xFF666666),
+            size: 28,
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          'No articles yet',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          'Create your first article to get started.',
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 }

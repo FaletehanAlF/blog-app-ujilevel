@@ -39,6 +39,38 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> confirmDelete(Post post) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Hapus Artikel'),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus artikel "${post.title}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      deletePost(post.id);
+    }
+  }
+
   Future<void> deletePost(int id) async {
     try {
       await apiService.deletePost(id);
@@ -102,7 +134,7 @@ class _HomePageState extends State<HomePage> {
                     return PostCard(
                       post: post,
                       onDelete: () {
-                        deletePost(post.id);
+                        confirmDelete(post);
                       },
                       onTap: () {
                         Navigator.push(

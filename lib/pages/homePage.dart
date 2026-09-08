@@ -17,6 +17,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> fetchPosts() async {
     final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/posts'));
     if (response.statusCode == 200) {
+      print('Response body: ${response.body}');
       setState(() {
         product = json.decode(response.body);
       });

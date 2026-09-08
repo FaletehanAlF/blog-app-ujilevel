@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'editproduct.dart';
 
 class DetailPostScreen extends StatefulWidget {
   final int postId;
@@ -48,6 +49,24 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Artikel'),
+        actions: [
+          if (post != null)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditProductPage(
+                      product: post!,
+                    ),
+                  ),
+                );
+
+                fetchPost();
+              },
+            ),
+        ],
       ),
       body: isLoading
           ? const Center(

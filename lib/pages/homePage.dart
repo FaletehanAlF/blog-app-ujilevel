@@ -36,6 +36,15 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Product List'),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddProductPage()),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
       body: ListView.builder(
         itemCount: product.length,
         itemBuilder: (context, index) {

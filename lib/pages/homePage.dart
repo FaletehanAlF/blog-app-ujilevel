@@ -72,13 +72,14 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Blog App'),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const AddProductPage(),
             ),
           );
+          fetchPosts();
         },
         child: const Icon(Icons.add),
       ),

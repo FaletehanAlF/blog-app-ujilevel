@@ -30,7 +30,7 @@ class _AddProductPageState extends State<AddProductPage> {
         'category': categoryController.text,
       }),
     );
-
+    
     setState(() => isSaving = false);
 
     if (response.statusCode == 200 || response.statusCode == 201) {

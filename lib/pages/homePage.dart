@@ -25,6 +25,24 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> deleteProduct(int id) async {
+  final response = await http.delete(
+    Uri.parse('https://fakestoreapi.com/products/$id'),
+  );
+
+  if (response.statusCode == 200) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Produk Berhasil Dihapus: ${response.statusCode}')),
+    );
+
+    setState(() {
+      product.removeWhere((p) => p['id'] == id);
+    });
+  } else {
+    print('Gagal menghapus produk: ${response.statusCode}');
+  }
+}
+
   @override
   void initState() {
     super.initState();

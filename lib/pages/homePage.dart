@@ -3,6 +3,7 @@ import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/models/post.dart';
 import 'package:belajar_flutter/pages/detail_post_screen.dart';
 import 'package:belajar_flutter/widgets/post_card.dart';
+
 import 'addproduct.dart';
 
 class HomePage extends StatefulWidget {
@@ -35,136 +36,129 @@ class _HomePageState extends State<HomePage> {
         isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
   Future<void> confirmDelete(Post post) async {
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return Dialog(
-        backgroundColor: const Color(0xFF171717),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(
-            color: Color(0xFF292929),
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: const Color(0xFF171717),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFF292929)),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF241719),
-                      borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF241719),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Color(0xFFE5484D),
+                        size: 21,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: Color(0xFFE5484D),
-                      size: 21,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Color(0xFF666666),
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Delete article?',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(height: 9),
-              Text(
-                '“${post.title}” will be permanently deleted. This action cannot be undone.',
-                style: const TextStyle(
-                  color: Color(0xFF8A8A8A),
-                  fontSize: 13,
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
+                    const Spacer(),
+                    IconButton(
                       onPressed: () => Navigator.pop(context, false),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(
-                          color: Color(0xFF333333),
-                        ),
-                        minimumSize: const Size.fromHeight(48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Color(0xFF666666),
+                        size: 20,
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Delete article?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 9),
+                Text(
+                  '“${post.title}” will be permanently deleted. This action cannot be undone.',
+                  style: const TextStyle(
+                    color: Color(0xFF8A8A8A),
+                    fontSize: 13,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Color(0xFF333333)),
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFE5484D),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFE5484D),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
+        );
+      },
+    );
 
-  if (result == true) {
-    await deletePost(post.id);
+    if (result == true) {
+      await deletePost(post.id);
+    }
   }
-}
 
   Future<void> deletePost(int id) async {
     try {
@@ -177,48 +171,40 @@ class _HomePageState extends State<HomePage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(
-    backgroundColor: const Color(0xFF171717),
-    behavior: SnackBarBehavior.floating,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    ),
-    content: const Row(
-      children: [
-        Icon(
-          Icons.check_circle_outline_rounded,
-          color: Colors.white,
-          size: 19,
-        ),
-        SizedBox(width: 10),
-        Text(
-          'Article deleted successfully',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 13,
+        SnackBar(
+          backgroundColor: const Color(0xFF171717),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: const Row(
+            children: [
+              Icon(
+                Icons.check_circle_outline_rounded,
+                color: Colors.white,
+                size: 19,
+              ),
+              SizedBox(width: 10),
+              Text(
+                'Article deleted successfully',
+                style: TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ],
           ),
         ),
-      ],
-    ),
-  ),
-);
+      );
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
   Future<void> openAddArticle() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddProductPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddProductPage()),
     );
 
     fetchPosts();
@@ -239,13 +225,8 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Icon(
-          Icons.add_rounded,
-          size: 28,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(Icons.add_rounded, size: 28),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -274,9 +255,7 @@ class _HomePageState extends State<HomePage> {
               if (isLoading)
                 const SliverFillRemaining(
                   child: Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                    ),
+                    child: CircularProgressIndicator(color: Colors.white),
                   ),
                 )
               else if (posts.isEmpty)
@@ -288,27 +267,23 @@ class _HomePageState extends State<HomePage> {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(18, 0, 18, 100),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final post = posts[index];
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final post = posts[index];
 
-                        return PostCard(
-                          post: post,
-                          onDelete: () => confirmDelete(post),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => DetailPostScreen(
-                                  postId: post.id,
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      childCount: posts.length,
-                    ),
+                      return PostCard(
+                        post: post,
+                        onDelete: () => confirmDelete(post),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  DetailPostScreen(postId: post.id),
+                            ),
+                          );
+                        },
+                      );
+                    }, childCount: posts.length),
                   ),
                 ),
             ],
@@ -353,9 +328,7 @@ class _HomePageState extends State<HomePage> {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            border: Border.all(
-              color: const Color(0xFF292929),
-            ),
+            border: Border.all(color: const Color(0xFF292929)),
             shape: BoxShape.circle,
           ),
           child: const Icon(
@@ -393,11 +366,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         const SizedBox(height: 18),
-        Container(
-          width: 42,
-          height: 2,
-          color: Colors.white,
-        ),
+        Container(width: 42, height: 2, color: Colors.white),
         const SizedBox(height: 18),
         Text(
           'Create and manage your ideas,\none article at a time.',
@@ -446,9 +415,7 @@ class _HomePageState extends State<HomePage> {
           width: 68,
           height: 68,
           decoration: BoxDecoration(
-            border: Border.all(
-              color: const Color(0xFF292929),
-            ),
+            border: Border.all(color: const Color(0xFF292929)),
             borderRadius: BorderRadius.circular(18),
           ),
           child: const Icon(
@@ -469,10 +436,7 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 7),
         Text(
           'Create your first article to get started.',
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 13,
-          ),
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
       ],
     );

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:belajar_flutter/pages/homePage.dart';
+import 'pages/homePage.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const BlogApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class BlogApp extends StatelessWidget {
+  const BlogApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +14,23 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Blog App',
       theme: ThemeData(
-        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
+        colorScheme: const ColorScheme.dark(
+          surface: Color(0xFF0D0D0D),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF0D0D0D),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+        ),
+        inputDecorationTheme: const InputDecorationTheme(
+          border: InputBorder.none,
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+        ),
       ),
       home: const HomePage(),
     );

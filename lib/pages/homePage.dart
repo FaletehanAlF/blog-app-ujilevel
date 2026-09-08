@@ -45,7 +45,7 @@ class _HomePageState extends State<HomePage> {
     final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/posts'));
     if (response.statusCode == 200) {
       setState(() {
-        _posts = json.decode(response.body);
+        product = ;
       });
     } else {
       throw Exception('Failed to load posts');

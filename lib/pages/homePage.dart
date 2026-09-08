@@ -66,6 +66,7 @@ class _HomePageState extends State<HomePage> {
         itemBuilder: (context, index) {
           final itemProduct = product[index];
          return ListTile(
+          leading: Image.network(itemProduct['image']),
             title: Text(itemProduct['title']),
             subtitle: Text(itemProduct['Price'].toString()),
           );

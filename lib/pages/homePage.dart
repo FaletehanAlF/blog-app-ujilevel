@@ -1,7 +1,6 @@
-import 'package:belajar_flutter/pages/editproduct.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:belajar_flutter/services/api_service.dart';
+import 'package:belajar_flutter/pages/detail_post_screen.dart';
 import 'addproduct.dart';
 
 class HomePage extends StatefulWidget {
@@ -12,37 +11,53 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List product = [];
+  final ApiService apiService = ApiService();
+
+  List posts = [];
+  bool isLoading = true;
 
   Future<void> fetchPosts() async {
-    final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/posts'));
-    if (response.statusCode == 200) {
-      print('Response body: ${response.body}');
+    try {
+      final data = await apiService.getPosts();
+
       setState(() {
-        product = json.decode(response.body);
+        posts = data;
+        isLoading = false;
       });
-    } else {
-      print('Failed to load posts');
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+        ),
+      );
     }
   }
 
-  Future<void> deleteProduct(int id) async {
-  final response = await http.delete(
-    Uri.parse('https://fakestoreapi.com/products/$id'),
-  );
+  Future<void> deletePost(int id) async {
+    try {
+      await apiService.deletePost(id);
 
-  if (response.statusCode == 200) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Produk Berhasil Dihapus: ${response.statusCode}')),
-    );
+      setState(() {
+        posts.removeWhere((post) => post['id'] == id);
+      });
 
-    setState(() {
-      product.removeWhere((p) => p['id'] == id);
-    });
-  } else {
-    print('Gagal menghapus produk: ${response.statusCode}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Artikel berhasil dihapus'),
+        ),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+        ),
+      );
+    }
   }
-}
 
   @override
   void initState() {
@@ -54,45 +69,56 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Product List'),
+        title: const Text('Blog App'),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddProductPage()),
+            MaterialPageRoute(
+              builder: (context) => const AddProductPage(),
+            ),
           );
         },
         child: const Icon(Icons.add),
       ),
-      body: ListView.builder(
-        itemCount: product.length,
-        itemBuilder: (context, index) {
-          final itemProduct = product[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditProductPage(product: itemProduct),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : posts.isEmpty
+              ? const Center(
+                  child: Text('Belum ada artikel'),
+                )
+              : ListView.builder(
+                  itemCount: posts.length,
+                  itemBuilder: (context, index) {
+                    final post = posts[index];
+
+                    return ListTile(
+                      title: Text(post['title']),
+                      subtitle: Text(
+                        post['category'],
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          deletePost(post['id']);
+                        },
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailPostScreen(
+                              postId: post['id'],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
-              );
-              // Handle item tap, e.g., navigate to edit page
-            },
-            child: ListTile(
-              leading: Image.network(itemProduct["image"]),
-              title: Text(itemProduct['title']),
-              subtitle: Text(itemProduct['body']),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () {
-                  deleteProduct(itemProduct['id']);
-                },
-              ),
-            ),
-          );
-        },
-      ),
     );
   }
 }

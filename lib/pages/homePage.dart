@@ -82,6 +82,12 @@ class _HomePageState extends State<HomePage> {
               leading: Image.network(itemProduct["image"]),
               title: Text(itemProduct['title']),
               subtitle: Text(itemProduct['body']),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  deleteProduct(itemProduct['id']);
+                },
+              ),
             ),
           );
         },

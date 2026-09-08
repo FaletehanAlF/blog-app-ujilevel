@@ -70,4 +70,17 @@ Future<void> updatePost(
     throw Exception('Gagal memperbarui artikel');
   }
 }
+
+Future<List<dynamic>> getCategories() async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/categories'),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data['data'];
+  } else {
+    throw Exception('Gagal mengambil data kategori');
+  }
+}
 }

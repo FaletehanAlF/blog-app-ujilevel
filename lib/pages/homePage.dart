@@ -57,3 +57,19 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     fetchPosts();
   }
+
+  @override
+  widget.build(BuildContext context) {
+    return Scaffold(
+      body: ListView.builder(
+        itemCount: product.length,
+        itemBuilder: (context, index) {
+          final itemProduct = product[index];
+         return ListTile(
+            title: Text(itemProduct['title']),
+            subtitle: Text(itemProduct['Price'].toString()),
+          );
+        },
+      )
+    );
+  }

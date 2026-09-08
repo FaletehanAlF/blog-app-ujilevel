@@ -177,10 +177,31 @@ class _HomePageState extends State<HomePage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Article deleted successfully'),
+  SnackBar(
+    backgroundColor: const Color(0xFF171717),
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    content: const Row(
+      children: [
+        Icon(
+          Icons.check_circle_outline_rounded,
+          color: Colors.white,
+          size: 19,
         ),
-      );
+        SizedBox(width: 10),
+        Text(
+          'Article deleted successfully',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+          ),
+        ),
+      ],
+    ),
+  ),
+);
     } catch (error) {
       if (!mounted) return;
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../models/post.dart';
 import 'editproduct.dart';
 
 class DetailPostScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class DetailPostScreen extends StatefulWidget {
 }
 
 class _DetailPostScreenState extends State<DetailPostScreen> {
-  Map<String, dynamic>? post;
+  Post? post;
   bool isLoading = true;
 
   Future<void> fetchPost() async {
@@ -28,7 +29,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       final data = jsonDecode(response.body);
 
       setState(() {
-        post = data['data'];
+        post = Post.fromJson(data['data']);
         isLoading = false;
       });
     } else {
@@ -58,7 +59,13 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => EditProductPage(
-                      product: post!,
+                      product: {
+                        'id': post!.id,
+                        'title': post!.title,
+                        'content': post!.content,
+                        'category_id': post!.categoryId,
+                        'category': post!.category,
+                      },
                     ),
                   ),
                 );
@@ -82,7 +89,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        post!['title'],
+                        post!.title,
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -90,14 +97,14 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        post!['category'],
+                        post!.category,
                         style: const TextStyle(
                           fontSize: 14,
                         ),
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        post!['content'],
+                        post!.content,
                         style: const TextStyle(
                           fontSize: 16,
                         ),

@@ -43,6 +43,15 @@ class _HomePageState extends State<HomePage> {
             title: Text(itemProduct['title']),
             subtitle: Text(itemProduct['body']),
           );
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddProductPage()),
+              );
+            },
+            child: const Icon(Icons.add),
+          );
         },
       ),
     );

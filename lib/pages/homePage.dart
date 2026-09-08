@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/models/post.dart';
 import 'package:belajar_flutter/pages/detail_post_screen.dart';
+import 'package:belajar_flutter/widgets/post_card.dart';
 import 'addproduct.dart';
 
 class HomePage extends StatefulWidget {
@@ -98,15 +99,11 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     final post = posts[index];
 
-                    return ListTile(
-                      title: Text(post.title),
-                      subtitle: Text(post.category),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          deletePost(post.id);
-                        },
-                      ),
+                    return PostCard(
+                      post: post,
+                      onDelete: () {
+                        deletePost(post.id);
+                      },
                       onTap: () {
                         Navigator.push(
                           context,

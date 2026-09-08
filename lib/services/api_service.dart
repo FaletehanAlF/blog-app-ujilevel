@@ -26,4 +26,26 @@ class ApiService {
       throw Exception('Gagal menghapus artikel');
     }
   }
+
+  Future<void> createPost(
+  String title,
+  String content,
+  int categoryId,
+) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/posts'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'title': title,
+      'content': content,
+      'category_id': categoryId,
+    }),
+  );
+
+  if (response.statusCode != 201) {
+    throw Exception('Gagal menambahkan artikel');
+  }
+}
 }

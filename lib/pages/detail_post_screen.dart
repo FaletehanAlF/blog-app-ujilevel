@@ -20,7 +20,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
   Future<void> fetchPost() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/posts/${widget.postId}'),
+      Uri.parse('http://localhost:8000/posts/${widget.postId}'),
     );
 
     if (response.statusCode == 200) {

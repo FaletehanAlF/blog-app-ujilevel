@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
 
@@ -30,7 +29,7 @@ class _AddProductPageState extends State<AddProductPage> {
         'category': categoryController.text,
       }),
     );
-    
+
     setState(() => isSaving = false);
 
     if (response.statusCode == 200 || response.statusCode == 201) {

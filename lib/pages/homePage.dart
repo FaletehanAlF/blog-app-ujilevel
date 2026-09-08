@@ -44,51 +44,127 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> confirmDelete(Post post) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A1A),
-          title: const Text(
-            'Delete article?',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return Dialog(
+        backgroundColor: const Color(0xFF171717),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(
+            color: Color(0xFF292929),
           ),
-          content: Text(
-            '“${post.title}” will be permanently deleted.',
-            style: const TextStyle(
-              color: Color(0xFFAAAAAA),
-              height: 1.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text(
-                'Cancel',
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF241719),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Color(0xFFE5484D),
+                      size: 21,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF666666),
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Delete article?',
                 style: TextStyle(
-                  color: Color(0xFFAAAAAA),
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
                 ),
               ),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFE5484D),
+              const SizedBox(height: 9),
+              Text(
+                '“${post.title}” will be permanently deleted. This action cannot be undone.',
+                style: const TextStyle(
+                  color: Color(0xFF8A8A8A),
+                  fontSize: 13,
+                  height: 1.6,
+                ),
               ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(
+                          color: Color(0xFF333333),
+                        ),
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFE5484D),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 
-    if (result == true) {
-      deletePost(post.id);
-    }
+  if (result == true) {
+    await deletePost(post.id);
   }
+}
 
   Future<void> deletePost(int id) async {
     try {

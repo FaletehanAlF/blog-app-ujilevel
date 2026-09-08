@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
+import 'package:belajar_flutter/models/post.dart';
 import 'package:belajar_flutter/pages/detail_post_screen.dart';
 import 'addproduct.dart';
 
@@ -13,7 +14,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final ApiService apiService = ApiService();
 
-  List posts = [];
+  List<Post> posts = [];
   bool isLoading = true;
 
   Future<void> fetchPosts() async {
@@ -42,7 +43,7 @@ class _HomePageState extends State<HomePage> {
       await apiService.deletePost(id);
 
       setState(() {
-        posts.removeWhere((post) => post['id'] == id);
+        posts.removeWhere((post) => post.id == id);
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -79,6 +80,7 @@ class _HomePageState extends State<HomePage> {
               builder: (context) => const AddProductPage(),
             ),
           );
+
           fetchPosts();
         },
         child: const Icon(Icons.add),
@@ -97,14 +99,12 @@ class _HomePageState extends State<HomePage> {
                     final post = posts[index];
 
                     return ListTile(
-                      title: Text(post['title']),
-                      subtitle: Text(
-                        post['category'],
-                      ),
+                      title: Text(post.title),
+                      subtitle: Text(post.category),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () {
-                          deletePost(post['id']);
+                          deletePost(post.id);
                         },
                       ),
                       onTap: () {
@@ -112,7 +112,7 @@ class _HomePageState extends State<HomePage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => DetailPostScreen(
-                              postId: post['id'],
+                              postId: post.id,
                             ),
                           ),
                         );

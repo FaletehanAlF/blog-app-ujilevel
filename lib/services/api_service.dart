@@ -75,6 +75,29 @@ class ApiService {
   }
 }
 
+Future<void> updatePost(
+  int id,
+  String title,
+  String content,
+  int categoryId,
+) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/posts/$id'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'title': title,
+      'content': content,
+      'category_id': categoryId,
+    }),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Gagal memperbarui artikel');
+  }
+}
+
 Future<List<dynamic>> getCategories() async {
   final response = await http.get(
     Uri.parse('$baseUrl/categories'),

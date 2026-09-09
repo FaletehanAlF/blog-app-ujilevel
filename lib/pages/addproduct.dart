@@ -107,10 +107,11 @@ class _AddProductPageState extends State<AddProductPage> {
 
     try {
       await apiService.createPost(
-        title,
-        content,
-        selectedCategory!,
-      );
+  title,
+  content,
+  selectedCategory!,
+  selectedImage,
+);
 
       if (!mounted) return;
 

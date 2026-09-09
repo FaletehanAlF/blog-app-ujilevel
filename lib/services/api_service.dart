@@ -69,9 +69,13 @@ class ApiService {
   }
 
   final response = await request.send();
+  final responseBody = await response.stream.bytesToString();
+
+  print('STATUS: ${response.statusCode}');
+  print('RESPONSE: $responseBody');
 
   if (response.statusCode != 201) {
-    throw Exception('Gagal menambahkan artikel');
+    throw Exception('Gagal menambahkan artikel: $responseBody');
   }
 }
 

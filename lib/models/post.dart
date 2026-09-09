@@ -4,6 +4,7 @@ class Post {
   final String content;
   final int categoryId;
   final String category;
+  final String? image;
 
   Post({
     required this.id,
@@ -11,6 +12,7 @@ class Post {
     required this.content,
     required this.categoryId,
     required this.category,
+    this.image,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class Post {
       content: json['content'],
       categoryId: json['category_id'],
       category: json['category'],
+      image: json['image'],
     );
   }
 }

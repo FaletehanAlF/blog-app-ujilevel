@@ -25,4 +25,6 @@ class Post {
       image: json['image'],
     );
   }
+
+  
 }

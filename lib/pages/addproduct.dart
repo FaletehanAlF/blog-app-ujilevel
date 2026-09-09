@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -10,12 +13,16 @@ class AddProductPage extends StatefulWidget {
 
 class _AddProductPageState extends State<AddProductPage> {
   final ApiService apiService = ApiService();
+  final ImagePicker picker = ImagePicker();
 
   final titleController = TextEditingController();
   final contentController = TextEditingController();
 
   List<dynamic> categories = [];
   int? selectedCategory;
+
+  File? selectedImage;
+
   bool isLoading = false;
   bool isLoadingCategories = true;
 
@@ -30,6 +37,19 @@ class _AddProductPageState extends State<AddProductPage> {
     titleController.dispose();
     contentController.dispose();
     super.dispose();
+  }
+
+  Future<void> pickImage() async {
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (image == null) return;
+
+    setState(() {
+      selectedImage = File(image.path);
+    });
   }
 
   Future<void> fetchCategories() async {
@@ -49,11 +69,7 @@ class _AddProductPageState extends State<AddProductPage> {
         isLoadingCategories = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal mengambil kategori: $error'),
-        ),
-      );
+      _showMessage('Gagal mengambil kategori: $error');
     }
   }
 
@@ -120,7 +136,18 @@ class _AddProductPageState extends State<AddProductPage> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        backgroundColor: const Color(0xFF171717),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+          ),
+        ),
       ),
     );
   }
@@ -159,6 +186,8 @@ class _AddProductPageState extends State<AddProductPage> {
             _buildTitleField(),
             const SizedBox(height: 22),
             _buildCategoryField(),
+            const SizedBox(height: 22),
+            _buildImagePicker(),
             const SizedBox(height: 22),
             _buildContentField(),
             const SizedBox(height: 34),
@@ -265,6 +294,83 @@ class _AddProductPageState extends State<AddProductPage> {
                 },
               ),
             ),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'COVER IMAGE',
+          style: TextStyle(
+            color: Color(0xFF777777),
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 9),
+        GestureDetector(
+          onTap: pickImage,
+          child: Container(
+            width: double.infinity,
+            height: 190,
+            decoration: BoxDecoration(
+              color: const Color(0xFF171717),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFF292929),
+              ),
+            ),
+            child: selectedImage == null
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF222222),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.add_photo_alternate_outlined,
+                          color: Color(0xFF888888),
+                          size: 23,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Add cover image',
+                        style: TextStyle(
+                          color: Color(0xFFBBBBBB),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      const Text(
+                        'Tap to choose from gallery',
+                        style: TextStyle(
+                          color: Color(0xFF666666),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(13),
+                    child: Image.file(
+                      selectedImage!,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 

@@ -17,6 +17,19 @@ class ApiService {
     }
   }
 
+  Future<Post> getPostById(int id) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/posts/$id'),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return Post.fromJson(data['data']);
+    } else {
+      throw Exception('Gagal mengambil detail artikel');
+    }
+  }
+
   Future<void> deletePost(int id) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/posts/$id'),

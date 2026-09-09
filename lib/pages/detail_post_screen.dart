@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import '../models/post.dart';
+import '../services/api_service.dart';
 import 'editproduct.dart';
 
 class DetailPostScreen extends StatefulWidget {
@@ -19,29 +18,18 @@ class DetailPostScreen extends StatefulWidget {
 class _DetailPostScreenState extends State<DetailPostScreen> {
   Post? post;
   bool isLoading = true;
+  final ApiService apiService = ApiService();
 
   Future<void> fetchPost() async {
     try {
-      final response = await http.get(
-        Uri.parse('http://192.168.1.5:8000/posts/${widget.postId}'),
-      );
+      final fetchedPost = await apiService.getPostById(widget.postId);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (!mounted) return;
 
-        if (!mounted) return;
-
-        setState(() {
-          post = Post.fromJson(data['data']);
-          isLoading = false;
-        });
-      } else {
-        if (!mounted) return;
-
-        setState(() {
-          isLoading = false;
-        });
-      }
+      setState(() {
+        post = fetchedPost;
+        isLoading = false;
+      });
     } catch (error) {
       if (!mounted) return;
 

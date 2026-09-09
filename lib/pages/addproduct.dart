@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,7 +20,7 @@ class _AddProductPageState extends State<AddProductPage> {
   List<dynamic> categories = [];
   int? selectedCategory;
 
-  File? selectedImage;
+  XFile? selectedImage;
 
   bool isLoading = false;
   bool isLoadingCategories = true;
@@ -48,7 +47,7 @@ class _AddProductPageState extends State<AddProductPage> {
     if (image == null) return;
 
     setState(() {
-      selectedImage = File(image.path);
+      selectedImage = image;
     });
   }
 
@@ -361,11 +360,20 @@ class _AddProductPageState extends State<AddProductPage> {
                   )
                 : ClipRRect(
                     borderRadius: BorderRadius.circular(13),
-                    child: Image.file(
-                      selectedImage!,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
+                    child: FutureBuilder<Uint8List>(
+                      future: selectedImage!.readAsBytes(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return Image.memory(
+                            snapshot.data!,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                          );
+                        } else {
+                          return const CircularProgressIndicator();
+                        }
+                      },
                     ),
                   ),
           ),

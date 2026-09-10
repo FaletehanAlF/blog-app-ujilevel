@@ -135,7 +135,7 @@ class HomePageState extends State<HomePage> {
           const SizedBox(height: 28),
 
           const Text(
-            'Featured',
+            'Artikel Pilihan',
             style: TextStyle(
               color: Colors.white,
               fontSize: 19,
@@ -165,7 +165,7 @@ class HomePageState extends State<HomePage> {
           // Artikel lainnya
           if (posts.length > 1) ...[
             const Text(
-              'Explore',
+              'Artikel Terbaru',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 19,

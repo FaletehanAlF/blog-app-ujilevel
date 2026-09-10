@@ -8,10 +8,7 @@ import 'package:image_picker/image_picker.dart';
 class EditProductPage extends StatefulWidget {
   final Map<String, dynamic> product;
 
-  const EditProductPage({
-    super.key,
-    required this.product,
-  });
+  const EditProductPage({super.key, required this.product});
 
   @override
   State<EditProductPage> createState() => _EditProductPageState();
@@ -92,9 +89,7 @@ class _EditProductPageState extends State<EditProductPage> {
   // --- LOGIC SAMA: pilih gambar baru (opsional) ---
   Future<void> pickImage() async {
     try {
-      final image = await imagePicker.pickImage(
-        source: ImageSource.gallery,
-      );
+      final image = await imagePicker.pickImage(source: ImageSource.gallery);
 
       if (image == null) return;
 
@@ -103,8 +98,7 @@ class _EditProductPageState extends State<EditProductPage> {
       });
     } catch (error) {
       if (!mounted) return;
-      showAppSnack(context, 'Gagal memilih gambar: $error',
-          isError: true);
+      showAppSnack(context, 'Gagal memilih gambar: $error', isError: true);
     }
   }
 
@@ -118,20 +112,19 @@ class _EditProductPageState extends State<EditProductPage> {
       titleError = title.isEmpty
           ? 'Judul artikel wajib diisi'
           : title.length < 3
-              ? 'Judul minimal 3 karakter'
-              : null;
+          ? 'Judul minimal 3 karakter'
+          : null;
       contentError = content.isEmpty
           ? 'Konten artikel wajib diisi'
           : content.length < 10
-              ? 'Konten minimal 10 karakter'
-              : null;
-      categoryError =
-          selectedCategory == null ? 'Silakan pilih kategori' : null;
+          ? 'Konten minimal 10 karakter'
+          : null;
+      categoryError = selectedCategory == null
+          ? 'Silakan pilih kategori'
+          : null;
     });
 
-    return titleError == null &&
-        contentError == null &&
-        categoryError == null;
+    return titleError == null && contentError == null && categoryError == null;
   }
 
   // --- LOGIC SAMA: PUT /posts/:id ---
@@ -202,15 +195,15 @@ class _EditProductPageState extends State<EditProductPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Sempurnakan\ntulisan Anda.',
-                    style: AppType.pageTitle),
+                Text('Sempurnakan\ntulisan Anda.', style: AppType.pageTitle),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Perubahan langsung terlihat di daftar artikel.',
                   style: TextStyle(
-                      fontSize: 13,
-                      height: 1.6,
-                      color: AppColors.textSecondary),
+                    fontSize: 13,
+                    height: 1.6,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const FieldLabel('Gambar sampul', optional: true),
@@ -221,8 +214,7 @@ class _EditProductPageState extends State<EditProductPage> {
                   controller: titleController,
                   textInputAction: TextInputAction.next,
                   maxLength: 120,
-                  style: const TextStyle(
-                      color: AppColors.textPrimary, fontSize: 14),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
                   cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'Masukkan judul artikel',
@@ -240,10 +232,11 @@ class _EditProductPageState extends State<EditProductPage> {
                   controller: contentController,
                   maxLines: 8,
                   minLines: 6,
-                  style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      height: 1.7),
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    height: 1.7,
+                  ),
                   cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'Edit isi artikel…',
@@ -280,8 +273,7 @@ class _EditProductPageState extends State<EditProductPage> {
                 ? FutureBuilder(
                     future: selectedImage!.readAsBytes(),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                              ConnectionState.done &&
+                      if (snapshot.connectionState == ConnectionState.done &&
                           snapshot.hasData) {
                         return Image.memory(
                           snapshot.data!,
@@ -295,50 +287,50 @@ class _EditProductPageState extends State<EditProductPage> {
                         child: const SizedBox(
                           width: 22,
                           height: 22,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       );
                     },
                   )
                 : hasExisting
-                    ? Image.network(
-                        url,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (context, error, stackTrace) {
-                          return _imagePlaceholder(
-                              'Gambar lama tidak dapat dimuat');
-                        },
-                      )
-                    : _imagePlaceholder(
-                        'Belum ada gambar sampul'),
+                ? Image.network(
+                    url,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _imagePlaceholder(
+                        'Gambar lama tidak dapat dimuat',
+                      );
+                    },
+                  )
+                : _imagePlaceholder('Belum ada gambar sampul'),
           ),
         ),
         if (selectedImage != null) ...[
           const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius:
-                  BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.info_outline_rounded,
-                    size: 16, color: AppColors.textSecondary),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Gambar baru dipilih dan akan menggantikan gambar lama.',
                     style: TextStyle(
-                        fontSize: 12,
-                        height: 1.5,
-                        color: AppColors.textSecondary),
+                      fontSize: 12,
+                      height: 1.5,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -354,9 +346,11 @@ class _EditProductPageState extends State<EditProductPage> {
                 child: OutlinedButton.icon(
                   onPressed: isLoading ? null : pickImage,
                   icon: const Icon(Icons.image_outlined, size: 17),
-                  label: Text(hasExisting || selectedImage != null
-                      ? 'Ganti gambar'
-                      : 'Pilih gambar'),
+                  label: Text(
+                    hasExisting || selectedImage != null
+                        ? 'Ganti gambar'
+                        : 'Pilih gambar',
+                  ),
                 ),
               ),
             ),
@@ -366,10 +360,8 @@ class _EditProductPageState extends State<EditProductPage> {
                 child: SizedBox(
                   height: 48,
                   child: TextButton(
-                    onPressed:
-                        isLoading ? null : cancelNewImage,
-                    child:
-                        const Text('Batalkan gambar baru'),
+                    onPressed: isLoading ? null : cancelNewImage,
+                    child: const Text('Batalkan gambar baru'),
                   ),
                 ),
               ),
@@ -389,12 +381,12 @@ class _EditProductPageState extends State<EditProductPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.image_outlined,
-              color: AppColors.textMuted, size: 30),
+          Icon(Icons.image_outlined, color: AppColors.textMuted, size: 30),
           const SizedBox(height: 8),
-          Text(text,
-              style: const TextStyle(
-                  color: AppColors.textMuted, fontSize: 12)),
+          Text(
+            text,
+            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -409,7 +401,7 @@ class _EditProductPageState extends State<EditProductPage> {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border),
         ),
-        child: const Row(
+        child: Row(
           children: [
             SizedBox(width: 16),
             SizedBox(
@@ -433,11 +425,11 @@ class _EditProductPageState extends State<EditProductPage> {
         ),
         child: Row(
           children: [
-            const Expanded(
-              child: Text('Gagal memuat kategori.',
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary)),
+            Expanded(
+              child: Text(
+                'Gagal memuat kategori.',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
             ),
             TextButton.icon(
               onPressed: fetchCategories,
@@ -454,9 +446,8 @@ class _EditProductPageState extends State<EditProductPage> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-            color: categoryError != null
-                ? AppColors.danger
-                : AppColors.border),
+          color: categoryError != null ? AppColors.danger : AppColors.border,
+        ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
@@ -464,12 +455,12 @@ class _EditProductPageState extends State<EditProductPage> {
           isExpanded: true,
           dropdownColor: AppColors.surface2,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: const Icon(
+          icon: Icon(
             Icons.keyboard_arrow_down_rounded,
             color: AppColors.textMuted,
           ),
-          hint: const Text('Pilih kategori', style: AppType.hint),
-          style: const TextStyle(
+          hint: Text('Pilih kategori', style: AppType.hint),
+          style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 14,
             fontWeight: FontWeight.w500,

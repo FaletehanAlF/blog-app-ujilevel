@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/models/post.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
+
 import 'category_articles_page.dart';
 
 /// Tab Kategori: daftar kategori dari GET /categories.
@@ -95,7 +96,7 @@ class CategoryPageState extends State<CategoryPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('TOPIK', style: AppType.sectionLabel),
+                Text('TOPIK', style: AppType.sectionLabel),
                 const SizedBox(height: 16),
                 _buildBody(),
               ],
@@ -127,8 +128,7 @@ class CategoryPageState extends State<CategoryPage>
                   height: 36,
                   decoration: BoxDecoration(
                     color: AppColors.skeletonHi,
-                    borderRadius:
-                        BorderRadius.circular(AppRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -142,8 +142,7 @@ class CategoryPageState extends State<CategoryPage>
                         height: 13,
                         decoration: BoxDecoration(
                           color: AppColors.skeletonHi,
-                          borderRadius: BorderRadius.circular(
-                              AppRadius.sm),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -153,8 +152,7 @@ class CategoryPageState extends State<CategoryPage>
                         height: 11,
                         decoration: BoxDecoration(
                           color: AppColors.skeleton,
-                          borderRadius: BorderRadius.circular(
-                              AppRadius.sm),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                       ),
                     ],
@@ -203,8 +201,7 @@ class CategoryPageState extends State<CategoryPage>
               onTap: () => openCategory(map),
               borderRadius: BorderRadius.circular(AppRadius.lg),
               splashColor: Colors.white.withValues(alpha: 0.04),
-              highlightColor:
-                  Colors.white.withValues(alpha: 0.02),
+              highlightColor: Colors.white.withValues(alpha: 0.02),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -214,10 +211,9 @@ class CategoryPageState extends State<CategoryPage>
                       height: 40,
                       decoration: BoxDecoration(
                         color: AppColors.surface2,
-                        borderRadius: BorderRadius.circular(
-                            AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.tag_outlined,
                         color: AppColors.textSecondary,
                         size: 20,
@@ -226,14 +222,13 @@ class CategoryPageState extends State<CategoryPage>
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             map['name'].toString(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -241,10 +236,8 @@ class CategoryPageState extends State<CategoryPage>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            count == 0
-                                ? 'Belum ada artikel'
-                                : '$count artikel',
-                            style: const TextStyle(
+                            count == 0 ? 'Belum ada artikel' : '$count artikel',
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textMuted,
                             ),
@@ -252,7 +245,7 @@ class CategoryPageState extends State<CategoryPage>
                         ],
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right_rounded,
                       color: AppColors.textMuted,
                       size: 22,

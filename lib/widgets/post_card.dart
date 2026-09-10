@@ -18,10 +18,9 @@ class PostCard extends StatelessWidget {
     required this.onTap,
   });
 
-  String get _imageUrl =>
-      (post.image != null && post.image!.isNotEmpty)
-          ? '${ApiService.baseUrl}${post.image}'
-          : '';
+  String get _imageUrl => (post.image != null && post.image!.isNotEmpty)
+      ? '${ApiService.baseUrl}${post.image}'
+      : '';
 
   @override
   Widget build(BuildContext context) {
@@ -54,9 +53,8 @@ class PostCard extends StatelessWidget {
                           _imageUrl,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder:
-                              (context, error, stackTrace) =>
-                                  _placeholder(),
+                          errorBuilder: (context, error, stackTrace) =>
+                              _placeholder(),
                         )
                       : _placeholder(),
                 ),
@@ -83,14 +81,11 @@ class PostCard extends StatelessWidget {
                       style: AppType.excerpt,
                     ),
                     const SizedBox(height: 12),
-                    Container(
-                      height: 1,
-                      color: AppColors.border,
-                    ),
+                    Container(height: 1, color: AppColors.border),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           'Baca artikel',
                           style: TextStyle(
                             color: AppColors.accent,
@@ -99,7 +94,7 @@ class PostCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(
+                        Icon(
                           Icons.arrow_forward_rounded,
                           size: 14,
                           color: AppColors.textMuted,
@@ -107,9 +102,8 @@ class PostCard extends StatelessWidget {
                         const Spacer(),
                         InkWell(
                           onTap: onDelete,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.sm),
-                          child: const Padding(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          child: Padding(
                             padding: EdgeInsets.all(4),
                             child: Icon(
                               Icons.delete_outline_rounded,
@@ -136,11 +130,7 @@ class PostCard extends StatelessWidget {
       height: double.infinity,
       color: AppColors.surface2,
       alignment: Alignment.center,
-      child: const Icon(
-        Icons.image_outlined,
-        color: AppColors.textMuted,
-        size: 30,
-      ),
+      child: Icon(Icons.image_outlined, color: AppColors.textMuted, size: 30),
     );
   }
 }

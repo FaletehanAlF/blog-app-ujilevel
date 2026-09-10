@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/api_service.dart';
 import '../widgets/app_ui.dart';
 import 'editproduct.dart';
 
-/// Halaman baca: hero image → category → title → content → action.
-/// Artikel TIDAK dibungkus card — fokus pada keterbacaan.
 class DetailPostScreen extends StatefulWidget {
   final int postId;
 
-  const DetailPostScreen({
-    super.key,
-    required this.postId,
-  });
+  const DetailPostScreen({super.key, required this.postId});
 
   @override
   State<DetailPostScreen> createState() => _DetailPostScreenState();
@@ -25,7 +21,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   String? errorMessage;
   final ApiService apiService = ApiService();
 
-  // --- LOGIC SAMA: GET /posts/:id ---
   Future<void> fetchPost() async {
     setState(() {
       isLoading = true;
@@ -71,7 +66,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     fetchPost();
   }
 
-  // --- LOGIC SAMA: DELETE /posts/:id lalu kembali ---
   Future<void> confirmDelete() async {
     if (post == null || isDeleting) return;
     final ok = await showDeleteDialog(context, title: post!.title);
@@ -114,7 +108,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
               color: AppColors.surface2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                side: const BorderSide(color: AppColors.border),
+                side: BorderSide(color: AppColors.border),
               ),
               onSelected: (value) {
                 if (value == 'edit') {
@@ -123,20 +117,23 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                   confirmDelete();
                 }
               },
-              itemBuilder: (context) => const [
+              itemBuilder: (context) => [
                 PopupMenuItem(
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit_outlined,
-                          size: 18,
-                          color: AppColors.textSecondary),
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 18,
+                        color: AppColors.textSecondary,
+                      ),
                       SizedBox(width: 12),
                       Text(
                         'Edit',
                         style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 14),
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -145,14 +142,15 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline_rounded,
-                          size: 18, color: AppColors.danger),
+                      Icon(
+                        Icons.delete_outline_rounded,
+                        size: 18,
+                        color: AppColors.danger,
+                      ),
                       SizedBox(width: 12),
                       Text(
                         'Hapus',
-                        style: TextStyle(
-                            color: AppColors.danger,
-                            fontSize: 14),
+                        style: TextStyle(color: AppColors.danger, fontSize: 14),
                       ),
                     ],
                   ),
@@ -169,7 +167,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       body: _buildBody(),
     );
   }
-
   Widget _buildBody() {
     if (isLoading) {
       return const Center(
@@ -182,11 +179,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
               child: CircularProgressIndicator(strokeWidth: 2.5),
             ),
             SizedBox(height: 12),
-            Text(
-              'Memuat artikel…',
-              style: TextStyle(
-                  color: AppColors.textSecondary, fontSize: 13),
-            ),
           ],
         ),
       );
@@ -246,15 +238,22 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
               return Container(
                 color: AppColors.surface2,
                 alignment: Alignment.center,
-                child: const Column(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.image_not_supported_outlined,
-                        color: AppColors.textMuted, size: 30),
+                    Icon(
+                      Icons.image_not_supported_outlined,
+                      color: AppColors.textMuted,
+                      size: 30,
+                    ),
                     SizedBox(height: 8),
-                    Text('Gambar tidak dapat dimuat',
-                        style: TextStyle(
-                            color: AppColors.textMuted, fontSize: 12)),
+                    Text(
+                      'Gambar tidak dapat dimuat',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               );

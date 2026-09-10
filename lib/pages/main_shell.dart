@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
+
 import 'homePage.dart';
 import 'category_page.dart';
 import 'about_page.dart';
@@ -63,7 +64,7 @@ class _MainShellState extends State<MainShell> {
           children: [
             Text(
               _titles[_index],
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
@@ -73,7 +74,7 @@ class _MainShellState extends State<MainShell> {
             if (_subtitles[_index].isNotEmpty)
               Text(
                 _subtitles[_index],
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textMuted,
@@ -99,21 +100,18 @@ class _MainShellState extends State<MainShell> {
       // FAB hanya di Beranda — buka Tambah Artikel.
       floatingActionButton: _index == 0
           ? FloatingActionButton(
-              onPressed: () =>
-                  _homeKey.currentState?.openAddArticle(),
+              onPressed: () => _homeKey.currentState?.openAddArticle(),
               backgroundColor: AppColors.accent,
               foregroundColor: AppColors.onAccent,
               elevation: 0,
               tooltip: 'Tambah artikel',
-              child: const Icon(Icons.add_rounded, size: 26),
+              child: Icon(Icons.add_rounded, size: 26),
             )
           : null,
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
-          border: Border(
-            top: BorderSide(color: AppColors.border),
-          ),
+          border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: BottomNavigationBar(
           currentIndex: _index,
@@ -124,8 +122,7 @@ class _MainShellState extends State<MainShell> {
           unselectedItemColor: AppColors.textMuted,
           selectedFontSize: 11,
           unselectedFontSize: 11,
-          selectedLabelStyle:
-              const TextStyle(fontWeight: FontWeight.w700),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
           elevation: 0,
           items: const [
             BottomNavigationBarItem(

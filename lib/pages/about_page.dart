@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 
-/// Tab Tentang: informasi singkat aplikasi, teknologi, dan project.
-/// Halaman statis — tidak memanggil API.
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
 
@@ -16,7 +14,6 @@ class AboutPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Identitas aplikasi ──
               Row(
                 children: [
                   Container(
@@ -24,17 +21,16 @@ class AboutPage extends StatelessWidget {
                     height: 52,
                     decoration: BoxDecoration(
                       color: AppColors.accent,
-                      borderRadius:
-                          BorderRadius.circular(AppRadius.lg),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.auto_stories_rounded,
                       color: AppColors.onAccent,
                       size: 26,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -61,7 +57,7 @@ class AboutPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Aplikasi blog mobile untuk menulis, membaca, dan mengelola artikel dengan kategori serta gambar sampul. Seluruh data artikel dimuat langsung dari REST API.',
                 style: TextStyle(
                   fontSize: 13,
@@ -71,7 +67,7 @@ class AboutPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               // ── Teknologi ──
-              const Text('TEKNOLOGI', style: AppType.sectionLabel),
+              Text('TEKNOLOGI', style: AppType.sectionLabel),
               const SizedBox(height: 12),
               _infoRow(
                 icon: Icons.phone_android_outlined,
@@ -96,7 +92,7 @@ class AboutPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               // ── Fitur ──
-              const Text('FITUR', style: AppType.sectionLabel),
+              Text('FITUR', style: AppType.sectionLabel),
               const SizedBox(height: 12),
               _infoRow(
                 icon: Icons.article_outlined,
@@ -137,11 +133,9 @@ class AboutPage extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: AppColors.surface2,
-              borderRadius:
-                  BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Icon(icon,
-                color: AppColors.textSecondary, size: 20),
+            child: Icon(icon, color: AppColors.textSecondary, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -150,7 +144,7 @@ class AboutPage extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -159,7 +153,7 @@ class AboutPage extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),

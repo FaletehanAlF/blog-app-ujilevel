@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
@@ -96,20 +97,19 @@ class _AddProductPageState extends State<AddProductPage> {
       titleError = title.isEmpty
           ? 'Judul artikel wajib diisi'
           : title.length < 3
-              ? 'Judul minimal 3 karakter'
-              : null;
+          ? 'Judul minimal 3 karakter'
+          : null;
       contentError = content.isEmpty
           ? 'Konten artikel wajib diisi'
           : content.length < 10
-              ? 'Konten minimal 10 karakter'
-              : null;
-      categoryError =
-          selectedCategory == null ? 'Silakan pilih kategori' : null;
+          ? 'Konten minimal 10 karakter'
+          : null;
+      categoryError = selectedCategory == null
+          ? 'Silakan pilih kategori'
+          : null;
     });
 
-    return titleError == null &&
-        contentError == null &&
-        categoryError == null;
+    return titleError == null && contentError == null && categoryError == null;
   }
 
   // --- LOGIC SAMA: POST /posts (multipart, gambar opsional) ---
@@ -169,15 +169,15 @@ class _AddProductPageState extends State<AddProductPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Tulis sesuatu\nyang bermakna.',
-                    style: AppType.pageTitle),
+                Text('Tulis sesuatu\nyang bermakna.', style: AppType.pageTitle),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Lengkapi gambar, judul, kategori, dan konten.',
                   style: TextStyle(
-                      fontSize: 13,
-                      height: 1.6,
-                      color: AppColors.textSecondary),
+                    fontSize: 13,
+                    height: 1.6,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const FieldLabel('Gambar sampul', optional: true),
@@ -188,8 +188,7 @@ class _AddProductPageState extends State<AddProductPage> {
                   controller: titleController,
                   textInputAction: TextInputAction.next,
                   maxLength: 120,
-                  style: const TextStyle(
-                      color: AppColors.textPrimary, fontSize: 14),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
                   cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'Contoh: Panduan Memulai Blog',
@@ -207,10 +206,11 @@ class _AddProductPageState extends State<AddProductPage> {
                   controller: contentController,
                   maxLines: 8,
                   minLines: 6,
-                  style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      height: 1.7),
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    height: 1.7,
+                  ),
                   cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'Tulis isi artikel di sini…',
@@ -241,15 +241,15 @@ class _AddProductPageState extends State<AddProductPage> {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            SizedBox(width: 16),
-            SizedBox(
+            const SizedBox(width: 16),
+            const SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Text('Memuat kategori…', style: AppType.hint),
           ],
         ),
@@ -265,11 +265,11 @@ class _AddProductPageState extends State<AddProductPage> {
         ),
         child: Row(
           children: [
-            const Expanded(
-              child: Text('Gagal memuat kategori.',
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary)),
+            Expanded(
+              child: Text(
+                'Gagal memuat kategori.',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
             ),
             TextButton.icon(
               onPressed: fetchCategories,
@@ -286,9 +286,8 @@ class _AddProductPageState extends State<AddProductPage> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-            color: categoryError != null
-                ? AppColors.danger
-                : AppColors.border),
+          color: categoryError != null ? AppColors.danger : AppColors.border,
+        ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
@@ -296,12 +295,12 @@ class _AddProductPageState extends State<AddProductPage> {
           isExpanded: true,
           dropdownColor: AppColors.surface2,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: const Icon(
+          icon: Icon(
             Icons.keyboard_arrow_down_rounded,
             color: AppColors.textMuted,
           ),
-          hint: const Text('Pilih kategori', style: AppType.hint),
-          style: const TextStyle(
+          hint: Text('Pilih kategori', style: AppType.hint),
+          style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -337,19 +336,17 @@ class _AddProductPageState extends State<AddProductPage> {
                   ? Container(
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.lg),
-                        border:
-                            Border.all(color: AppColors.border),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(color: AppColors.border),
                       ),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                              Icons
-                                  .add_photo_alternate_outlined,
-                              color: AppColors.textMuted,
-                              size: 30),
+                            Icons.add_photo_alternate_outlined,
+                            color: AppColors.textMuted,
+                            size: 30,
+                          ),
                           SizedBox(height: 12),
                           Text(
                             'Tambah gambar sampul',
@@ -363,8 +360,9 @@ class _AddProductPageState extends State<AddProductPage> {
                           Text(
                             'Ketuk untuk memilih dari galeri',
                             style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary),
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -385,8 +383,7 @@ class _AddProductPageState extends State<AddProductPage> {
                           child: const SizedBox(
                             width: 22,
                             height: 22,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         );
                       },
@@ -403,13 +400,14 @@ class _AddProductPageState extends State<AddProductPage> {
                 child: OutlinedButton.icon(
                   onPressed: pickImage,
                   icon: Icon(
-                      selectedImage == null
-                          ? Icons.image_outlined
-                          : Icons.swap_horiz_rounded,
-                      size: 17),
-                  label: Text(selectedImage == null
-                      ? 'Pilih gambar'
-                      : 'Ganti gambar'),
+                    selectedImage == null
+                        ? Icons.image_outlined
+                        : Icons.swap_horiz_rounded,
+                    size: 17,
+                  ),
+                  label: Text(
+                    selectedImage == null ? 'Pilih gambar' : 'Ganti gambar',
+                  ),
                 ),
               ),
             ),
@@ -421,10 +419,9 @@ class _AddProductPageState extends State<AddProductPage> {
                   child: TextButton.icon(
                     onPressed: removeImage,
                     style: TextButton.styleFrom(
-                        foregroundColor: AppColors.danger),
-                    icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        size: 17),
+                      foregroundColor: AppColors.danger,
+                    ),
+                    icon: const Icon(Icons.delete_outline_rounded, size: 17),
                     label: const Text('Hapus'),
                   ),
                 ),

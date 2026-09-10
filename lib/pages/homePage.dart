@@ -17,8 +17,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => HomePageState();
 }
 
-class HomePageState extends State<HomePage>
-    with AutomaticKeepAliveClientMixin {
+class HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin {
   final ApiService apiService = ApiService();
 
   List<Post> posts = [];
@@ -129,15 +128,14 @@ class HomePageState extends State<HomePage>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('ARTIKEL TERBARU',
-                        style: AppType.sectionLabel),
+                    Text('ARTIKEL TERBARU', style: AppType.sectionLabel),
                     Text(
                       isLoading
                           ? 'Memuat…'
                           : posts.isEmpty
-                              ? 'Kosong'
-                              : '${posts.length} artikel',
-                      style: const TextStyle(
+                          ? 'Kosong'
+                          : '${posts.length} artikel',
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textMuted,
                       ),
@@ -173,8 +171,7 @@ class HomePageState extends State<HomePage>
     if (posts.isEmpty) {
       return EmptyStateView(
         title: 'Belum ada artikel',
-        subtitle:
-            'Buat artikel pertama Anda dan bagikan ide terbaik Anda.',
+        subtitle: 'Buat artikel pertama Anda dan bagikan ide terbaik Anda.',
         actionLabel: 'Tulis artikel pertama',
         onAction: openAddArticle,
       );

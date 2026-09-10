@@ -5,9 +5,6 @@ import 'package:belajar_flutter/pages/detail_post_screen.dart';
 import 'package:belajar_flutter/widgets/post_card.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 
-/// Artikel berdasarkan kategori (filter lokal dari GET /posts).
-/// Dibuka dari tab Kategori — memiliki AppBar + back sendiri,
-/// sehingga bottom navigation tidak tampil di sini.
 class CategoryArticlesPage extends StatefulWidget {
   final int categoryId;
   final String categoryName;
@@ -19,8 +16,7 @@ class CategoryArticlesPage extends StatefulWidget {
   });
 
   @override
-  State<CategoryArticlesPage> createState() =>
-      _CategoryArticlesPageState();
+  State<CategoryArticlesPage> createState() => _CategoryArticlesPageState();
 }
 
 class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
@@ -30,7 +26,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
   bool isLoading = true;
   String? errorMessage;
 
-  // --- LOGIC SAMA: GET /posts, filter per kategori secara lokal ---
   Future<void> fetchPosts() async {
     try {
       final data = await apiService.getPosts();
@@ -38,9 +33,7 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
       if (!mounted) return;
 
       setState(() {
-        posts = data
-            .where((p) => p.categoryId == widget.categoryId)
-            .toList();
+        posts = data.where((p) => p.categoryId == widget.categoryId).toList();
         isLoading = false;
         errorMessage = null;
       });
@@ -130,9 +123,9 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
                     isLoading
                         ? 'Memuat artikel…'
                         : posts.isEmpty
-                            ? 'Belum ada artikel'
-                            : '${posts.length} artikel',
-                    style: const TextStyle(
+                        ? 'Belum ada artikel'
+                        : '${posts.length} artikel',
+                    style: TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
@@ -167,8 +160,7 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
     if (posts.isEmpty) {
       return const EmptyStateView(
         title: 'Belum ada artikel',
-        subtitle:
-            'Belum ada artikel pada kategori ini. Coba kategori lain.',
+        subtitle: 'Belum ada artikel pada kategori ini. Coba kategori lain.',
       );
     }
     return ListView.builder(

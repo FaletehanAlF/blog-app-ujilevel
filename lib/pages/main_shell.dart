@@ -93,7 +93,6 @@ class _MainShellState extends State<MainShell> {
           const SettingsPage(),
         ],
       ),
-      // FAB hanya di Beranda — buka Tambah Artikel.
       floatingActionButton: _index == 0
           ? FloatingActionButton(
               onPressed: () => _homeKey.currentState?.openAddArticle(),

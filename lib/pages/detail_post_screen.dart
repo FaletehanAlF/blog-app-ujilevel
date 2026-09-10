@@ -123,9 +123,13 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildArticleNumber(),
+
           const SizedBox(height: 28),
+
           _buildCategory(),
+
           const SizedBox(height: 14),
+
           Text(
             post!.title,
             style: const TextStyle(
@@ -136,13 +140,48 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
               letterSpacing: -1.4,
             ),
           ),
+
           const SizedBox(height: 24),
+
+          // Gambar artikel
+          if (post!.image != null && post!.image!.isNotEmpty) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.network(
+                'http://10.2.14.139:8000${post!.image}',
+                width: double.infinity,
+                height: 220,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: double.infinity,
+                    height: 220,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1C1C1C),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Color(0xFF666666),
+                      size: 32,
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 28),
+          ],
+
           Container(
             width: 44,
             height: 2,
             color: Colors.white,
           ),
+
           const SizedBox(height: 26),
+
           Text(
             post!.content,
             style: const TextStyle(
@@ -152,7 +191,9 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
               letterSpacing: 0.05,
             ),
           ),
+
           const SizedBox(height: 42),
+
           _buildFooter(),
         ],
       ),

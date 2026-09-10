@@ -1,101 +1,246 @@
 import 'package:flutter/material.dart';
-import 'package:belajar_flutter/services/api_service.dart';
-import 'package:belajar_flutter/models/post.dart';
-import 'package:belajar_flutter/widgets/app_ui.dart';
 
+import '../services/api_service.dart';
+import '../widgets/app_ui.dart';
 import 'category_articles_page.dart';
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
 
   @override
-  State<CategoryPage> createState() => CategoryPageState();
+  State<CategoryPage> createState() => _CategoryPageState();
 }
 
-class CategoryPageState extends State<CategoryPage>
+class _CategoryPageState extends State<CategoryPage>
     with AutomaticKeepAliveClientMixin {
   final ApiService apiService = ApiService();
 
   List<dynamic> categories = [];
-  List<Post> posts = [];
+
   bool isLoading = true;
   String? errorMessage;
 
   @override
   bool get wantKeepAlive => true;
 
-  Future<void> fetchAll() async {
-    if (categories.isEmpty && errorMessage == null) {
-      setState(() => isLoading = true);
-    }
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  // =========================
+  // GET CATEGORIES
+  // =========================
+  Future<void> fetchData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
     try {
-      final results = await Future.wait([
-        apiService.getCategories(),
-        apiService.getPosts(),
-      ]);
+      final data = await apiService.getCategories();
 
       if (!mounted) return;
 
       setState(() {
-        categories = results[0];
-        posts = results[1] as List<Post>;
+        categories = List<dynamic>.from(data);
         isLoading = false;
-        errorMessage = null;
       });
     } catch (error) {
       if (!mounted) return;
 
       setState(() {
         isLoading = false;
-        if (categories.isEmpty) errorMessage = error.toString();
+        errorMessage = error.toString();
       });
-
-      if (categories.isNotEmpty) {
-        showAppSnack(context, error.toString(), isError: true);
-      }
     }
   }
 
-  int countFor(int categoryId) =>
-      posts.where((p) => p.categoryId == categoryId).length;
-
+  // =========================
+  // OPEN CATEGORY
+  // =========================
   void openCategory(Map<String, dynamic> category) {
+    final id = category['id'] as int;
+    final name = category['name'].toString();
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CategoryArticlesPage(
-          categoryId: category['id'] as int,
-          categoryName: category['name'].toString(),
-        ),
+        builder: (context) =>
+            CategoryArticlesPage(categoryId: id, categoryName: name),
       ),
-    ).then((_) => fetchAll());
+    );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    fetchAll();
+  // =========================
+  // GET ICON CATEGORY
+  // =========================
+  IconData getCategoryIcon(String name) {
+    switch (name.toLowerCase()) {
+      case 'pemrograman':
+        return Icons.code_rounded;
+
+      case 'teknologi':
+        return Icons.memory_rounded;
+
+      case 'mobile':
+        return Icons.smartphone_rounded;
+
+      default:
+        return Icons.category_outlined;
+    }
+  }
+
+  // =========================
+  // GET DESCRIPTION CATEGORY
+  // =========================
+  String getCategoryDescription(String name) {
+    switch (name.toLowerCase()) {
+      case 'pemrograman':
+        return 'Coding, development, dan teknologi software.';
+
+      case 'teknologi':
+        return 'Informasi seputar perkembangan teknologi.';
+
+      case 'mobile':
+        return 'Dunia aplikasi dan teknologi mobile.';
+
+      default:
+        return 'Artikel berdasarkan topik pilihan.';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return RefreshIndicator(
-      backgroundColor: AppColors.surface2,
-      color: AppColors.accent,
-      onRefresh: fetchAll,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+
+    return RefreshIndicator(onRefresh: fetchData, child: _buildContent());
+  }
+
+  // =========================
+  // CONTENT
+  // =========================
+  Widget _buildContent() {
+    if (isLoading) {
+      return _buildLoading();
+    }
+
+    if (errorMessage != null) {
+      return _buildError();
+    }
+
+    if (categories.isEmpty) {
+      return _buildEmpty();
+    }
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      children: [
+        // =========================
+        // HEADER
+        // =========================
+        Text('Articles', style: AppType.pageTitle),
+
+        const SizedBox(height: 6),
+
+        Text(
+          'Temukan artikel berdasarkan topik yang kamu minati.',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 13,
+            height: 1.5,
+          ),
+        ),
+
+        const SizedBox(height: 28),
+
+        // =========================
+        // CATEGORY LIST
+        // =========================
+        ...categories.map((category) => _buildCategoryCard(category)),
+      ],
+    );
+  }
+
+  // =========================
+  // CATEGORY CARD
+  // =========================
+  Widget _buildCategoryCard(dynamic category) {
+    final map = Map<String, dynamic>.from(category as Map);
+    final name = map['name'].toString();
+    final icon = getCategoryIcon(name);
+    final description = getCategoryDescription(name);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => openCategory(map),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Ink(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
               children: [
-                Text('TOPIK', style: AppType.sectionLabel),
-                const SizedBox(height: 16),
-                _buildBody(),
+                // =========================
+                // ICON
+                // =========================
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Icon(icon, color: Colors.blue, size: 24),
+                ),
+
+                const SizedBox(width: 16),
+
+                // =========================
+                // TEXT
+                // =========================
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // =========================
+                // ARROW
+                // =========================
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: AppColors.textMuted,
+                  size: 16,
+                ),
               ],
             ),
           ),
@@ -104,156 +249,111 @@ class CategoryPageState extends State<CategoryPage>
     );
   }
 
-  Widget _buildBody() {
-    if (isLoading) {
-      return Column(
-        children: List.generate(
-          4,
-          (_) => Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            height: 68,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.border),
+  // =========================
+  // LOADING
+  // =========================
+  Widget _buildLoading() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      children: [
+        Container(
+          width: 140,
+          height: 22,
+          decoration: BoxDecoration(
+            color: AppColors.surface2,
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        Container(
+          width: 260,
+          height: 14,
+          decoration: BoxDecoration(
+            color: AppColors.surface2,
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+
+        const SizedBox(height: 28),
+
+        ...List.generate(
+          3,
+          (index) => Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Container(
+              height: 88,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
             ),
-            child: Row(
+          ),
+        ),
+      ],
+    );
+  }
+
+  // =========================
+  // ERROR
+  // =========================
+  Widget _buildError() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: ErrorStateView(
+            message: errorMessage ?? 'Terjadi kesalahan.',
+            onRetry: fetchData,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // =========================
+  // EMPTY
+  // =========================
+  Widget _buildEmpty() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(width: 16),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.skeletonHi,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                Icon(
+                  Icons.article_outlined,
+                  color: AppColors.textMuted,
+                  size: 42,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Belum ada kategori',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 120,
-                        height: 13,
-                        decoration: BoxDecoration(
-                          color: AppColors.skeletonHi,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: 70,
-                        height: 11,
-                        decoration: BoxDecoration(
-                          color: AppColors.skeleton,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 5),
+                Text(
+                  'Kategori artikel belum tersedia.',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
                   ),
                 ),
               ],
             ),
           ),
         ),
-      );
-    }
-    if (errorMessage != null) {
-      return ErrorStateView(
-        message: errorMessage!,
-        onRetry: () {
-          setState(() {
-            isLoading = true;
-            errorMessage = null;
-          });
-          fetchAll();
-        },
-      );
-    }
-    if (categories.isEmpty) {
-      return const EmptyStateView(
-        title: 'Belum ada kategori',
-        subtitle: 'Kategori akan muncul di sini setelah ditambahkan.',
-        icon: Icons.grid_view_outlined,
-      );
-    }
-    return Column(
-      children: categories.map((c) {
-        final map = Map<String, dynamic>.from(c as Map);
-        final id = map['id'] as int;
-        final count = countFor(id);
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => openCategory(map),
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              splashColor: Colors.white.withValues(alpha: 0.04),
-              highlightColor: Colors.white.withValues(alpha: 0.02),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface2,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: Icon(
-                        Icons.tag_outlined,
-                        color: AppColors.textSecondary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            map['name'].toString(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            count == 0 ? 'Belum ada artikel' : '$count artikel',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppColors.textMuted,
-                      size: 22,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+      ],
     );
   }
 }

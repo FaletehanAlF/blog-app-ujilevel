@@ -8,7 +8,10 @@ import 'editproduct.dart';
 class DetailPostScreen extends StatefulWidget {
   final int postId;
 
-  const DetailPostScreen({super.key, required this.postId});
+  const DetailPostScreen({
+    super.key,
+    required this.postId,
+  });
 
   @override
   State<DetailPostScreen> createState() => _DetailPostScreenState();
@@ -19,13 +22,18 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   bool isLoading = true;
   bool isDeleting = false;
   String? errorMessage;
+
   final ApiService apiService = ApiService();
 
+  // =========================
+  // GET DETAIL ARTIKEL
+  // =========================
   Future<void> fetchPost() async {
     setState(() {
       isLoading = true;
       errorMessage = null;
     });
+
     try {
       final fetchedPost = await apiService.getPostById(widget.postId);
 
@@ -45,8 +53,12 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     }
   }
 
+  // =========================
+  // EDIT ARTIKEL
+  // =========================
   Future<void> openEdit() async {
     if (post == null) return;
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -63,24 +75,45 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       ),
     );
 
+    // Ambil ulang data setelah kembali dari halaman edit
     fetchPost();
   }
 
+  // =========================
+  // HAPUS ARTIKEL
+  // =========================
   Future<void> confirmDelete() async {
     if (post == null || isDeleting) return;
-    final ok = await showDeleteDialog(context, title: post!.title);
+
+    final ok = await showDeleteDialog(
+      context,
+      title: post!.title,
+    );
+
     if (!ok) return;
 
-    setState(() => isDeleting = true);
+    setState(() {
+      isDeleting = true;
+    });
+
     try {
       await apiService.deletePost(post!.id);
+
       if (!mounted) return;
-      Navigator.pop(context);
-      showAppSnack(context, 'Artikel berhasil dihapus');
+
+      Navigator.pop(context, true);
     } catch (error) {
       if (!mounted) return;
-      setState(() => isDeleting = false);
-      showAppSnack(context, error.toString(), isError: true);
+
+      setState(() {
+        isDeleting = false;
+      });
+
+      showAppSnack(
+        context,
+        error.toString(),
+        isError: true,
+      );
     }
   }
 
@@ -94,95 +127,71 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+
+      // =========================
+      // APP BAR
+      // =========================
       appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+
         leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_rounded, size: 22),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            size: 22,
+          ),
+          tooltip: 'Kembali',
         ),
-        title: const Text('Artikel'),
-        actions: [
-          if (post != null && !isLoading)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded, size: 20),
-              tooltip: 'Kelola artikel',
-              color: AppColors.surface2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                side: BorderSide(color: AppColors.border),
-              ),
-              onSelected: (value) {
-                if (value == 'edit') {
-                  openEdit();
-                } else if (value == 'delete') {
-                  confirmDelete();
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.edit_outlined,
-                        size: 18,
-                        color: AppColors.textSecondary,
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        'Edit',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.delete_outline_rounded,
-                        size: 18,
-                        color: AppColors.danger,
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        'Hapus',
-                        style: TextStyle(color: AppColors.danger, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(width: 4),
-        ],
+
+        title: const Text(
+          'Detail Artikel',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.border),
+          child: Container(
+            height: 1,
+            color: AppColors.border,
+          ),
         ),
       ),
+
       body: _buildBody(),
+
+      // =========================
+      // ACTION BAR
+      // =========================
+      bottomNavigationBar:
+          post != null && !isLoading && errorMessage == null
+              ? _buildActionBar()
+              : null,
     );
   }
+
+  // =========================
+  // BODY
+  // =========================
   Widget _buildBody() {
     if (isLoading) {
       return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            ),
-            SizedBox(height: 12),
-          ],
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+          ),
         ),
       );
     }
+
     if (errorMessage != null || post == null) {
       return SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -195,27 +204,104 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         ),
       );
     }
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      padding: const EdgeInsets.fromLTRB(
+        20,
+        24,
+        20,
+        32,
+      ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 680),
+          constraints: const BoxConstraints(
+            maxWidth: 680,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Hero image ──
+              // =========================
+              // HERO IMAGE
+              // =========================
               if (post!.image != null && post!.image!.isNotEmpty)
                 _buildHeroImage(),
-              // ── Category ──
-              CategoryLabel(label: post!.category),
-              const SizedBox(height: 12),
-              // ── Title (fokus utama) ──
-              Text(post!.title, style: AppType.detailTitle),
+
+              // =========================
+              // CATEGORY
+              // =========================
+              CategoryLabel(
+                label: post!.category,
+              ),
+
+              const SizedBox(height: 14),
+
+              // =========================
+              // TITLE
+              // =========================
+              Text(
+                post!.title,
+                style: AppType.detailTitle,
+              ),
+
               const SizedBox(height: 20),
-              Container(height: 1, color: AppColors.border),
+
+              // =========================
+              // DIVIDER
+              // =========================
+              Container(
+                height: 1,
+                color: AppColors.border,
+              ),
+
               const SizedBox(height: 20),
-              // ── Content ──
-              Text(post!.content, style: AppType.body),
+
+              // =========================
+              // CONTENT
+              // =========================
+              Text(
+                post!.content,
+                style: AppType.body,
+              ),
+
+              const SizedBox(height: 24),
+
+              // =========================
+              // PETUNJUK
+              // =========================
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(
+                    AppRadius.md,
+                  ),
+                  border: Border.all(
+                    color: AppColors.border,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Gunakan tombol di bawah untuk mengedit atau menghapus artikel.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -223,18 +309,29 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     );
   }
 
+  // =========================
+  // HERO IMAGE
+  // =========================
   Widget _buildHeroImage() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(
+        bottom: 24,
+      ),
       child: AspectRatio(
         aspectRatio: 16 / 9,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(
+            AppRadius.lg,
+          ),
           child: Image.network(
             '${ApiService.baseUrl}${post!.image}',
             width: double.infinity,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
+            errorBuilder: (
+              context,
+              error,
+              stackTrace,
+            ) {
               return Container(
                 color: AppColors.surface2,
                 alignment: Alignment.center,
@@ -246,7 +343,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                       color: AppColors.textMuted,
                       size: 30,
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'Gambar tidak dapat dimuat',
                       style: TextStyle(
@@ -259,6 +356,107 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+
+  // =========================
+  // ACTION BAR
+  // =========================
+  Widget _buildActionBar() {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          12,
+          20,
+          12,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border(
+            top: BorderSide(
+              color: AppColors.border,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            // =========================
+            // EDIT
+            // =========================
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: isDeleting ? null : openEdit,
+                icon: const Icon(
+                  Icons.edit_outlined,
+                  size: 18,
+                ),
+                label: const Text(
+                  'Edit Artikel',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textPrimary,
+                  side: BorderSide(
+                    color: AppColors.border,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppRadius.md,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            // =========================
+            // HAPUS
+            // =========================
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: isDeleting
+                    ? null
+                    : confirmDelete,
+                icon: isDeleting
+                    ? const SizedBox(
+                        width: 17,
+                        height: 17,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.delete_outline_rounded,
+                        size: 18,
+                      ),
+                label: Text(
+                  isDeleting
+                      ? 'Menghapus...'
+                      : 'Hapus Artikel',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.danger,
+                  side: BorderSide(
+                    color: AppColors.danger,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppRadius.md,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

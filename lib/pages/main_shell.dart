@@ -33,8 +33,6 @@ class _MainShellState extends State<MainShell> {
     SettingsPage(),
   ];
 
-  // Menyesuaikan index BottomNavigationBar
-  // dengan index halaman yang sebenarnya.
   int get _pageIndex {
     if (_index > 2) {
       return _index - 1;
@@ -53,7 +51,6 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _onTap(int index) {
-    // Tombol tambah artikel
     if (index == 2) {
       _openAddArticle();
       return;
@@ -88,15 +85,15 @@ class _MainShellState extends State<MainShell> {
         automaticallyImplyLeading: false,
 
         title: _index == 0
-    ? Text(
-        'NARATA',
-        style: GoogleFonts.playfairDisplay(
-          color: AppColors.textPrimary,
-          fontSize: 21,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.5,
-        ),
-      )
+            ? Text(
+                'NARATA',
+                style: GoogleFonts.playfairDisplay(
+                  color: AppColors.textPrimary,
+                  fontSize: 21,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                ),
+              )
             : Text(
                 _titles[_pageIndex],
                 style: TextStyle(
@@ -108,11 +105,11 @@ class _MainShellState extends State<MainShell> {
 
         centerTitle: true,
 
-        // Icon notifikasi di kiri
+        // Icon kiri hanya pada Home
         leading: _index == 0
             ? IconButton(
                 onPressed: () {
-                  // Belum ada fungsi notifikasi
+                  // Fitur notifikasi belum digunakan
                 },
                 icon: const Icon(
                   Icons.notifications_none_rounded,
@@ -122,7 +119,7 @@ class _MainShellState extends State<MainShell> {
               )
             : null,
 
-        // Icon profile di kanan
+        // Profile hanya pada Home
         actions: _index == 0
             ? [
                 IconButton(
@@ -156,62 +153,80 @@ class _MainShellState extends State<MainShell> {
       // =========================
       // BOTTOM NAVIGATION
       // =========================
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: _onTap,
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          backgroundColor: AppColors.surface,
+          indicatorColor: Colors.blue.withValues(alpha: 0.15),
 
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.surface2,
+          // Warna icon aktif dan tidak aktif
+          iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+            (states) {
+              if (states.contains(WidgetState.selected)) {
+                return const IconThemeData(
+                  color: Colors.blue,
+                );
+              }
 
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(
-              Icons.home_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.home_rounded,
-            ),
-            label: 'Home',
+              return const IconThemeData(
+                color: Colors.grey,
+              );
+            },
           ),
 
-          NavigationDestination(
-            icon: Icon(
-              Icons.article_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.article_rounded,
-            ),
-            label: 'Articles',
-          ),
+          // Warna tulisan aktif dan tidak aktif
+          labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
+            (states) {
+              if (states.contains(WidgetState.selected)) {
+                return const TextStyle(
+                  color: Colors.blue,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                );
+              }
 
-          NavigationDestination(
-            icon: Icon(
-              Icons.add_rounded,
-              size: 28,
-            ),
-            label: 'Tambah',
+              return const TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              );
+            },
           ),
+        ),
 
-          NavigationDestination(
-            icon: Icon(
-              Icons.info_outline_rounded,
-            ),
-            selectedIcon: Icon(
-              Icons.info_rounded,
-            ),
-            label: 'About',
-          ),
+        child: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: _onTap,
 
-          NavigationDestination(
-            icon: Icon(
-              Icons.settings_outlined,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Home',
             ),
-            selectedIcon: Icon(
-              Icons.settings_rounded,
+            NavigationDestination(
+              icon: Icon(Icons.article_outlined),
+              selectedIcon: Icon(Icons.article_rounded),
+              label: 'Articles',
             ),
-            label: 'Settings',
-          ),
-        ],
+            NavigationDestination(
+              icon: Icon(
+                Icons.add_rounded,
+                size: 28,
+              ),
+              label: 'Tambah',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.info_outline_rounded),
+              selectedIcon: Icon(Icons.info_rounded),
+              label: 'About',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings_rounded),
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
     );
   }

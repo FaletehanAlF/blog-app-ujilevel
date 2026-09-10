@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProductPage extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -15,12 +16,17 @@ class EditProductPage extends StatefulWidget {
 
 class _EditProductPageState extends State<EditProductPage> {
   final ApiService apiService = ApiService();
+  final ImagePicker imagePicker = ImagePicker();
 
   late TextEditingController titleController;
   late TextEditingController contentController;
 
   List<dynamic> categories = [];
   int? selectedCategory;
+
+  XFile? selectedImage;
+  String? existingImage;
+
   bool isLoading = false;
   bool isLoadingCategories = true;
 
@@ -37,6 +43,8 @@ class _EditProductPageState extends State<EditProductPage> {
     );
 
     selectedCategory = widget.product['category_id'];
+
+    existingImage = widget.product['image'];
 
     fetchCategories();
   }
@@ -66,6 +74,22 @@ class _EditProductPageState extends State<EditProductPage> {
       });
 
       _showMessage('Gagal mengambil kategori: $error');
+    }
+  }
+
+  Future<void> pickImage() async {
+    try {
+      final image = await imagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
+
+      if (image == null) return;
+
+      setState(() {
+        selectedImage = image;
+      });
+    } catch (error) {
+      _showMessage('Gagal memilih gambar: $error');
     }
   }
 
@@ -108,6 +132,7 @@ class _EditProductPageState extends State<EditProductPage> {
         title,
         content,
         selectedCategory!,
+        selectedImage,
       );
 
       if (!mounted) return;
@@ -136,6 +161,14 @@ class _EditProductPageState extends State<EditProductPage> {
         content: Text(message),
       ),
     );
+  }
+
+  String getImageUrl() {
+    if (existingImage == null || existingImage!.isEmpty) {
+      return '';
+    }
+
+    return '${ApiService.baseUrl}$existingImage';
   }
 
   @override
@@ -168,13 +201,25 @@ class _EditProductPageState extends State<EditProductPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(),
+
             const SizedBox(height: 36),
+
+            _buildImageField(),
+
+            const SizedBox(height: 26),
+
             _buildTitleField(),
+
             const SizedBox(height: 22),
+
             _buildCategoryField(),
+
             const SizedBox(height: 22),
+
             _buildContentField(),
+
             const SizedBox(height: 34),
+
             _buildUpdateButton(),
           ],
         ),
@@ -207,6 +252,115 @@ class _EditProductPageState extends State<EditProductPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildImageField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'IMAGE',
+          style: TextStyle(
+            color: Color(0xFF777777),
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
+
+        const SizedBox(height: 9),
+
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: selectedImage != null
+              ? FutureBuilder(
+                  future: selectedImage!.readAsBytes(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done &&
+                        snapshot.hasData) {
+                      return Image.memory(
+                        snapshot.data!,
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                      );
+                    }
+
+                    return _buildImagePlaceholder();
+                  },
+                )
+              : existingImage != null && existingImage!.isNotEmpty
+                  ? Image.network(
+                      getImageUrl(),
+                      width: double.infinity,
+                      height: 220,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildImagePlaceholder();
+                      },
+                    )
+                  : _buildImagePlaceholder(),
+        ),
+
+        const SizedBox(height: 12),
+
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: isLoading ? null : pickImage,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white,
+              side: const BorderSide(
+                color: Color(0xFF333333),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(
+              Icons.image_outlined,
+              size: 18,
+            ),
+            label: Text(
+              selectedImage != null
+                  ? 'CHANGE IMAGE'
+                  : 'CHANGE IMAGE',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+        ),
+
+        if (selectedImage != null) ...[
+          const SizedBox(height: 8),
+          const Text(
+            'New image selected. It will replace the current image.',
+            style: TextStyle(
+              color: Color(0xFF777777),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: 220,
+      color: const Color(0xFF171717),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.image_outlined,
+        color: Color(0xFF555555),
+        size: 40,
+      ),
     );
   }
 

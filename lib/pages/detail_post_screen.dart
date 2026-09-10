@@ -89,6 +89,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                         'content': post!.content,
                         'category_id': post!.categoryId,
                         'category': post!.category,
+                        'image': post!.image,
                       },
                     ),
                   ),

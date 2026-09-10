@@ -88,31 +88,31 @@ class PostCard extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 // Gambar artikel
-                if (post.image != null && post.image!.isNotEmpty) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      'http://10.2.14.139:8000/uploads/${post.image}',
-                      width: double.infinity,
-                      height: 190,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: double.infinity,
-                          height: 190,
-                          color: const Color(0xFF222222),
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.image_not_supported_outlined,
-                            color: Color(0xFF666666),
-                            size: 32,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                ],
+if (post.image != null && post.image!.isNotEmpty) ...[
+  ClipRRect(
+    borderRadius: BorderRadius.circular(14),
+    child: Image.network(
+      'http://10.2.14.139:8000${post.image}',
+      width: double.infinity,
+      height: 190,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          width: double.infinity,
+          height: 190,
+          color: const Color(0xFF222222),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.image_not_supported_outlined,
+            color: Color(0xFF666666),
+            size: 32,
+          ),
+        );
+      },
+    ),
+  ),
+  const SizedBox(height: 18),
+],
 
                 Text(
                   post.title,

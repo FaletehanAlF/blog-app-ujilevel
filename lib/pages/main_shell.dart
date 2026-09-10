@@ -6,10 +6,6 @@ import 'category_page.dart';
 import 'about_page.dart';
 import 'settings_page.dart';
 
-/// Shell navigasi utama: satu AppBar + PageView + BottomNav + FAB.
-/// PageView memungkinkan berpindah tab dengan ketuk maupun geser.
-/// Tiap tab menjaga state-nya sendiri sehingga API tidak dipanggil
-/// ulang setiap kali berpindah tab.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 

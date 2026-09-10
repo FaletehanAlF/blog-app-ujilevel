@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Pengatur tema aplikasi: gelap / terang.
-/// Disimpan di perangkat sehingga pilihan bertahan setelah restart.
 class AppTheme {
   static const _key = 'theme_is_dark';
 
@@ -17,7 +15,6 @@ class AppTheme {
       final dark = prefs.getBool(_key) ?? true;
       mode.value = dark ? ThemeMode.dark : ThemeMode.light;
     } catch (_) {
-      // Penyimpanan gagal — tetap gunakan mode gelap bawaan.
     }
   }
 

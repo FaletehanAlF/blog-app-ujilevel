@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'homePage.dart';
 import 'category_page.dart';
+import 'addproduct.dart';
 import 'about_page.dart';
 import 'settings_page.dart';
+import 'profile_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -15,133 +18,200 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
-  late final PageController _pageController;
-  final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
 
-  static const _titles = ['Blog', 'Kategori', 'Tentang', 'Setting'];
-  static const _subtitles = [
-    'Cerita yang layak dibaca.',
-    'Jelajahi artikel per topik.',
-    '',
-    'Hanya tampilan.',
+  final List<String> _titles = [
+    'Blog',
+    'Articles',
+    'Tentang',
+    'Settings',
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: _index);
+  final List<Widget> _pages = const [
+    HomePage(),
+    CategoryPage(),
+    AboutPage(),
+    SettingsPage(),
+  ];
+
+  // Menyesuaikan index BottomNavigationBar
+  // dengan index halaman yang sebenarnya.
+  int get _pageIndex {
+    if (_index > 2) {
+      return _index - 1;
+    }
+
+    return _index;
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  Future<void> _openAddArticle() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddProductPage(),
+      ),
+    );
   }
 
-  void _onTap(int i) {
-    if (i == _index) return;
-    _pageController.jumpToPage(i);
+  void _onTap(int index) {
+    // Tombol tambah artikel
+    if (index == 2) {
+      _openAddArticle();
+      return;
+    }
+
+    setState(() {
+      _index = index;
+    });
   }
 
-  void _onPageChanged(int i) {
-    if (i == _index) return;
-    setState(() => _index = i);
+  void _openProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ProfilePage(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+
+      // =========================
+      // APP BAR
+      // =========================
       appBar: AppBar(
-        toolbarHeight: _subtitles[_index].isEmpty ? null : 64,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _titles[_index],
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-              ),
-            ),
-            if (_subtitles[_index].isNotEmpty)
-              Text(
-                _subtitles[_index],
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+
+        title: _index == 0
+    ? Text(
+        'NARATA',
+        style: GoogleFonts.playfairDisplay(
+          color: AppColors.textPrimary,
+          fontSize: 21,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.5,
+        ),
+      )
+            : Text(
+                _titles[_pageIndex],
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textMuted,
+                  color: AppColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-          ],
-        ),
+
+        centerTitle: true,
+
+        // Icon notifikasi di kiri
+        leading: _index == 0
+            ? IconButton(
+                onPressed: () {
+                  // Belum ada fungsi notifikasi
+                },
+                icon: const Icon(
+                  Icons.notifications_none_rounded,
+                  size: 22,
+                ),
+                tooltip: 'Notifikasi',
+              )
+            : null,
+
+        // Icon profile di kanan
+        actions: _index == 0
+            ? [
+                IconButton(
+                  onPressed: _openProfile,
+                  icon: const Icon(
+                    Icons.person_outline_rounded,
+                    size: 22,
+                  ),
+                  tooltip: 'Profile',
+                ),
+              ]
+            : null,
+
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.border),
+          child: Container(
+            height: 1,
+            color: AppColors.border,
+          ),
         ),
       ),
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        children: [
-          HomePage(key: _homeKey),
-          const CategoryPage(),
-          const AboutPage(),
-          const SettingsPage(),
+
+      // =========================
+      // CONTENT
+      // =========================
+      body: IndexedStack(
+        index: _pageIndex,
+        children: _pages,
+      ),
+
+      // =========================
+      // BOTTOM NAVIGATION
+      // =========================
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: _onTap,
+
+        backgroundColor: AppColors.surface,
+        indicatorColor: AppColors.surface2,
+
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(
+              Icons.home_outlined,
+            ),
+            selectedIcon: Icon(
+              Icons.home_rounded,
+            ),
+            label: 'Home',
+          ),
+
+          NavigationDestination(
+            icon: Icon(
+              Icons.article_outlined,
+            ),
+            selectedIcon: Icon(
+              Icons.article_rounded,
+            ),
+            label: 'Articles',
+          ),
+
+          NavigationDestination(
+            icon: Icon(
+              Icons.add_rounded,
+              size: 28,
+            ),
+            label: 'Tambah',
+          ),
+
+          NavigationDestination(
+            icon: Icon(
+              Icons.info_outline_rounded,
+            ),
+            selectedIcon: Icon(
+              Icons.info_rounded,
+            ),
+            label: 'About',
+          ),
+
+          NavigationDestination(
+            icon: Icon(
+              Icons.settings_outlined,
+            ),
+            selectedIcon: Icon(
+              Icons.settings_rounded,
+            ),
+            label: 'Settings',
+          ),
         ],
-      ),
-      floatingActionButton: _index == 0
-          ? FloatingActionButton(
-              onPressed: () => _homeKey.currentState?.openAddArticle(),
-              backgroundColor: AppColors.accent,
-              foregroundColor: AppColors.onAccent,
-              elevation: 0,
-              tooltip: 'Tambah artikel',
-              child: Icon(Icons.add_rounded, size: 26),
-            )
-          : null,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _index,
-          onTap: _onTap,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.accent,
-          unselectedItemColor: AppColors.textMuted,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined, size: 22),
-              activeIcon: Icon(Icons.home_rounded, size: 22),
-              label: 'Beranda',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_outlined, size: 22),
-              activeIcon: Icon(Icons.grid_view_rounded, size: 22),
-              label: 'Kategori',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.info_outlined, size: 22),
-              activeIcon: Icon(Icons.info_rounded, size: 22),
-              label: 'Tentang',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined, size: 22),
-              activeIcon: Icon(Icons.settings_rounded, size: 22),
-              label: 'Setting',
-            ),
-          ],
-        ),
       ),
     );
   }

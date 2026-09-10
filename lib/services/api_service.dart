@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/post.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.14.139:8000';
+  static const String baseUrl = 'http://192.168.1.9:8000';
 
   Future<List<Post>> getPosts() async {
     final response = await http.get(

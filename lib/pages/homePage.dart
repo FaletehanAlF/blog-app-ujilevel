@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/models/post.dart';
+import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/pages/detail_post_screen.dart';
-import 'package:belajar_flutter/widgets/post_card.dart';
-import 'package:belajar_flutter/widgets/app_ui.dart';
 
-import 'addproduct.dart';
-
-/// Konten tab Beranda (tanpa Scaffold sendiri).
-/// Scaffold + AppBar + BottomNav + FAB dimiliki oleh MainShell
-/// agar tidak ada AppBar ganda dan state tab tetap terjaga.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -17,90 +10,14 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => HomePageState();
 }
 
-class HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin {
+class HomePageState extends State<HomePage> {
   final ApiService apiService = ApiService();
+
+  final TextEditingController searchController =
+      TextEditingController();
 
   List<Post> posts = [];
   bool isLoading = true;
-  String? errorMessage;
-
-  @override
-  bool get wantKeepAlive => true;
-
-  // --- LOGIC SAMA: GET /posts ---
-  Future<void> fetchPosts() async {
-    if (posts.isEmpty && errorMessage == null) {
-      setState(() => isLoading = true);
-    }
-    try {
-      final data = await apiService.getPosts();
-
-      if (!mounted) return;
-
-      setState(() {
-        posts = data;
-        isLoading = false;
-        errorMessage = null;
-      });
-    } catch (error) {
-      if (!mounted) return;
-
-      setState(() {
-        isLoading = false;
-        if (posts.isEmpty) errorMessage = error.toString();
-      });
-
-      if (posts.isNotEmpty) {
-        showAppSnack(context, error.toString(), isError: true);
-      }
-    }
-  }
-
-  /// Dipanggil Shell setelah kembali dari Tambah Artikel.
-  Future<void> refresh() => fetchPosts();
-
-  // --- LOGIC SAMA: konfirmasi + DELETE /posts/:id ---
-  Future<void> confirmDelete(Post post) async {
-    final result = await showDeleteDialog(context, title: post.title);
-    if (result == true) {
-      await deletePost(post.id);
-    }
-  }
-
-  Future<void> deletePost(int id) async {
-    try {
-      await apiService.deletePost(id);
-
-      if (!mounted) return;
-
-      setState(() {
-        posts.removeWhere((post) => post.id == id);
-      });
-
-      showAppSnack(context, 'Artikel berhasil dihapus');
-    } catch (error) {
-      if (!mounted) return;
-      showAppSnack(context, error.toString(), isError: true);
-    }
-  }
-
-  Future<void> openAddArticle() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddProductPage()),
-    );
-
-    fetchPosts();
-  }
-
-  void openDetail(Post post) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => DetailPostScreen(postId: post.id),
-      ),
-    ).then((_) => fetchPosts());
-  }
 
   @override
   void initState() {
@@ -109,85 +26,275 @@ class HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin {
   }
 
   @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return RefreshIndicator(
-      backgroundColor: AppColors.surface2,
-      color: AppColors.accent,
-      onRefresh: fetchPosts,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header seksi (judul halaman ada di AppBar Shell) ──
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('ARTIKEL TERBARU', style: AppType.sectionLabel),
-                    Text(
-                      isLoading
-                          ? 'Memuat…'
-                          : posts.isEmpty
-                          ? 'Kosong'
-                          : '${posts.length} artikel',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildBody(),
-              ],
-            ),
-          ),
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> fetchPosts() async {
+    try {
+      final data = await apiService.getPosts();
+
+      if (!mounted) return;
+
+      setState(() {
+        posts = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void openDetail(Post post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailPostScreen(
+          postId: post.id,
         ),
       ),
     );
   }
 
-  Widget _buildBody() {
-    if (isLoading) {
-      return const LoadingSkeletonList();
-    }
-    if (errorMessage != null) {
-      return ErrorStateView(
-        message: errorMessage!,
-        onRetry: () {
-          setState(() {
-            isLoading = true;
-            errorMessage = null;
-          });
-          fetchPosts();
-        },
-      );
-    }
-    if (posts.isEmpty) {
-      return EmptyStateView(
-        title: 'Belum ada artikel',
-        subtitle: 'Buat artikel pertama Anda dan bagikan ide terbaik Anda.',
-        actionLabel: 'Tulis artikel pertama',
-        onAction: openAddArticle,
-      );
-    }
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: posts.length,
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return PostCard(
-          post: post,
-          onDelete: () => confirmDelete(post),
-          onTap: () => openDetail(post),
-        );
-      },
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: fetchPosts,
+      child: ListView(
+        padding: const EdgeInsets.all(18),
+        children: [
+          // Header
+          const Text(
+            'Selamat datang di Narata!',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
+            ),
+          ),
+
+          const SizedBox(height: 5),
+
+          const Text(
+            'Temukan sesuatu untuk dibaca.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Search bar
+          TextField(
+            controller: searchController,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+            ),
+            cursorColor: Colors.white,
+            decoration: InputDecoration(
+              hintText: 'Cari artikel...',
+              hintStyle: const TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Colors.grey,
+                size: 21,
+              ),
+              filled: true,
+              fillColor: const Color(0xFF1C1C1C),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 14,
+                horizontal: 16,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 28),
+
+          const Text(
+            'Featured',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Artikel utama
+          if (isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else if (posts.isNotEmpty)
+            _featuredArticle(posts.first)
+          else
+            const Text(
+              'Belum ada artikel.',
+              style: TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+
+          const SizedBox(height: 28),
+
+          // Artikel lainnya
+          if (posts.length > 1) ...[
+            const Text(
+              'Explore',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            ...posts.skip(1).map(
+              (post) => _articleItem(post),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _featuredArticle(Post post) {
+    return GestureDetector(
+      onTap: () => openDetail(post),
+      child: Container(
+        height: 280,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1C1C1C),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            if (post.image != null)
+              Image.network(
+                '${ApiService.baseUrl}${post.image}',
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+              ),
+
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.category,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  Text(
+                    post.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 21,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _articleItem(Post post) {
+    return GestureDetector(
+      onTap: () => openDetail(post),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1C1C1C),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            if (post.image != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  '${ApiService.baseUrl}${post.image}',
+                  width: 90,
+                  height: 90,
+                  fit: BoxFit.cover,
+                ),
+              ),
+
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.category,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  Text(
+                    post.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

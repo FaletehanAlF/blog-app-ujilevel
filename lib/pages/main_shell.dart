@@ -218,12 +218,12 @@ class _MainShellState extends State<MainShell> {
             NavigationDestination(
               icon: Icon(Icons.info_outline_rounded),
               selectedIcon: Icon(Icons.info_rounded),
-              label: 'About',
+              label: 'Tentang',
             ),
             NavigationDestination(
               icon: Icon(Icons.settings_outlined),
               selectedIcon: Icon(Icons.settings_rounded),
-              label: 'Settings',
+              label: 'Pengaturan',
             ),
           ],
         ),

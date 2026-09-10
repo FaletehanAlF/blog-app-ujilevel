@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../services/api_service.dart';
+import '../widgets/app_ui.dart';
 import 'editproduct.dart';
 
 class DetailPostScreen extends StatefulWidget {
@@ -18,9 +19,16 @@ class DetailPostScreen extends StatefulWidget {
 class _DetailPostScreenState extends State<DetailPostScreen> {
   Post? post;
   bool isLoading = true;
+  bool isDeleting = false;
+  String? errorMessage;
   final ApiService apiService = ApiService();
 
+  // --- LOGIC SAMA: ambil detail dari API ---
   Future<void> fetchPost() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
     try {
       final fetchedPost = await apiService.getPostById(widget.postId);
 
@@ -35,13 +43,48 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
       setState(() {
         isLoading = false;
+        errorMessage = error.toString();
       });
+    }
+  }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal mengambil artikel: $error'),
+  Future<void> openEdit() async {
+    if (post == null) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProductPage(
+          product: {
+            'id': post!.id,
+            'title': post!.title,
+            'content': post!.content,
+            'category_id': post!.categoryId,
+            'category': post!.category,
+            'image': post!.image,
+          },
         ),
-      );
+      ),
+    );
+
+    fetchPost();
+  }
+
+  // --- LOGIC SAMA: hapus via API, lalu kembali ke daftar ---
+  Future<void> confirmDelete() async {
+    if (post == null || isDeleting) return;
+    final ok = await showDeleteDialog(context, title: post!.title);
+    if (!ok) return;
+
+    setState(() => isDeleting = true);
+    try {
+      await apiService.deletePost(post!.id);
+      if (!mounted) return;
+      Navigator.pop(context);
+      showAppSnack(context, 'Artikel berhasil dihapus');
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => isDeleting = false);
+      showAppSnack(context, error.toString(), isError: true);
     }
   }
 
@@ -54,284 +97,194 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            size: 22,
-          ),
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
         ),
-        title: const Text(
-          'Article',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
-          ),
-        ),
+        title: const Text('Detail Artikel'),
         actions: [
-          if (post != null)
+          if (post != null && !isLoading)
             IconButton(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditProductPage(
-                      product: {
-                        'id': post!.id,
-                        'title': post!.title,
-                        'content': post!.content,
-                        'category_id': post!.categoryId,
-                        'category': post!.category,
-                        'image': post!.image,
-                      },
-                    ),
-                  ),
-                );
-
-                fetchPost();
-              },
+              onPressed: openEdit,
               tooltip: 'Edit artikel',
-              icon: const Icon(
-                Icons.edit_outlined,
-                size: 20,
-              ),
+              icon: const Icon(Icons.edit_outlined, size: 20),
             ),
+          const SizedBox(width: 4),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: AppColors.border),
+        ),
       ),
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-              ),
-            )
-          : post == null
-              ? _buildNotFound()
-              : _buildArticle(),
+      body: _buildBody(),
     );
   }
 
-  Widget _buildArticle() {
+  Widget _buildBody() {
+    if (isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Memuat artikel…',
+              style: TextStyle(
+                  color: AppColors.textSecondary, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+    if (errorMessage != null || post == null) {
+      return ErrorStateView(
+        message: errorMessage ?? 'Artikel tidak ditemukan.',
+        onRetry: fetchPost,
+      );
+    }
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(22, 20, 22, 50),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CategoryBadge(label: post!.category),
+              const SizedBox(height: 12),
+              Text(
+                post!.title,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 24,
+                  height: 1.3,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (post!.image != null && post!.image!.isNotEmpty)
+                _buildImage(),
+              Text(
+                post!.content,
+                style: const TextStyle(
+                  color: Color(0xFF374151),
+                  fontSize: 15,
+                  height: 1.75,
+                ),
+              ),
+              const SizedBox(height: 28),
+              _buildActions(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Image.network(
+            '${ApiService.baseUrl}${post!.image}',
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: const Color(0xFFF3F4F6),
+                alignment: Alignment.center,
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.image_not_supported_outlined,
+                        color: AppColors.textMuted, size: 32),
+                    SizedBox(height: 8),
+                    Text('Gambar tidak dapat dimuat',
+                        style: TextStyle(
+                            color: AppColors.textMuted, fontSize: 12)),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActions() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildArticleNumber(),
-
-          const SizedBox(height: 28),
-
-          _buildCategory(),
-
-          const SizedBox(height: 14),
-
-          Text(
-            post!.title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 34,
-              height: 1.08,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1.4,
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Gambar artikel
-          if (post!.image != null && post!.image!.isNotEmpty) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.network(
-                'http://10.2.14.139:8000${post!.image}',
-                width: double.infinity,
-                height: 220,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: double.infinity,
-                    height: 220,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1C1C1C),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.image_not_supported_outlined,
-                      color: Color(0xFF666666),
-                      size: 32,
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 28),
-          ],
-
-          Container(
-            width: 44,
-            height: 2,
-            color: Colors.white,
-          ),
-
-          const SizedBox(height: 26),
-
-          Text(
-            post!.content,
-            style: const TextStyle(
-              color: Color(0xFFB0B0B0),
-              fontSize: 16,
-              height: 1.8,
-              letterSpacing: 0.05,
-            ),
-          ),
-
-          const SizedBox(height: 42),
-
-          _buildFooter(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildArticleNumber() {
-    return Row(
-      children: [
-        Text(
-          'ARTICLE',
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Container(
-          width: 28,
-          height: 1,
-          color: const Color(0xFF444444),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          post!.id.toString().padLeft(2, '0'),
-          style: const TextStyle(
-            color: Color(0xFF777777),
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategory() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1C),
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(
-          color: const Color(0xFF303030),
-        ),
-      ),
-      child: Text(
-        post!.category.toUpperCase(),
-        style: const TextStyle(
-          color: Color(0xFFBDBDBD),
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.only(top: 20),
-      decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFF292929),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.auto_stories_outlined,
-            color: Color(0xFF666666),
-            size: 17,
-          ),
-          const SizedBox(width: 9),
-          Text(
-            'BLOG APP',
+          const Text(
+            'Kelola artikel',
             style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.5,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotFound() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: const Color(0xFF292929),
+          const SizedBox(height: 4),
+          const Text(
+            'Perbarui isi artikel atau hapus secara permanen.',
+            style: TextStyle(
+                fontSize: 12, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: openEdit,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(46),
+                  ),
+                  icon: const Icon(Icons.edit_outlined, size: 17),
+                  label: const Text('Edit'),
                 ),
-                borderRadius: BorderRadius.circular(18),
               ),
-              child: const Icon(
-                Icons.article_outlined,
-                color: Color(0xFF666666),
-                size: 28,
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: isDeleting ? null : confirmDelete,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: Color(0xFFF3C2C2)),
+                    minimumSize: const Size.fromHeight(46),
+                  ),
+                  icon: isDeleting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.danger),
+                        )
+                      : const Icon(Icons.delete_outline_rounded,
+                          size: 17),
+                  label: Text(isDeleting ? 'Menghapus…' : 'Hapus'),
+                ),
               ),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'Article not found',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 7),
-            Text(
-              'The article you are looking for does not exist.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 13,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

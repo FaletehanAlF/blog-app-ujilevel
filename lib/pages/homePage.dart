@@ -3,6 +3,7 @@ import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/models/post.dart';
 import 'package:belajar_flutter/pages/detail_post_screen.dart';
 import 'package:belajar_flutter/widgets/post_card.dart';
+import 'package:belajar_flutter/widgets/app_ui.dart';
 
 import 'addproduct.dart';
 
@@ -15,11 +16,27 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ApiService apiService = ApiService();
+  final TextEditingController searchController = TextEditingController();
 
   List<Post> posts = [];
+  List<dynamic> categories = [];
   bool isLoading = true;
+  String? errorMessage;
+  String searchQuery = '';
+  int? selectedCategoryId;
 
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  // --- LOGIC SAMA: ambil daftar artikel dari API ---
   Future<void> fetchPosts() async {
+    // Refresh tenang (tanpa skeleton penuh) saat pull-to-refresh.
+    if (posts.isEmpty && errorMessage == null) {
+      setState(() => isLoading = true);
+    }
     try {
       final data = await apiService.getPosts();
 
@@ -28,133 +45,37 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         posts = data;
         isLoading = false;
+        errorMessage = null;
       });
+      // Kategori untuk filter diambil dari endpoint yang sudah ada.
+      fetchCategories(silent: true);
     } catch (error) {
       if (!mounted) return;
 
       setState(() {
         isLoading = false;
+        if (posts.isEmpty) errorMessage = error.toString();
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
+      if (posts.isNotEmpty) {
+        showAppSnack(context, error.toString(), isError: true);
+      }
     }
   }
 
-  Future<void> confirmDelete(Post post) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: const Color(0xFF171717),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFF292929)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF241719),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: Color(0xFFE5484D),
-                        size: 21,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: Color(0xFF666666),
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Delete article?',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 9),
-                Text(
-                  '“${post.title}” will be permanently deleted. This action cannot be undone.',
-                  style: const TextStyle(
-                    color: Color(0xFF8A8A8A),
-                    fontSize: 13,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Color(0xFF333333)),
-                          minimumSize: const Size.fromHeight(48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFE5484D),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  Future<void> fetchCategories({bool silent = false}) async {
+    try {
+      final data = await apiService.getCategories();
+      if (!mounted) return;
+      setState(() => categories = data);
+    } catch (_) {
+      // Filter kategori opsional — kegagalan tidak mengganggu daftar artikel.
+    }
+  }
 
+  // --- LOGIC SAMA: konfirmasi + hapus via API ---
+  Future<void> confirmDelete(Post post) async {
+    final result = await showDeleteDialog(context, title: post.title);
     if (result == true) {
       await deletePost(post.id);
     }
@@ -170,34 +91,10 @@ class _HomePageState extends State<HomePage> {
         posts.removeWhere((post) => post.id == id);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: const Color(0xFF171717),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          content: const Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline_rounded,
-                color: Colors.white,
-                size: 19,
-              ),
-              SizedBox(width: 10),
-              Text(
-                'Article deleted successfully',
-                style: TextStyle(color: Colors.white, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-      );
+      showAppSnack(context, 'Artikel berhasil dihapus');
     } catch (error) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
+      showAppSnack(context, error.toString(), isError: true);
     }
   }
 
@@ -210,6 +107,28 @@ class _HomePageState extends State<HomePage> {
     fetchPosts();
   }
 
+  void openDetail(Post post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailPostScreen(postId: post.id),
+      ),
+    ).then((_) => fetchPosts());
+  }
+
+  // --- Filter lokal (tidak mengubah API): cari + kategori ---
+  List<Post> get filteredPosts {
+    return posts.where((p) {
+      final q = searchQuery.trim().toLowerCase();
+      final matchQuery = q.isEmpty ||
+          p.title.toLowerCase().contains(q) ||
+          p.content.toLowerCase().contains(q);
+      final matchCategory =
+          selectedCategoryId == null || p.categoryId == selectedCategoryId;
+      return matchQuery && matchCategory;
+    }).toList();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -219,226 +138,219 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
-      floatingActionButton: FloatingActionButton(
-        onPressed: openAddArticle,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add_rounded, size: 28),
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: Colors.black,
-          backgroundColor: Colors.white,
-          onRefresh: fetchPosts,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTopBar(),
-                      const SizedBox(height: 52),
-                      _buildHero(),
-                      const SizedBox(height: 54),
-                      _buildSectionHeader(),
-                      const SizedBox(height: 18),
-                    ],
-                  ),
-                ),
-              ),
-              if (isLoading)
-                const SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
-                )
-              else if (posts.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: _buildEmptyState(),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 100),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final post = posts[index];
-
-                      return PostCard(
-                        post: post,
-                        onDelete: () => confirmDelete(post),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  DetailPostScreen(postId: post.id),
-                            ),
-                          );
-                        },
-                      );
-                    }, childCount: posts.length),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTopBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Row(
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: const Icon(
-                Icons.auto_stories_rounded,
-                color: Colors.black,
-                size: 19,
-              ),
-            ),
-            const SizedBox(width: 11),
-            const Text(
-              'BLOG',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 2.5,
-              ),
-            ),
+            Icon(Icons.article_rounded, size: 21),
+            SizedBox(width: 8),
+            Text('Blog'),
           ],
         ),
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF292929)),
-            shape: BoxShape.circle,
+        actions: [
+          IconButton(
+            onPressed: fetchPosts,
+            tooltip: 'Muat ulang',
+            icon: const Icon(Icons.refresh_rounded, size: 21),
           ),
-          child: const Icon(
-            Icons.person_outline_rounded,
-            color: Color(0xFFBBBBBB),
-            size: 19,
+          const SizedBox(width: 4),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: AppColors.border),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: openAddArticle,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        icon: const Icon(Icons.add_rounded, size: 20),
+        label: const Text(
+          'Tulis',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        backgroundColor: Colors.white,
+        onRefresh: fetchPosts,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 16),
+                  _buildSearch(),
+                  if (categories.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _buildCategoryFilter(),
+                  ],
+                  const SizedBox(height: 20),
+                  _buildBody(),
+                ],
+              ),
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildHero() {
+  Widget _buildHeader() {
+    final total = posts.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'STORIES',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 3,
-            color: Colors.grey.shade500,
-          ),
-        ),
-        const SizedBox(height: 10),
         const Text(
-          'That\nMatter.',
+          'Artikel Terbaru',
           style: TextStyle(
-            fontSize: 48,
-            height: 0.98,
+            fontSize: 22,
             fontWeight: FontWeight.w800,
-            letterSpacing: -2.5,
-            color: Colors.white,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: 18),
-        Container(width: 42, height: 2, color: Colors.white),
-        const SizedBox(height: 18),
+        const SizedBox(height: 4),
         Text(
-          'Create and manage your ideas,\none article at a time.',
-          style: TextStyle(
-            fontSize: 14,
-            height: 1.6,
-            color: Colors.grey.shade500,
+          isLoading
+              ? 'Memuat artikel…'
+              : total == 0
+                  ? 'Belum ada artikel'
+                  : '$total artikel tersedia',
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSectionHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        const Text(
-          'LATEST',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2,
-            color: Colors.white,
-          ),
-        ),
-        Text(
-          '${posts.length.toString().padLeft(2, '0')} ARTICLES',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: Colors.grey.shade600,
-          ),
-        ),
-      ],
+  Widget _buildSearch() {
+    return TextField(
+      controller: searchController,
+      onChanged: (v) => setState(() => searchQuery = v),
+      textInputAction: TextInputAction.search,
+      decoration: appInputDecoration(
+        hint: 'Cari judul atau isi artikel…',
+        suffixIcon: searchQuery.isEmpty
+            ? const Icon(Icons.search_rounded,
+                color: AppColors.textMuted, size: 20)
+            : IconButton(
+                onPressed: () {
+                  searchController.clear();
+                  setState(() => searchQuery = '');
+                },
+                icon: const Icon(Icons.close_rounded,
+                    color: AppColors.textMuted, size: 20),
+              ),
+      ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 68,
-          height: 68,
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF292929)),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: const Icon(
-            Icons.article_outlined,
-            color: Color(0xFF666666),
-            size: 28,
+  Widget _buildCategoryFilter() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _filterChip(label: 'Semua', selected: selectedCategoryId == null,
+              onTap: () => setState(() => selectedCategoryId = null)),
+          const SizedBox(width: 8),
+          ...categories.map((c) {
+            final id = c['id'] as int;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _filterChip(
+                label: c['name'].toString(),
+                selected: selectedCategoryId == id,
+                onTap: () => setState(() => selectedCategoryId =
+                    selectedCategoryId == id ? null : id),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.border,
           ),
         ),
-        const SizedBox(height: 18),
-        const Text(
-          'No articles yet',
+        child: Text(
+          label,
           style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 7),
-        Text(
-          'Create your first article to get started.',
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-        ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (isLoading) {
+      return const LoadingSkeletonList();
+    }
+    if (errorMessage != null) {
+      return ErrorStateView(
+        message: errorMessage!,
+        onRetry: () {
+          setState(() {
+            isLoading = true;
+            errorMessage = null;
+          });
+          fetchPosts();
+        },
+      );
+    }
+    if (posts.isEmpty) {
+      return EmptyStateView(
+        title: 'Belum ada artikel',
+        subtitle: 'Buat artikel pertama Anda dan bagikan ide terbaik Anda.',
+        actionLabel: 'Tulis artikel pertama',
+        onAction: openAddArticle,
+      );
+    }
+    final items = filteredPosts;
+    if (items.isEmpty) {
+      return EmptyStateView(
+        title: 'Tidak ditemukan',
+        subtitle: 'Coba kata kunci lain atau ubah filter kategori.',
+        icon: Icons.search_off_rounded,
+      );
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final post = items[index];
+        return PostCard(
+          post: post,
+          onDelete: () => confirmDelete(post),
+          onTap: () => openDetail(post),
+        );
+      },
     );
   }
 }

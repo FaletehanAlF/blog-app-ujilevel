@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../models/post.dart';
+import '../services/api_service.dart';
+import 'app_ui.dart';
 
+/// Kartu artikel ringkas: mudah dipindai, judul sebagai fokus utama,
+/// kategori sebagai info pendukung, thumbnail proporsional 1:1.
 class PostCard extends StatelessWidget {
   final Post post;
   final VoidCallback onDelete;
@@ -14,166 +18,133 @@ class PostCard extends StatelessWidget {
     required this.onTap,
   });
 
+  String get _imageUrl =>
+      (post.image != null && post.image!.isNotEmpty)
+          ? '${ApiService.baseUrl}${post.image}'
+          : '';
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF171717),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFF292929),
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          splashColor: Colors.white.withValues(alpha: 0.04),
-          highlightColor: Colors.white.withValues(alpha: 0.02),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 10, 18),
-            child: Column(
+            padding: const EdgeInsets.all(14),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 30,
-                      height: 30,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF222222),
-                        borderRadius: BorderRadius.circular(9),
+                // --- Teks: kategori, judul, ringkasan ---
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: CategoryBadge(label: post.category),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        '${post.id}'.padLeft(2, '0'),
+                      const SizedBox(height: 8),
+                      Text(
+                        post.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF888888),
-                          fontSize: 10,
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          height: 1.35,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        post.category.toUpperCase(),
+                      const SizedBox(height: 6),
+                      Text(
+                        post.content,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF8D8D8D),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.3,
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          height: 1.5,
                         ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: onDelete,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 34,
-                        minHeight: 34,
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          const Text(
+                            'Baca artikel',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          const Spacer(),
+                          InkWell(
+                            onTap: onDelete,
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.delete_outline_rounded,
+                                size: 18,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      icon: const Icon(
-                        Icons.more_horiz_rounded,
-                        color: Color(0xFF777777),
-                        size: 21,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 18),
-
-                // Gambar artikel
-if (post.image != null && post.image!.isNotEmpty) ...[
-  ClipRRect(
-    borderRadius: BorderRadius.circular(14),
-    child: Image.network(
-      'http://10.2.14.139:8000${post.image}',
-      width: double.infinity,
-      height: 190,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          width: double.infinity,
-          height: 190,
-          color: const Color(0xFF222222),
-          alignment: Alignment.center,
-          child: const Icon(
-            Icons.image_not_supported_outlined,
-            color: Color(0xFF666666),
-            size: 32,
-          ),
-        );
-      },
-    ),
-  ),
-  const SizedBox(height: 18),
-],
-
-                Text(
-                  post.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 21,
-                    height: 1.2,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 11),
-
-                Text(
-                  post.content,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF999999),
-                    fontSize: 13,
-                    height: 1.6,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    const Text(
-                      'READ ARTICLE',
-                      style: TextStyle(
-                        color: Color(0xFFBBBBBB),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.white,
-                      size: 15,
-                    ),
-                    const Spacer(),
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 12),
+                // --- Thumbnail proporsional ---
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: _imageUrl.isNotEmpty
+                      ? Image.network(
+                          _imageUrl,
+                          width: 88,
+                          height: 88,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _placeholder(),
+                        )
+                      : _placeholder(),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      width: 88,
+      height: 88,
+      color: const Color(0xFFF3F4F6),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.image_outlined,
+        color: AppColors.textMuted,
+        size: 26,
       ),
     );
   }

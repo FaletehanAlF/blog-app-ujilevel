@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
+import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:image_picker/image_picker.dart';
 
 class EditProductPage extends StatefulWidget {
@@ -29,6 +30,11 @@ class _EditProductPageState extends State<EditProductPage> {
 
   bool isLoading = false;
   bool isLoadingCategories = true;
+  String? categoryLoadError;
+
+  String? titleError;
+  String? contentError;
+  String? categoryError;
 
   @override
   void initState() {
@@ -56,7 +62,12 @@ class _EditProductPageState extends State<EditProductPage> {
     super.dispose();
   }
 
+  // --- LOGIC SAMA: ambil kategori dari API ---
   Future<void> fetchCategories() async {
+    setState(() {
+      isLoadingCategories = true;
+      categoryLoadError = null;
+    });
     try {
       final data = await apiService.getCategories();
 
@@ -71,12 +82,12 @@ class _EditProductPageState extends State<EditProductPage> {
 
       setState(() {
         isLoadingCategories = false;
+        categoryLoadError = error.toString();
       });
-
-      _showMessage('Gagal mengambil kategori: $error');
     }
   }
 
+  // --- LOGIC SAMA: pilih gambar baru (opsional) ---
   Future<void> pickImage() async {
     try {
       final image = await imagePicker.pickImage(
@@ -89,38 +100,46 @@ class _EditProductPageState extends State<EditProductPage> {
         selectedImage = image;
       });
     } catch (error) {
-      _showMessage('Gagal memilih gambar: $error');
+      if (!mounted) return;
+      showAppSnack(context, 'Gagal memilih gambar: $error',
+          isError: true);
     }
   }
 
-  Future<void> updatePost() async {
+  void cancelNewImage() => setState(() => selectedImage = null);
+
+  bool validate() {
     final title = titleController.text.trim();
     final content = contentController.text.trim();
 
-    if (title.isEmpty) {
-      _showMessage('Judul artikel wajib diisi');
-      return;
-    }
+    setState(() {
+      titleError = title.isEmpty
+          ? 'Judul artikel wajib diisi'
+          : title.length < 3
+              ? 'Judul minimal 3 karakter'
+              : null;
+      contentError = content.isEmpty
+          ? 'Konten artikel wajib diisi'
+          : content.length < 10
+              ? 'Konten minimal 10 karakter'
+              : null;
+      categoryError =
+          selectedCategory == null ? 'Silakan pilih kategori' : null;
+    });
 
-    if (title.length < 3) {
-      _showMessage('Judul minimal 3 karakter');
-      return;
-    }
+    return titleError == null &&
+        contentError == null &&
+        categoryError == null;
+  }
 
-    if (content.isEmpty) {
-      _showMessage('Konten artikel wajib diisi');
-      return;
-    }
+  // --- LOGIC SAMA: PUT /posts/:id ---
+  // selectedImage null  -> gambar lama dipertahankan.
+  // selectedImage ada   -> gambar baru dikirim & menggantikan yang lama.
+  Future<void> updatePost() async {
+    if (!validate()) return;
 
-    if (content.length < 10) {
-      _showMessage('Konten minimal 10 karakter');
-      return;
-    }
-
-    if (selectedCategory == null) {
-      _showMessage('Silakan pilih kategori');
-      return;
-    }
+    final title = titleController.text.trim();
+    final content = contentController.text.trim();
 
     setState(() {
       isLoading = true;
@@ -138,12 +157,7 @@ class _EditProductPageState extends State<EditProductPage> {
       if (!mounted) return;
 
       Navigator.pop(context);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Artikel berhasil diperbarui'),
-        ),
-      );
+      showAppSnack(context, 'Artikel berhasil diperbarui');
     } catch (error) {
       if (!mounted) return;
 
@@ -151,16 +165,8 @@ class _EditProductPageState extends State<EditProductPage> {
         isLoading = false;
       });
 
-      _showMessage(error.toString());
+      showAppSnack(context, error.toString(), isError: true);
     }
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
   }
 
   String getImageUrl() {
@@ -174,379 +180,335 @@ class _EditProductPageState extends State<EditProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.close_rounded,
-            size: 22,
-          ),
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
         ),
-        title: const Text(
-          'Edit Article',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
+        title: const Text('Edit Artikel'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: AppColors.border),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(22, 24, 22, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-
-            const SizedBox(height: 36),
-
-            _buildImageField(),
-
-            const SizedBox(height: 26),
-
-            _buildTitleField(),
-
-            const SizedBox(height: 22),
-
-            _buildCategoryField(),
-
-            const SizedBox(height: 22),
-
-            _buildContentField(),
-
-            const SizedBox(height: 34),
-
-            _buildUpdateButton(),
-          ],
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Perbarui artikel',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Perubahan akan langsung terlihat di daftar artikel.',
+                  style: TextStyle(
+                      fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 20),
+                const FieldLabel('Gambar sampul', optional: true),
+                _buildImageField(),
+                const SizedBox(height: 16),
+                const FieldLabel('Judul'),
+                TextField(
+                  controller: titleController,
+                  textInputAction: TextInputAction.next,
+                  maxLength: 120,
+                  decoration: appInputDecoration(
+                    hint: 'Masukkan judul artikel',
+                    hasError: titleError != null,
+                  ),
+                ),
+                FieldError(message: titleError),
+                const SizedBox(height: 16),
+                const FieldLabel('Kategori'),
+                _buildCategoryField(),
+                FieldError(message: categoryError),
+                const SizedBox(height: 16),
+                const FieldLabel('Konten'),
+                TextField(
+                  controller: contentController,
+                  maxLines: 8,
+                  minLines: 6,
+                  decoration: appInputDecoration(
+                    hint: 'Edit isi artikel…',
+                    hasError: contentError != null,
+                  ),
+                ),
+                FieldError(message: contentError),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(
+                    onPressed: isLoading ? null : updatePost,
+                    style: FilledButton.styleFrom(
+                      disabledBackgroundColor:
+                          const Color(0xFFD1D5DB),
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Simpan Perubahan',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'UPDATE',
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2.5,
-          ),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          'Refine your\narticle.',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 32,
-            height: 1.08,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1.2,
-          ),
-        ),
-      ],
     );
   }
 
   Widget _buildImageField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'IMAGE',
-          style: TextStyle(
-            color: Color(0xFF777777),
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.5,
-          ),
-        ),
+    final url = getImageUrl();
+    final hasExisting = url.isNotEmpty;
 
-        const SizedBox(height: 9),
-
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: selectedImage != null
-              ? FutureBuilder(
-                  future: selectedImage!.readAsBytes(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done &&
-                        snapshot.hasData) {
-                      return Image.memory(
-                        snapshot.data!,
-                        width: double.infinity,
-                        height: 220,
-                        fit: BoxFit.cover,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: selectedImage != null
+                ? FutureBuilder(
+                    future: selectedImage!.readAsBytes(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                              ConnectionState.done &&
+                          snapshot.hasData) {
+                        return Image.memory(
+                          snapshot.data!,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
+                        );
+                      }
+                      return Container(
+                        height: 200,
+                        color: const Color(0xFFF3F4F6),
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2),
+                        ),
                       );
-                    }
-
-                    return _buildImagePlaceholder();
-                  },
-                )
-              : existingImage != null && existingImage!.isNotEmpty
-                  ? Image.network(
-                      getImageUrl(),
-                      width: double.infinity,
-                      height: 220,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildImagePlaceholder();
-                      },
-                    )
-                  : _buildImagePlaceholder(),
-        ),
-
-        const SizedBox(height: 12),
-
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: OutlinedButton.icon(
-            onPressed: isLoading ? null : pickImage,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(
-                color: Color(0xFF333333),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: const Icon(
-              Icons.image_outlined,
-              size: 18,
-            ),
-            label: Text(
-              selectedImage != null
-                  ? 'CHANGE IMAGE'
-                  : 'CHANGE IMAGE',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-              ),
-            ),
+                    },
+                  )
+                : hasExisting
+                    ? Image.network(
+                        url,
+                        width: double.infinity,
+                        height: 200,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (context, error, stackTrace) {
+                          return _imagePlaceholder(
+                              'Gambar lama tidak dapat dimuat');
+                        },
+                      )
+                    : _imagePlaceholder(
+                        'Belum ada gambar sampul'),
           ),
-        ),
-
-        if (selectedImage != null) ...[
-          const SizedBox(height: 8),
-          const Text(
-            'New image selected. It will replace the current image.',
-            style: TextStyle(
-              color: Color(0xFF777777),
-              fontSize: 11,
+          const SizedBox(height: 10),
+          if (selectedImage != null)
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius:
+                    BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      size: 16, color: AppColors.textSecondary),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Gambar baru dipilih dan akan menggantikan gambar lama.',
+                      style: TextStyle(
+                          fontSize: 12,
+                          height: 1.45,
+                          color: AppColors.textSecondary),
+                    ),
+                  ),
+                ],
+              ),
             ),
+          if (selectedImage != null) const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: isLoading ? null : pickImage,
+                  icon: const Icon(Icons.image_outlined, size: 17),
+                  label: Text(hasExisting || selectedImage != null
+                      ? 'Ganti gambar'
+                      : 'Pilih gambar'),
+                ),
+              ),
+              if (selectedImage != null) ...[
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextButton(
+                    onPressed:
+                        isLoading ? null : cancelNewImage,
+                    child: const Text('Batalkan gambar baru'),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
-      ],
-    );
-  }
-
-  Widget _buildImagePlaceholder() {
-    return Container(
-      width: double.infinity,
-      height: 220,
-      color: const Color(0xFF171717),
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.image_outlined,
-        color: Color(0xFF555555),
-        size: 40,
       ),
     );
   }
 
-  Widget _buildTitleField() {
-    return _buildFieldContainer(
-      label: 'TITLE',
-      child: TextField(
-        controller: titleController,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-        cursorColor: Colors.white,
-        textInputAction: TextInputAction.next,
-        decoration: _inputDecoration(
-          hint: 'Enter article title',
-        ),
+  Widget _imagePlaceholder(String text) {
+    return Container(
+      width: double.infinity,
+      height: 200,
+      color: const Color(0xFFF3F4F6),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.image_outlined,
+              color: AppColors.textMuted, size: 30),
+          const SizedBox(height: 8),
+          Text(text,
+              style: const TextStyle(
+                  color: AppColors.textMuted, fontSize: 12)),
+        ],
       ),
     );
   }
 
   Widget _buildCategoryField() {
-    return _buildFieldContainer(
-      label: 'CATEGORY',
-      child: isLoadingCategories
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 15),
-              child: SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              ),
-            )
-          : DropdownButtonHideUnderline(
-              child: DropdownButton<int>(
-                value: selectedCategory,
-                isExpanded: true,
-                dropdownColor: const Color(0xFF1A1A1A),
-                icon: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF888888),
-                ),
-                hint: const Text(
-                  'Select category',
-                  style: TextStyle(
-                    color: Color(0xFF666666),
-                    fontSize: 14,
-                  ),
-                ),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                items: categories.map<DropdownMenuItem<int>>((category) {
-                  return DropdownMenuItem<int>(
-                    value: category['id'],
-                    child: Text(category['name']),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedCategory = value;
-                  });
-                },
-              ),
-            ),
-    );
-  }
-
-  Widget _buildContentField() {
-    return _buildFieldContainer(
-      label: 'CONTENT',
-      child: TextField(
-        controller: contentController,
-        style: const TextStyle(
+    if (isLoadingCategories) {
+      return Container(
+        height: 52,
+        decoration: BoxDecoration(
           color: Colors.white,
-          fontSize: 14,
-          height: 1.6,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.border),
         ),
-        cursorColor: Colors.white,
-        maxLines: 9,
-        decoration: _inputDecoration(
-          hint: 'Edit your article...',
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFieldContainer({
-    required String label,
-    required Widget child,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF777777),
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 9),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 15,
-            vertical: 3,
-          ),
-          decoration: BoxDecoration(
-            color: const Color(0xFF171717),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: const Color(0xFF292929),
+        child: const Row(
+          children: [
+            SizedBox(width: 14),
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
-          ),
-          child: child,
+            SizedBox(width: 10),
+            Text('Memuat kategori…',
+                style: TextStyle(
+                    color: AppColors.textMuted, fontSize: 14)),
+          ],
         ),
-      ],
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String hint,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(
-        color: Color(0xFF555555),
-        fontSize: 14,
-      ),
-      border: InputBorder.none,
-      contentPadding: const EdgeInsets.symmetric(
-        vertical: 14,
-      ),
-    );
-  }
-
-  Widget _buildUpdateButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: FilledButton(
-        onPressed: isLoading ? null : updatePost,
-        style: FilledButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          disabledBackgroundColor: const Color(0xFF333333),
-          disabledForegroundColor: const Color(0xFF777777),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+      );
+    }
+    if (categoryLoadError != null) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.border),
         ),
-        child: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.black,
-                ),
-              )
-            : const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'UPDATE ARTICLE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                    ),
-                  ),
-                  SizedBox(width: 9),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 17,
-                  ),
-                ],
-              ),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text('Gagal memuat kategori.',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary)),
+            ),
+            TextButton.icon(
+              onPressed: fetchCategories,
+              icon: const Icon(Icons.refresh_rounded, size: 16),
+              label: const Text('Muat ulang'),
+            ),
+          ],
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+            color: categoryError != null
+                ? AppColors.danger
+                : AppColors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: selectedCategory,
+          isExpanded: true,
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppColors.textMuted,
+          ),
+          hint: const Text(
+            'Pilih kategori',
+            style:
+                TextStyle(color: AppColors.textMuted, fontSize: 14),
+          ),
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          items: categories.map<DropdownMenuItem<int>>((category) {
+            return DropdownMenuItem<int>(
+              value: category['id'],
+              child: Text(category['name'].toString()),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              selectedCategory = value;
+              categoryError = null;
+            });
+          },
+        ),
       ),
     );
   }

@@ -1,23 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/models/post.dart';
+import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/pages/detail_post_screen.dart';
-import 'package:belajar_flutter/widgets/post_card.dart';
-
-import 'addproduct.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   final ApiService apiService = ApiService();
+
+  final TextEditingController searchController =
+      TextEditingController();
 
   List<Post> posts = [];
   bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPosts();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> fetchPosts() async {
     try {
@@ -29,416 +41,260 @@ class _HomePageState extends State<HomePage> {
         posts = data;
         isLoading = false;
       });
-    } catch (error) {
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
         isLoading = false;
       });
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
-  Future<void> confirmDelete(Post post) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: const Color(0xFF171717),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFF292929)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF241719),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: Color(0xFFE5484D),
-                        size: 21,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: Color(0xFF666666),
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Delete article?',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 9),
-                Text(
-                  '“${post.title}” will be permanently deleted. This action cannot be undone.',
-                  style: const TextStyle(
-                    color: Color(0xFF8A8A8A),
-                    fontSize: 13,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Color(0xFF333333)),
-                          minimumSize: const Size.fromHeight(48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFE5484D),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    if (result == true) {
-      await deletePost(post.id);
-    }
-  }
-
-  Future<void> deletePost(int id) async {
-    try {
-      await apiService.deletePost(id);
-
-      if (!mounted) return;
-
-      setState(() {
-        posts.removeWhere((post) => post.id == id);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: const Color(0xFF171717),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          content: const Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline_rounded,
-                color: Colors.white,
-                size: 19,
-              ),
-              SizedBox(width: 10),
-              Text(
-                'Article deleted successfully',
-                style: TextStyle(color: Colors.white, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-      );
-    } catch (error) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
-    }
-  }
-
-  Future<void> openAddArticle() async {
-    await Navigator.push(
+  void openDetail(Post post) {
+    Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddProductPage()),
+      MaterialPageRoute(
+        builder: (context) => DetailPostScreen(
+          postId: post.id,
+        ),
+      ),
     );
-
-    fetchPosts();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchPosts();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
-      floatingActionButton: FloatingActionButton(
-        onPressed: openAddArticle,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add_rounded, size: 28),
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: Colors.black,
-          backgroundColor: Colors.white,
-          onRefresh: fetchPosts,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTopBar(),
-                      const SizedBox(height: 52),
-                      _buildHero(),
-                      const SizedBox(height: 54),
-                      _buildSectionHeader(),
-                      const SizedBox(height: 18),
-                    ],
-                  ),
+    return RefreshIndicator(
+      onRefresh: fetchPosts,
+      child: ListView(
+        padding: const EdgeInsets.all(18),
+        children: [
+          // Header
+          const Text(
+            'Selamat datang di Narata!',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
+            ),
+          ),
+
+          const SizedBox(height: 5),
+
+          const Text(
+            'Temukan sesuatu untuk dibaca.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Search bar
+          TextField(
+            controller: searchController,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+            ),
+            cursorColor: Colors.white,
+            decoration: InputDecoration(
+              hintText: 'Cari artikel...',
+              hintStyle: const TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Colors.grey,
+                size: 21,
+              ),
+              filled: true,
+              fillColor: const Color(0xFF1C1C1C),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 14,
+                horizontal: 16,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.15),
                 ),
               ),
-              if (isLoading)
-                const SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
-                )
-              else if (posts.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: _buildEmptyState(),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 100),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final post = posts[index];
-
-                      return PostCard(
-                        post: post,
-                        onDelete: () => confirmDelete(post),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  DetailPostScreen(postId: post.id),
-                            ),
-                          );
-                        },
-                      );
-                    }, childCount: posts.length),
-                  ),
-                ),
-            ],
+            ),
           ),
-        ),
+
+          const SizedBox(height: 28),
+
+          const Text(
+            'Featured',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Artikel utama
+          if (isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else if (posts.isNotEmpty)
+            _featuredArticle(posts.first)
+          else
+            const Text(
+              'Belum ada artikel.',
+              style: TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+
+          const SizedBox(height: 28),
+
+          // Artikel lainnya
+          if (posts.length > 1) ...[
+            const Text(
+              'Explore',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            ...posts.skip(1).map(
+              (post) => _articleItem(post),
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _buildTopBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
+  Widget _featuredArticle(Post post) {
+    return GestureDetector(
+      onTap: () => openDetail(post),
+      child: Container(
+        height: 280,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1C1C1C),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(11),
+            if (post.image != null)
+              Image.network(
+                '${ApiService.baseUrl}${post.image}',
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
               ),
-              child: const Icon(
-                Icons.auto_stories_rounded,
-                color: Colors.black,
-                size: 19,
-              ),
-            ),
-            const SizedBox(width: 11),
-            const Text(
-              'BLOG',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 2.5,
+
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.category,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  Text(
+                    post.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 21,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF292929)),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.person_outline_rounded,
-            color: Color(0xFFBBBBBB),
-            size: 19,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildHero() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'STORIES',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 3,
-            color: Colors.grey.shade500,
-          ),
+  Widget _articleItem(Post post) {
+    return GestureDetector(
+      onTap: () => openDetail(post),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1C1C1C),
+          borderRadius: BorderRadius.circular(16),
         ),
-        const SizedBox(height: 10),
-        const Text(
-          'That\nMatter.',
-          style: TextStyle(
-            fontSize: 48,
-            height: 0.98,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -2.5,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 18),
-        Container(width: 42, height: 2, color: Colors.white),
-        const SizedBox(height: 18),
-        Text(
-          'Create and manage your ideas,\none article at a time.',
-          style: TextStyle(
-            fontSize: 14,
-            height: 1.6,
-            color: Colors.grey.shade500,
-          ),
-        ),
-      ],
-    );
-  }
+        child: Row(
+          children: [
+            if (post.image != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  '${ApiService.baseUrl}${post.image}',
+                  width: 90,
+                  height: 90,
+                  fit: BoxFit.cover,
+                ),
+              ),
 
-  Widget _buildSectionHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        const Text(
-          'LATEST',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2,
-            color: Colors.white,
-          ),
-        ),
-        Text(
-          '${posts.length.toString().padLeft(2, '0')} ARTICLES',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: Colors.grey.shade600,
-          ),
-        ),
-      ],
-    );
-  }
+            const SizedBox(width: 12),
 
-  Widget _buildEmptyState() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 68,
-          height: 68,
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF292929)),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: const Icon(
-            Icons.article_outlined,
-            color: Color(0xFF666666),
-            size: 28,
-          ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.category,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  Text(
+                    post.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 18),
-        const Text(
-          'No articles yet',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 7),
-        Text(
-          'Create your first article to get started.',
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-        ),
-      ],
+      ),
     );
   }
 }

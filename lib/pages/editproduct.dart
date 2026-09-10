@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
+import 'package:belajar_flutter/widgets/app_ui.dart';
+import 'package:image_picker/image_picker.dart';
 
+/// Desain SAMA dengan Add: header → image → title → category →
+/// content → aksi. Beda: data terisi, gambar lama tampil, aksi update.
 class EditProductPage extends StatefulWidget {
   final Map<String, dynamic> product;
 
-  const EditProductPage({
-    super.key,
-    required this.product,
-  });
+  const EditProductPage({super.key, required this.product});
 
   @override
   State<EditProductPage> createState() => _EditProductPageState();
@@ -15,14 +16,24 @@ class EditProductPage extends StatefulWidget {
 
 class _EditProductPageState extends State<EditProductPage> {
   final ApiService apiService = ApiService();
+  final ImagePicker imagePicker = ImagePicker();
 
   late TextEditingController titleController;
   late TextEditingController contentController;
 
   List<dynamic> categories = [];
   int? selectedCategory;
+
+  XFile? selectedImage;
+  String? existingImage;
+
   bool isLoading = false;
   bool isLoadingCategories = true;
+  String? categoryLoadError;
+
+  String? titleError;
+  String? contentError;
+  String? categoryError;
 
   @override
   void initState() {
@@ -38,6 +49,8 @@ class _EditProductPageState extends State<EditProductPage> {
 
     selectedCategory = widget.product['category_id'];
 
+    existingImage = widget.product['image'];
+
     fetchCategories();
   }
 
@@ -48,7 +61,12 @@ class _EditProductPageState extends State<EditProductPage> {
     super.dispose();
   }
 
+  // --- LOGIC SAMA: GET /categories ---
   Future<void> fetchCategories() async {
+    setState(() {
+      isLoadingCategories = true;
+      categoryLoadError = null;
+    });
     try {
       final data = await apiService.getCategories();
 
@@ -63,40 +81,60 @@ class _EditProductPageState extends State<EditProductPage> {
 
       setState(() {
         isLoadingCategories = false;
+        categoryLoadError = error.toString();
       });
-
-      _showMessage('Gagal mengambil kategori: $error');
     }
   }
 
-  Future<void> updatePost() async {
+  // --- LOGIC SAMA: pilih gambar baru (opsional) ---
+  Future<void> pickImage() async {
+    try {
+      final image = await imagePicker.pickImage(source: ImageSource.gallery);
+
+      if (image == null) return;
+
+      setState(() {
+        selectedImage = image;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      showAppSnack(context, 'Gagal memilih gambar: $error', isError: true);
+    }
+  }
+
+  void cancelNewImage() => setState(() => selectedImage = null);
+
+  bool validate() {
     final title = titleController.text.trim();
     final content = contentController.text.trim();
 
-    if (title.isEmpty) {
-      _showMessage('Judul artikel wajib diisi');
-      return;
-    }
+    setState(() {
+      titleError = title.isEmpty
+          ? 'Judul artikel wajib diisi'
+          : title.length < 3
+          ? 'Judul minimal 3 karakter'
+          : null;
+      contentError = content.isEmpty
+          ? 'Konten artikel wajib diisi'
+          : content.length < 10
+          ? 'Konten minimal 10 karakter'
+          : null;
+      categoryError = selectedCategory == null
+          ? 'Silakan pilih kategori'
+          : null;
+    });
 
-    if (title.length < 3) {
-      _showMessage('Judul minimal 3 karakter');
-      return;
-    }
+    return titleError == null && contentError == null && categoryError == null;
+  }
 
-    if (content.isEmpty) {
-      _showMessage('Konten artikel wajib diisi');
-      return;
-    }
+  // --- LOGIC SAMA: PUT /posts/:id ---
+  // selectedImage null → gambar lama dipertahankan.
+  // selectedImage ada  → gambar baru menggantikan yang lama.
+  Future<void> updatePost() async {
+    if (!validate()) return;
 
-    if (content.length < 10) {
-      _showMessage('Konten minimal 10 karakter');
-      return;
-    }
-
-    if (selectedCategory == null) {
-      _showMessage('Silakan pilih kategori');
-      return;
-    }
+    final title = titleController.text.trim();
+    final content = contentController.text.trim();
 
     setState(() {
       isLoading = true;
@@ -108,17 +146,13 @@ class _EditProductPageState extends State<EditProductPage> {
         title,
         content,
         selectedCategory!,
+        selectedImage,
       );
 
       if (!mounted) return;
 
       Navigator.pop(context);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Artikel berhasil diperbarui'),
-        ),
-      );
+      showAppSnack(context, 'Artikel berhasil diperbarui');
     } catch (error) {
       if (!mounted) return;
 
@@ -126,273 +160,324 @@ class _EditProductPageState extends State<EditProductPage> {
         isLoading = false;
       });
 
-      _showMessage(error.toString());
+      showAppSnack(context, error.toString(), isError: true);
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+  String getImageUrl() {
+    if (existingImage == null || existingImage!.isEmpty) {
+      return '';
+    }
+
+    return '${ApiService.baseUrl}$existingImage';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.close_rounded,
-            size: 22,
-          ),
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
         ),
-        title: const Text(
-          'Edit Article',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
+        title: const Text('Edit Artikel'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: AppColors.border),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(22, 24, 22, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 36),
-            _buildTitleField(),
-            const SizedBox(height: 22),
-            _buildCategoryField(),
-            const SizedBox(height: 22),
-            _buildContentField(),
-            const SizedBox(height: 34),
-            _buildUpdateButton(),
-          ],
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Sempurnakan\ntulisan Anda.', style: AppType.pageTitle),
+                const SizedBox(height: 12),
+                Text(
+                  'Perubahan langsung terlihat di daftar artikel.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const FieldLabel('Gambar sampul', optional: true),
+                _buildImageField(),
+                const SizedBox(height: 20),
+                const FieldLabel('Judul'),
+                TextField(
+                  controller: titleController,
+                  textInputAction: TextInputAction.next,
+                  maxLength: 120,
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                  cursorColor: AppColors.accent,
+                  decoration: appInputDecoration(
+                    hint: 'Masukkan judul artikel',
+                    hasError: titleError != null,
+                  ),
+                ),
+                FieldError(message: titleError),
+                const SizedBox(height: 20),
+                const FieldLabel('Kategori'),
+                _buildCategoryField(),
+                FieldError(message: categoryError),
+                const SizedBox(height: 20),
+                const FieldLabel('Konten'),
+                TextField(
+                  controller: contentController,
+                  maxLines: 8,
+                  minLines: 6,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    height: 1.7,
+                  ),
+                  cursorColor: AppColors.accent,
+                  decoration: appInputDecoration(
+                    hint: 'Edit isi artikel…',
+                    hasError: contentError != null,
+                  ),
+                ),
+                FieldError(message: contentError),
+                const SizedBox(height: 24),
+                primaryButton(
+                  label: 'Simpan Perubahan',
+                  loading: isLoading,
+                  onPressed: updatePost,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildImageField() {
+    final url = getImageUrl();
+    final hasExisting = url.isNotEmpty;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'UPDATE',
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2.5,
+        AspectRatio(
+          aspectRatio: 16 / 9,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            child: selectedImage != null
+                ? FutureBuilder(
+                    future: selectedImage!.readAsBytes(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.done &&
+                          snapshot.hasData) {
+                        return Image.memory(
+                          snapshot.data!,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        );
+                      }
+                      return Container(
+                        color: AppColors.surface2,
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    },
+                  )
+                : hasExisting
+                ? Image.network(
+                    url,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _imagePlaceholder(
+                        'Gambar lama tidak dapat dimuat',
+                      );
+                    },
+                  )
+                : _imagePlaceholder('Belum ada gambar sampul'),
           ),
         ),
-        const SizedBox(height: 10),
-        const Text(
-          'Refine your\narticle.',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 32,
-            height: 1.08,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1.2,
+        if (selectedImage != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Gambar baru dipilih dan akan menggantikan gambar lama.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+        ],
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: isLoading ? null : pickImage,
+                  icon: const Icon(Icons.image_outlined, size: 17),
+                  label: Text(
+                    hasExisting || selectedImage != null
+                        ? 'Ganti gambar'
+                        : 'Pilih gambar',
+                  ),
+                ),
+              ),
+            ),
+            if (selectedImage != null) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: TextButton(
+                    onPressed: isLoading ? null : cancelNewImage,
+                    child: const Text('Batalkan gambar baru'),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildTitleField() {
-    return _buildFieldContainer(
-      label: 'TITLE',
-      child: TextField(
-        controller: titleController,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-        cursorColor: Colors.white,
-        textInputAction: TextInputAction.next,
-        decoration: _inputDecoration(
-          hint: 'Enter article title',
-        ),
+  Widget _imagePlaceholder(String text) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: AppColors.surface,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.image_outlined, color: AppColors.textMuted, size: 30),
+          const SizedBox(height: 8),
+          Text(
+            text,
+            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildCategoryField() {
-    return _buildFieldContainer(
-      label: 'CATEGORY',
-      child: isLoadingCategories
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 15),
-              child: SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              ),
-            )
-          : DropdownButtonHideUnderline(
-              child: DropdownButton<int>(
-                value: selectedCategory,
-                isExpanded: true,
-                dropdownColor: const Color(0xFF1A1A1A),
-                icon: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF888888),
-                ),
-                hint: const Text(
-                  'Select category',
-                  style: TextStyle(
-                    color: Color(0xFF666666),
-                    fontSize: 14,
-                  ),
-                ),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                items: categories.map<DropdownMenuItem<int>>((category) {
-                  return DropdownMenuItem<int>(
-                    value: category['id'],
-                    child: Text(category['name']),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedCategory = value;
-                  });
-                },
+    if (isLoadingCategories) {
+      return Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            SizedBox(width: 16),
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Memuat kategori…', style: AppType.hint),
+          ],
+        ),
+      );
+    }
+    if (categoryLoadError != null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Gagal memuat kategori.',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
             ),
-    );
-  }
-
-  Widget _buildContentField() {
-    return _buildFieldContainer(
-      label: 'CONTENT',
-      child: TextField(
-        controller: contentController,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          height: 1.6,
-        ),
-        cursorColor: Colors.white,
-        maxLines: 9,
-        decoration: _inputDecoration(
-          hint: 'Edit your article...',
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFieldContainer({
-    required String label,
-    required Widget child,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF777777),
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 9),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 15,
-            vertical: 3,
-          ),
-          decoration: BoxDecoration(
-            color: const Color(0xFF171717),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: const Color(0xFF292929),
+            TextButton.icon(
+              onPressed: fetchCategories,
+              icon: const Icon(Icons.refresh_rounded, size: 16),
+              label: const Text('Muat ulang'),
             ),
-          ),
-          child: child,
+          ],
         ),
-      ],
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String hint,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(
-        color: Color(0xFF555555),
-        fontSize: 14,
-      ),
-      border: InputBorder.none,
-      contentPadding: const EdgeInsets.symmetric(
-        vertical: 14,
-      ),
-    );
-  }
-
-  Widget _buildUpdateButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: FilledButton(
-        onPressed: isLoading ? null : updatePost,
-        style: FilledButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          disabledBackgroundColor: const Color(0xFF333333),
-          disabledForegroundColor: const Color(0xFF777777),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: categoryError != null ? AppColors.danger : AppColors.border,
         ),
-        child: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.black,
-                ),
-              )
-            : const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'UPDATE ARTICLE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                    ),
-                  ),
-                  SizedBox(width: 9),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 17,
-                  ),
-                ],
-              ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: selectedCategory,
+          isExpanded: true,
+          dropdownColor: AppColors.surface2,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppColors.textMuted,
+          ),
+          hint: Text('Pilih kategori', style: AppType.hint),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          items: categories.map<DropdownMenuItem<int>>((category) {
+            return DropdownMenuItem<int>(
+              value: category['id'],
+              child: Text(category['name'].toString()),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              selectedCategory = value;
+              categoryError = null;
+            });
+          },
+        ),
       ),
     );
   }

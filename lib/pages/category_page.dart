@@ -5,8 +5,6 @@ import 'package:belajar_flutter/widgets/app_ui.dart';
 
 import 'category_articles_page.dart';
 
-/// Tab Kategori: daftar kategori dari GET /categories.
-/// Jumlah artikel dihitung lokal dari GET /posts (tanpa endpoint baru).
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
 
@@ -26,7 +24,6 @@ class CategoryPageState extends State<CategoryPage>
   @override
   bool get wantKeepAlive => true;
 
-  // --- LOGIC SAMA: GET /categories + GET /posts (untuk hitung) ---
   Future<void> fetchAll() async {
     if (categories.isEmpty && errorMessage == null) {
       setState(() => isLoading = true);

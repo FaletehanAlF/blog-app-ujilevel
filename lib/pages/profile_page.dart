@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 
-/// Halaman Profil — informasi akun penulis (tampilan).
-/// Dibuka dari ikon profil di AppBar. Tanpa bottom navigation.
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 

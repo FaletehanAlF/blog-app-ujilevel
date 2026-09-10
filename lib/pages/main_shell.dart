@@ -3,9 +3,11 @@ import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'homePage.dart';
 import 'category_page.dart';
 import 'about_page.dart';
+import 'settings_page.dart';
 
-/// Shell navigasi utama: satu AppBar + IndexedStack + BottomNav + FAB.
-/// IndexedStack menjaga state tiap tab sehingga API tidak dipanggil
+/// Shell navigasi utama: satu AppBar + PageView + BottomNav + FAB.
+/// PageView memungkinkan berpindah tab dengan ketuk maupun geser.
+/// Tiap tab menjaga state-nya sendiri sehingga API tidak dipanggil
 /// ulang setiap kali berpindah tab.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -16,16 +18,35 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
+  late final PageController _pageController;
   final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
 
-  static const _titles = ['Blog', 'Kategori', 'Tentang'];
+  static const _titles = ['Blog', 'Kategori', 'Tentang', 'Setting'];
   static const _subtitles = [
     'Cerita yang layak dibaca.',
     'Jelajahi artikel per topik.',
     '',
+    'Hanya tampilan.',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _index);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _onTap(int i) {
+    if (i == _index) return;
+    _pageController.jumpToPage(i);
+  }
+
+  void _onPageChanged(int i) {
     if (i == _index) return;
     setState(() => _index = i);
   }
@@ -65,12 +86,14 @@ class _MainShellState extends State<MainShell> {
           child: Container(height: 1, color: AppColors.border),
         ),
       ),
-      body: IndexedStack(
-        index: _index,
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
         children: [
           HomePage(key: _homeKey),
           const CategoryPage(),
           const AboutPage(),
+          const SettingsPage(),
         ],
       ),
       // FAB hanya di Beranda — buka Tambah Artikel.
@@ -99,7 +122,7 @@ class _MainShellState extends State<MainShell> {
           backgroundColor: AppColors.surface,
           selectedItemColor: AppColors.accent,
           unselectedItemColor: AppColors.textMuted,
-          selectedFontSize: 12,
+          selectedFontSize: 11,
           unselectedFontSize: 11,
           selectedLabelStyle:
               const TextStyle(fontWeight: FontWeight.w700),
@@ -119,6 +142,11 @@ class _MainShellState extends State<MainShell> {
               icon: Icon(Icons.info_outlined, size: 22),
               activeIcon: Icon(Icons.info_rounded, size: 22),
               label: 'Tentang',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined, size: 22),
+              activeIcon: Icon(Icons.settings_rounded, size: 22),
+              label: 'Setting',
             ),
           ],
         ),

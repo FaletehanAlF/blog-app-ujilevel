@@ -16,16 +16,16 @@ class BlogApp extends StatelessWidget {
       title: 'Blog App',
       theme: ThemeData(
         useMaterial3: true,
+        brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.background,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          primary: AppColors.primary,
-          onPrimary: AppColors.onPrimary,
-          surface: AppColors.surface,
+        colorScheme: const ColorScheme.dark(
+          primary: AppColors.accent,
+          onPrimary: AppColors.onAccent,
+          surface: AppColors.background,
           error: AppColors.danger,
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.background,
           foregroundColor: AppColors.textPrimary,
           elevation: 0,
           scrolledUnderElevation: 0,
@@ -33,8 +33,9 @@ class BlogApp extends StatelessWidget {
           centerTitle: false,
           titleTextStyle: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 17,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
           ),
         ),
         snackBarTheme: SnackBarThemeData(
@@ -45,9 +46,9 @@ class BlogApp extends StatelessWidget {
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            backgroundColor: AppColors.accent,
+            foregroundColor: AppColors.onAccent,
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
@@ -56,11 +57,19 @@ class BlogApp extends StatelessWidget {
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.textPrimary,
-            side: const BorderSide(color: AppColors.borderStrong),
+            side: const BorderSide(color: AppColors.border),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
           ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.textSecondary,
+          ),
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: AppColors.accent,
         ),
       ),
       home: const HomePage(),

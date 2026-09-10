@@ -4,6 +4,8 @@ import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:image_picker/image_picker.dart';
 
+/// Struktur: header → image picker → title → category → content → aksi.
+/// Satu bahasa desain dengan halaman Edit.
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
 
@@ -27,7 +29,7 @@ class _AddProductPageState extends State<AddProductPage> {
   bool isLoadingCategories = true;
   String? categoryLoadError;
 
-  // Inline validation — aturan sama, hanya tampilan ditambah.
+  // Aturan validasi sama — hanya tampil inline.
   String? titleError;
   String? contentError;
   String? categoryError;
@@ -45,7 +47,7 @@ class _AddProductPageState extends State<AddProductPage> {
     super.dispose();
   }
 
-  // --- LOGIC SAMA: pilih gambar dari galeri ---
+  // --- LOGIC SAMA: pilih gambar galeri ---
   Future<void> pickImage() async {
     final XFile? image = await picker.pickImage(
       source: ImageSource.gallery,
@@ -61,7 +63,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
   void removeImage() => setState(() => selectedImage = null);
 
-  // --- LOGIC SAMA: ambil kategori dari API ---
+  // --- LOGIC SAMA: GET /categories ---
   Future<void> fetchCategories() async {
     setState(() {
       isLoadingCategories = true;
@@ -153,61 +155,63 @@ class _AddProductPageState extends State<AddProductPage> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_rounded, size: 22),
         ),
-        title: const Text('Tulis Artikel'),
+        title: const Text('Artikel Baru'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: AppColors.border),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Text('Tulis sesuatu\nyang bermakna.',
+                    style: AppType.pageTitle),
+                const SizedBox(height: 12),
                 const Text(
-                  'Artikel baru',
+                  'Lengkapi gambar, judul, kategori, dan konten.',
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.3,
-                  ),
+                      fontSize: 13,
+                      height: 1.6,
+                      color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Lengkapi judul, kategori, dan konten di bawah ini.',
-                  style: TextStyle(
-                      fontSize: 13, color: AppColors.textSecondary),
-                ),
+                const SizedBox(height: 24),
+                const FieldLabel('Gambar sampul', optional: true),
+                _buildImagePicker(),
                 const SizedBox(height: 20),
                 const FieldLabel('Judul'),
                 TextField(
                   controller: titleController,
                   textInputAction: TextInputAction.next,
                   maxLength: 120,
+                  style: const TextStyle(
+                      color: AppColors.textPrimary, fontSize: 14),
+                  cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'Contoh: Panduan Memulai Blog',
                     hasError: titleError != null,
                   ),
                 ),
                 FieldError(message: titleError),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 const FieldLabel('Kategori'),
                 _buildCategoryField(),
                 FieldError(message: categoryError),
-                const SizedBox(height: 16),
-                const FieldLabel('Gambar sampul', optional: true),
-                _buildImagePicker(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 const FieldLabel('Konten'),
                 TextField(
                   controller: contentController,
                   maxLines: 8,
                   minLines: 6,
-                  textInputAction: TextInputAction.newline,
+                  style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      height: 1.7),
+                  cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'Tulis isi artikel di sini…',
                     hasError: contentError != null,
@@ -215,31 +219,10 @@ class _AddProductPageState extends State<AddProductPage> {
                 ),
                 FieldError(message: contentError),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: FilledButton(
-                    onPressed: isLoading ? null : createPost,
-                    style: FilledButton.styleFrom(
-                      disabledBackgroundColor:
-                          const Color(0xFFD1D5DB),
-                    ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Terbitkan Artikel',
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700),
-                          ),
-                  ),
+                primaryButton(
+                  label: 'Terbitkan Artikel',
+                  loading: isLoading,
+                  onPressed: createPost,
                 ),
               ],
             ),
@@ -254,31 +237,29 @@ class _AddProductPageState extends State<AddProductPage> {
       return Container(
         height: 52,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border),
         ),
         child: const Row(
           children: [
-            SizedBox(width: 14),
+            SizedBox(width: 16),
             SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
-            SizedBox(width: 10),
-            Text('Memuat kategori…',
-                style: TextStyle(
-                    color: AppColors.textMuted, fontSize: 14)),
+            SizedBox(width: 12),
+            Text('Memuat kategori…', style: AppType.hint),
           ],
         ),
       );
     }
     if (categoryLoadError != null) {
       return Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border),
         ),
@@ -300,9 +281,9 @@ class _AddProductPageState extends State<AddProductPage> {
       );
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
             color: categoryError != null
@@ -313,17 +294,13 @@ class _AddProductPageState extends State<AddProductPage> {
         child: DropdownButton<int>(
           value: selectedCategory,
           isExpanded: true,
-          dropdownColor: Colors.white,
+          dropdownColor: AppColors.surface2,
           borderRadius: BorderRadius.circular(AppRadius.md),
           icon: const Icon(
             Icons.keyboard_arrow_down_rounded,
             color: AppColors.textMuted,
           ),
-          hint: const Text(
-            'Pilih kategori',
-            style:
-                TextStyle(color: AppColors.textMuted, fontSize: 14),
-          ),
+          hint: const Text('Pilih kategori', style: AppType.hint),
           style: const TextStyle(
             color: AppColors.textPrimary,
             fontSize: 14,
@@ -347,30 +324,33 @@ class _AddProductPageState extends State<AddProductPage> {
   }
 
   Widget _buildImagePicker() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          GestureDetector(
-            onTap: pickImage,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GestureDetector(
+          onTap: pickImage,
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: selectedImage == null
                   ? Container(
-                      height: 170,
-                      color: const Color(0xFFF3F4F6),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.lg),
+                        border:
+                            Border.all(color: AppColors.border),
+                      ),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.add_photo_alternate_outlined,
-                              color: AppColors.textMuted, size: 30),
-                          SizedBox(height: 10),
+                          Icon(
+                              Icons
+                                  .add_photo_alternate_outlined,
+                              color: AppColors.textMuted,
+                              size: 30),
+                          SizedBox(height: 12),
                           Text(
                             'Tambah gambar sampul',
                             style: TextStyle(
@@ -396,13 +376,11 @@ class _AddProductPageState extends State<AddProductPage> {
                           return Image.memory(
                             snapshot.data!,
                             width: double.infinity,
-                            height: 200,
                             fit: BoxFit.cover,
                           );
                         }
                         return Container(
-                          height: 200,
-                          color: const Color(0xFFF3F4F6),
+                          color: AppColors.surface2,
                           alignment: Alignment.center,
                           child: const SizedBox(
                             width: 22,
@@ -415,10 +393,13 @@ class _AddProductPageState extends State<AddProductPage> {
                     ),
             ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
                 child: OutlinedButton.icon(
                   onPressed: pickImage,
                   icon: Icon(
@@ -431,9 +412,12 @@ class _AddProductPageState extends State<AddProductPage> {
                       : 'Ganti gambar'),
                 ),
               ),
-              if (selectedImage != null) ...[
-                const SizedBox(width: 10),
-                Expanded(
+            ),
+            if (selectedImage != null) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
                   child: TextButton.icon(
                     onPressed: removeImage,
                     style: TextButton.styleFrom(
@@ -444,11 +428,11 @@ class _AddProductPageState extends State<AddProductPage> {
                     label: const Text('Hapus'),
                   ),
                 ),
-              ],
+              ),
             ],
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 }

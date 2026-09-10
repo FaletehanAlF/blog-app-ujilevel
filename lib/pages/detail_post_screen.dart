@@ -4,6 +4,8 @@ import '../services/api_service.dart';
 import '../widgets/app_ui.dart';
 import 'editproduct.dart';
 
+/// Halaman baca: hero image → category → title → content → action.
+/// Artikel TIDAK dibungkus card — fokus pada keterbacaan.
 class DetailPostScreen extends StatefulWidget {
   final int postId;
 
@@ -23,7 +25,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   String? errorMessage;
   final ApiService apiService = ApiService();
 
-  // --- LOGIC SAMA: ambil detail dari API ---
+  // --- LOGIC SAMA: GET /posts/:id ---
   Future<void> fetchPost() async {
     setState(() {
       isLoading = true;
@@ -69,7 +71,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     fetchPost();
   }
 
-  // --- LOGIC SAMA: hapus via API, lalu kembali ke daftar ---
+  // --- LOGIC SAMA: DELETE /posts/:id lalu kembali ---
   Future<void> confirmDelete() async {
     if (post == null || isDeleting) return;
     final ok = await showDeleteDialog(context, title: post!.title);
@@ -103,16 +105,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_rounded, size: 22),
         ),
-        title: const Text('Detail Artikel'),
-        actions: [
-          if (post != null && !isLoading)
-            IconButton(
-              onPressed: openEdit,
-              tooltip: 'Edit artikel',
-              icon: const Icon(Icons.edit_outlined, size: 20),
-            ),
-          const SizedBox(width: 4),
-        ],
+        title: const Text('Artikel'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: AppColors.border),
@@ -144,43 +137,40 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       );
     }
     if (errorMessage != null || post == null) {
-      return ErrorStateView(
-        message: errorMessage ?? 'Artikel tidak ditemukan.',
-        onRetry: fetchPost,
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: ErrorStateView(
+            message: errorMessage ?? 'Artikel tidak ditemukan.',
+            onRetry: fetchPost,
+          ),
+        ),
       );
     }
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 680),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CategoryBadge(label: post!.category),
-              const SizedBox(height: 12),
-              Text(
-                post!.title,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 24,
-                  height: 1.3,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
-                ),
-              ),
-              const SizedBox(height: 16),
+              // ── Hero image ──
               if (post!.image != null && post!.image!.isNotEmpty)
-                _buildImage(),
-              Text(
-                post!.content,
-                style: const TextStyle(
-                  color: Color(0xFF374151),
-                  fontSize: 15,
-                  height: 1.75,
-                ),
-              ),
-              const SizedBox(height: 28),
+                _buildHeroImage(),
+              // ── Category ──
+              CategoryLabel(label: post!.category),
+              const SizedBox(height: 12),
+              // ── Title (fokus utama) ──
+              Text(post!.title, style: AppType.detailTitle),
+              const SizedBox(height: 20),
+              Container(height: 1, color: AppColors.border),
+              const SizedBox(height: 20),
+              // ── Content ──
+              Text(post!.content, style: AppType.body),
+              const SizedBox(height: 32),
+              // ── Action: Edit primary, Delete subtle ──
               _buildActions(),
             ],
           ),
@@ -189,9 +179,9 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     );
   }
 
-  Widget _buildImage() {
+  Widget _buildHeroImage() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 24),
       child: AspectRatio(
         aspectRatio: 16 / 9,
         child: ClipRRect(
@@ -202,13 +192,13 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
               return Container(
-                color: const Color(0xFFF3F4F6),
+                color: AppColors.surface2,
                 alignment: Alignment.center,
                 child: const Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.image_not_supported_outlined,
-                        color: AppColors.textMuted, size: 32),
+                        color: AppColors.textMuted, size: 30),
                     SizedBox(height: 8),
                     Text('Gambar tidak dapat dimuat',
                         style: TextStyle(
@@ -224,68 +214,52 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   }
 
   Widget _buildActions() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Kelola artikel',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Perbarui isi artikel atau hapus secara permanen.',
-            style: TextStyle(
-                fontSize: 12, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(height: 1, color: AppColors.border),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
                 child: FilledButton.icon(
                   onPressed: openEdit,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(46),
-                  ),
                   icon: const Icon(Icons.edit_outlined, size: 17),
                   label: const Text('Edit'),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 48,
                 child: OutlinedButton.icon(
                   onPressed: isDeleting ? null : confirmDelete,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.danger,
-                    side: const BorderSide(color: Color(0xFFF3C2C2)),
-                    minimumSize: const Size.fromHeight(46),
+                    side: const BorderSide(
+                        color: AppColors.dangerBorder),
                   ),
                   icon: isDeleting
                       ? const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: AppColors.danger),
+                              strokeWidth: 2,
+                              color: AppColors.danger),
                         )
                       : const Icon(Icons.delete_outline_rounded,
                           size: 17),
-                  label: Text(isDeleting ? 'Menghapus…' : 'Hapus'),
+                  label:
+                      Text(isDeleting ? 'Menghapus…' : 'Hapus'),
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

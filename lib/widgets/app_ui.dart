@@ -1,61 +1,118 @@
 import 'package:flutter/material.dart';
 
-/// Design token terpusat: netral, minimal, satu warna aksen.
-/// Tidak ada gradient / glassmorphism — hanya flat color + border halus.
+/// ─────────────────────────────────────────────────────────────
+/// DARK MODERN EDITORIAL BLOG — design system tunggal.
+/// Hierarki: typography → whitespace → image → layout.
+/// Satu aksen (paper white) + satu warna destruktif (red).
+/// Tanpa gradient, tanpa glassmorphism, tanpa shadow berat.
+/// ─────────────────────────────────────────────────────────────
 class AppColors {
-  static const background = Color(0xFFF7F8FA);
-  static const surface = Colors.white;
-  static const border = Color(0xFFE5E7EB);
-  static const borderStrong = Color(0xFFD1D5DB);
+  static const background = Color(0xFF0B0B0B);
+  static const surface = Color(0xFF141414);
+  static const surface2 = Color(0xFF1C1C1C);
+  static const border = Color(0xFF292929);
 
-  static const textPrimary = Color(0xFF111827);
-  static const textSecondary = Color(0xFF6B7280);
-  static const textMuted = Color(0xFF9CA3AF);
+  static const textPrimary = Color(0xFFF5F5F5);
+  static const textSecondary = Color(0xFFA3A3A3);
+  static const textMuted = Color(0xFF737373);
 
-  static const primary = Color(0xFF111827);
-  static const onPrimary = Colors.white;
+  /// Satu-satunya aksen: paper white.
+  /// Dipakai untuk primary action / active / link / focus saja.
+  static const accent = Color(0xFFF5F5F5);
+  static const onAccent = Color(0xFF0B0B0B);
 
-  static const danger = Color(0xFFDC2626);
-  static const dangerSoft = Color(0xFFFEF2F2);
+  static const danger = Color(0xFFE5484D);
+  static const dangerSoft = Color(0xFF241719);
+  static const dangerBorder = Color(0xFF4A2526);
 
-  static const badgeBg = Color(0xFFF3F4F6);
-  static const badgeText = Color(0xFF374151);
+  static const skeleton = Color(0xFF1C1C1C);
+  static const skeletonHi = Color(0xFF262626);
 }
 
+/// Spacing: hanya 8 · 12 · 16 · 20 · 24 · 32.
+class AppSpace {
+  static const double xs = 8;
+  static const double sm = 12;
+  static const double md = 16;
+  static const double lg = 20;
+  static const double xl = 24;
+  static const double xxl = 32;
+}
+
+/// Radius konsisten: kecil 8 · input/button 12 · card/image 16.
 class AppRadius {
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
 }
 
-/// Badge kategori kecil — informasi pendukung, tidak mendominasi.
-class CategoryBadge extends StatelessWidget {
+class AppType {
+  static const TextStyle pageTitle = TextStyle(
+    color: AppColors.textPrimary,
+    fontSize: 30,
+    height: 1.15,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.8,
+  );
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.textPrimary,
+    fontSize: 17,
+    height: 1.4,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.2,
+  );
+  static const TextStyle detailTitle = TextStyle(
+    color: AppColors.textPrimary,
+    fontSize: 26,
+    height: 1.25,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.6,
+  );
+  static const TextStyle body = TextStyle(
+    color: Color(0xFFD4D4D4),
+    fontSize: 15,
+    height: 1.75,
+  );
+  static const TextStyle excerpt = TextStyle(
+    color: AppColors.textSecondary,
+    fontSize: 13,
+    height: 1.6,
+  );
+  static const TextStyle category = TextStyle(
+    color: AppColors.textMuted,
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.4,
+  );
+  static const TextStyle sectionLabel = TextStyle(
+    color: AppColors.textMuted,
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.6,
+  );
+  static const TextStyle hint = TextStyle(
+    color: AppColors.textMuted,
+    fontSize: 14,
+  );
+}
+
+/// Kategori: kecil & subtle, tidak mendominasi.
+class CategoryLabel extends StatelessWidget {
   final String label;
-  const CategoryBadge({super.key, required this.label});
+  const CategoryLabel({super.key, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.badgeBg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          color: AppColors.badgeText,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+    return Text(
+      label.toUpperCase(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: AppType.category,
     );
   }
 }
 
-/// Label form yang konsisten di semua halaman.
+/// Label form: jelas, satu gaya di Add & Edit.
 class FieldLabel extends StatelessWidget {
   final String text;
   final bool optional;
@@ -64,7 +121,7 @@ class FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpace.xs),
       child: Row(
         children: [
           Text(
@@ -76,13 +133,12 @@ class FieldLabel extends StatelessWidget {
             ),
           ),
           if (optional) ...[
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             const Text(
               'Opsional',
               style: TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 12,
-                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -92,7 +148,7 @@ class FieldLabel extends StatelessWidget {
   }
 }
 
-/// Pesan error validasi inline — mudah dibaca, tepat di bawah field.
+/// Error validasi inline tepat di bawah field.
 class FieldError extends StatelessWidget {
   final String? message;
   const FieldError({super.key, this.message});
@@ -101,20 +157,20 @@ class FieldError extends StatelessWidget {
   Widget build(BuildContext context) {
     if (message == null || message!.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.only(top: AppSpace.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.error_outline_rounded,
               size: 14, color: AppColors.danger),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               message!,
               style: const TextStyle(
                 color: AppColors.danger,
                 fontSize: 12,
-                height: 1.4,
+                height: 1.5,
               ),
             ),
           ),
@@ -124,7 +180,7 @@ class FieldError extends StatelessWidget {
   }
 }
 
-/// Decoration TextField yang konsisten: terang, border jelas saat fokus/error.
+/// Input dark: surface + border subtle, focus memakai aksen.
 InputDecoration appInputDecoration({
   required String hint,
   bool hasError = false,
@@ -136,31 +192,33 @@ InputDecoration appInputDecoration({
       );
   return InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+    hintStyle: AppType.hint,
     filled: true,
     fillColor: AppColors.surface,
     contentPadding:
-        const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     suffixIcon: suffixIcon,
+    suffixIconColor: AppColors.textMuted,
+    prefixIconColor: AppColors.textMuted,
     enabledBorder: border(hasError ? AppColors.danger : AppColors.border),
-    focusedBorder: border(hasError ? AppColors.danger : AppColors.primary),
+    focusedBorder: border(hasError ? AppColors.danger : AppColors.accent),
     errorBorder: border(AppColors.danger),
     focusedErrorBorder: border(AppColors.danger),
   );
 }
 
-/// Snackbar konsisten: gelap, rounded, dengan ikon status.
 void showAppSnack(BuildContext context, String message,
     {bool isError = false}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.surface2,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
+          side: const BorderSide(color: AppColors.border),
         ),
         content: Row(
           children: [
@@ -168,14 +226,15 @@ void showAppSnack(BuildContext context, String message,
               isError
                   ? Icons.error_outline_rounded
                   : Icons.check_circle_outline_rounded,
-              color: Colors.white,
+              color: isError ? AppColors.danger : AppColors.accent,
               size: 19,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: const TextStyle(
+                    color: AppColors.textPrimary, fontSize: 13),
               ),
             ),
           ],
@@ -184,90 +243,152 @@ void showAppSnack(BuildContext context, String message,
     );
 }
 
-/// Dialog konfirmasi hapus yang clean dan eksplisit.
+/// Dialog konfirmasi hapus — dark, clean, eksplisit.
 Future<bool> showDeleteDialog(BuildContext context,
     {required String title}) {
   return showDialog<bool>(
     context: context,
     builder: (context) {
-      return AlertDialog(
-        backgroundColor: Colors.white,
+      return Dialog(
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: const BorderSide(color: AppColors.border),
         ),
-        icon: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.dangerSoft,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(
-            Icons.delete_outline_rounded,
-            color: AppColors.danger,
-            size: 24,
-          ),
-        ),
-        title: const Text(
-          'Hapus artikel?',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: Text(
-          '“$title” akan dihapus permanen dan tidak bisa dikembalikan.',
-          style: const TextStyle(
-            fontSize: 13,
-            height: 1.55,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          Row(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
-                    side: const BorderSide(color: AppColors.borderStrong),
-                    minimumSize: const Size.fromHeight(46),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                  ),
-                  child: const Text('Batal',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.dangerSoft,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: AppColors.danger,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.danger,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(46),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+              const SizedBox(height: 16),
+              const Text(
+                'Hapus artikel?',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '“$title” akan dihapus permanen dan tidak bisa dikembalikan.',
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.6,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(
+                            color: AppColors.border),
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      child: const Text('Batal',
+                          style:
+                              TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
-                  child: const Text('Hapus',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.danger,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      child: const Text('Hapus',
+                          style:
+                              TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       );
     },
   ).then((v) => v ?? false);
 }
 
-/// State generik: loading skeleton, kosong, dan error dengan tombol aksi.
+/// Tombol primary editorial: aksen paper, tinggi konsisten 50.
+Widget primaryButton({
+  required String label,
+  required VoidCallback? onPressed,
+  bool loading = false,
+  IconData? icon,
+}) {
+  return SizedBox(
+    width: double.infinity,
+    height: 50,
+    child: FilledButton(
+      onPressed: loading ? null : onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: AppColors.accent,
+        foregroundColor: AppColors.onAccent,
+        disabledBackgroundColor: AppColors.surface2,
+        disabledForegroundColor: AppColors.textMuted,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+      ),
+      child: loading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: AppColors.textMuted),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 17),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  label,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+    ),
+  );
+}
+
+/// Skeleton loading editorial — blok netral, tanpa animasi berlebihan.
 class LoadingSkeletonList extends StatelessWidget {
   const LoadingSkeletonList({super.key});
 
@@ -276,32 +397,38 @@ class LoadingSkeletonList extends StatelessWidget {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: 4,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemCount: 3,
+      separatorBuilder: (_, _) => const SizedBox(height: 16),
       itemBuilder: (_, _) => Container(
-        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.border),
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
+            Container(
+              height: 170,
+              decoration: const BoxDecoration(
+                color: AppColors.skeleton,
+                borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(AppRadius.lg)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _bar(width: 90, height: 22),
-                  const SizedBox(height: 10),
-                  _bar(width: double.infinity, height: 14),
-                  const SizedBox(height: 6),
-                  _bar(width: 220, height: 14),
+                  _bar(width: 90, height: 12),
+                  const SizedBox(height: 12),
+                  _bar(width: double.infinity, height: 16),
+                  const SizedBox(height: 8),
+                  _bar(width: 200, height: 16),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            _bar(width: 88, height: 88),
           ],
         ),
       ),
@@ -309,13 +436,12 @@ class LoadingSkeletonList extends StatelessWidget {
   }
 
   Widget _bar({required double width, required double height}) {
-    final w = width == double.infinity ? 180.0 : width;
     return Container(
-      width: width == double.infinity ? double.infinity : w,
+      width: width == double.infinity ? double.infinity : width,
       height: height,
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF0F3),
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.skeletonHi,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
     );
   }
@@ -341,20 +467,21 @@ class EmptyStateView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(color: AppColors.border),
               ),
               child: Icon(icon,
-                  color: AppColors.textMuted, size: 28),
+                  color: AppColors.textMuted, size: 26),
             ),
             const SizedBox(height: 16),
             Text(
@@ -366,33 +493,36 @@ class EmptyStateView extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               subtitle,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,
-                height: 1.55,
+                height: 1.6,
                 color: AppColors.textSecondary,
               ),
             ),
             if (actionLabel != null) ...[
               const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: onAction,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 13),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+              SizedBox(
+                height: 48,
+                child: FilledButton.icon(
+                  onPressed: onAction,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: AppColors.onAccent,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppRadius.md),
+                    ),
                   ),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: Text(actionLabel!,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700)),
                 ),
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(actionLabel!,
-                    style:
-                        const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ],
           ],
@@ -416,19 +546,21 @@ class ErrorStateView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: AppColors.dangerSoft,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.dangerBorder),
               ),
               child: const Icon(Icons.cloud_off_outlined,
-                  color: AppColors.danger, size: 28),
+                  color: AppColors.danger, size: 26),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -439,31 +571,35 @@ class ErrorStateView extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,
-                height: 1.55,
+                height: 1.6,
                 color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 20),
-            OutlinedButton.icon(
-              onPressed: onRetry,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textPrimary,
-                side: const BorderSide(color: AppColors.borderStrong),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+            SizedBox(
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: onRetry,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textPrimary,
+                  side:
+                      const BorderSide(color: AppColors.border),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppRadius.md),
+                  ),
                 ),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Coba lagi',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
               ),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Coba lagi',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ],
         ),

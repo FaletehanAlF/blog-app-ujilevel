@@ -3,6 +3,8 @@ import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:image_picker/image_picker.dart';
 
+/// Desain SAMA dengan Add: header → image → title → category →
+/// content → aksi. Beda: data terisi, gambar lama tampil, aksi update.
 class EditProductPage extends StatefulWidget {
   final Map<String, dynamic> product;
 
@@ -62,7 +64,7 @@ class _EditProductPageState extends State<EditProductPage> {
     super.dispose();
   }
 
-  // --- LOGIC SAMA: ambil kategori dari API ---
+  // --- LOGIC SAMA: GET /categories ---
   Future<void> fetchCategories() async {
     setState(() {
       isLoadingCategories = true;
@@ -133,8 +135,8 @@ class _EditProductPageState extends State<EditProductPage> {
   }
 
   // --- LOGIC SAMA: PUT /posts/:id ---
-  // selectedImage null  -> gambar lama dipertahankan.
-  // selectedImage ada   -> gambar baru dikirim & menggantikan yang lama.
+  // selectedImage null → gambar lama dipertahankan.
+  // selectedImage ada  → gambar baru menggantikan yang lama.
   Future<void> updatePost() async {
     if (!validate()) return;
 
@@ -193,53 +195,56 @@ class _EditProductPageState extends State<EditProductPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Text('Sempurnakan\ntulisan Anda.',
+                    style: AppType.pageTitle),
+                const SizedBox(height: 12),
                 const Text(
-                  'Perbarui artikel',
+                  'Perubahan langsung terlihat di daftar artikel.',
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.3,
-                  ),
+                      fontSize: 13,
+                      height: 1.6,
+                      color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Perubahan akan langsung terlihat di daftar artikel.',
-                  style: TextStyle(
-                      fontSize: 13, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 const FieldLabel('Gambar sampul', optional: true),
                 _buildImageField(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 const FieldLabel('Judul'),
                 TextField(
                   controller: titleController,
                   textInputAction: TextInputAction.next,
                   maxLength: 120,
+                  style: const TextStyle(
+                      color: AppColors.textPrimary, fontSize: 14),
+                  cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'Masukkan judul artikel',
                     hasError: titleError != null,
                   ),
                 ),
                 FieldError(message: titleError),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 const FieldLabel('Kategori'),
                 _buildCategoryField(),
                 FieldError(message: categoryError),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 const FieldLabel('Konten'),
                 TextField(
                   controller: contentController,
                   maxLines: 8,
                   minLines: 6,
+                  style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      height: 1.7),
+                  cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'Edit isi artikel…',
                     hasError: contentError != null,
@@ -247,31 +252,10 @@ class _EditProductPageState extends State<EditProductPage> {
                 ),
                 FieldError(message: contentError),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: FilledButton(
-                    onPressed: isLoading ? null : updatePost,
-                    style: FilledButton.styleFrom(
-                      disabledBackgroundColor:
-                          const Color(0xFFD1D5DB),
-                    ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Simpan Perubahan',
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700),
-                          ),
-                  ),
+                primaryButton(
+                  label: 'Simpan Perubahan',
+                  loading: isLoading,
+                  onPressed: updatePost,
                 ),
               ],
             ),
@@ -285,18 +269,13 @@ class _EditProductPageState extends State<EditProductPage> {
     final url = getImageUrl();
     final hasExisting = url.isNotEmpty;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AspectRatio(
+          aspectRatio: 16 / 9,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             child: selectedImage != null
                 ? FutureBuilder(
                     future: selectedImage!.readAsBytes(),
@@ -307,13 +286,11 @@ class _EditProductPageState extends State<EditProductPage> {
                         return Image.memory(
                           snapshot.data!,
                           width: double.infinity,
-                          height: 200,
                           fit: BoxFit.cover,
                         );
                       }
                       return Container(
-                        height: 200,
-                        color: const Color(0xFFF3F4F6),
+                        color: AppColors.surface2,
                         alignment: Alignment.center,
                         child: const SizedBox(
                           width: 22,
@@ -328,7 +305,6 @@ class _EditProductPageState extends State<EditProductPage> {
                     ? Image.network(
                         url,
                         width: double.infinity,
-                        height: 200,
                         fit: BoxFit.cover,
                         errorBuilder:
                             (context, error, stackTrace) {
@@ -339,38 +315,42 @@ class _EditProductPageState extends State<EditProductPage> {
                     : _imagePlaceholder(
                         'Belum ada gambar sampul'),
           ),
-          const SizedBox(height: 10),
-          if (selectedImage != null)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius:
-                    BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.info_outline_rounded,
-                      size: 16, color: AppColors.textSecondary),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Gambar baru dipilih dan akan menggantikan gambar lama.',
-                      style: TextStyle(
-                          fontSize: 12,
-                          height: 1.45,
-                          color: AppColors.textSecondary),
-                    ),
-                  ),
-                ],
-              ),
+        ),
+        if (selectedImage != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius:
+                  BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: AppColors.border),
             ),
-          if (selectedImage != null) const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline_rounded,
+                    size: 16, color: AppColors.textSecondary),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Gambar baru dipilih dan akan menggantikan gambar lama.',
+                    style: TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                        color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
                 child: OutlinedButton.icon(
                   onPressed: isLoading ? null : pickImage,
                   icon: const Icon(Icons.image_outlined, size: 17),
@@ -379,28 +359,32 @@ class _EditProductPageState extends State<EditProductPage> {
                       : 'Pilih gambar'),
                 ),
               ),
-              if (selectedImage != null) ...[
-                const SizedBox(width: 10),
-                Expanded(
+            ),
+            if (selectedImage != null) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
                   child: TextButton(
                     onPressed:
                         isLoading ? null : cancelNewImage,
-                    child: const Text('Batalkan gambar baru'),
+                    child:
+                        const Text('Batalkan gambar baru'),
                   ),
                 ),
-              ],
+              ),
             ],
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _imagePlaceholder(String text) {
     return Container(
       width: double.infinity,
-      height: 200,
-      color: const Color(0xFFF3F4F6),
+      height: double.infinity,
+      color: AppColors.surface,
       alignment: Alignment.center,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -421,31 +405,29 @@ class _EditProductPageState extends State<EditProductPage> {
       return Container(
         height: 52,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border),
         ),
         child: const Row(
           children: [
-            SizedBox(width: 14),
+            SizedBox(width: 16),
             SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
-            SizedBox(width: 10),
-            Text('Memuat kategori…',
-                style: TextStyle(
-                    color: AppColors.textMuted, fontSize: 14)),
+            SizedBox(width: 12),
+            Text('Memuat kategori…', style: AppType.hint),
           ],
         ),
       );
     }
     if (categoryLoadError != null) {
       return Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border),
         ),
@@ -467,9 +449,9 @@ class _EditProductPageState extends State<EditProductPage> {
       );
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
             color: categoryError != null
@@ -480,17 +462,13 @@ class _EditProductPageState extends State<EditProductPage> {
         child: DropdownButton<int>(
           value: selectedCategory,
           isExpanded: true,
-          dropdownColor: Colors.white,
+          dropdownColor: AppColors.surface2,
           borderRadius: BorderRadius.circular(AppRadius.md),
           icon: const Icon(
             Icons.keyboard_arrow_down_rounded,
             color: AppColors.textMuted,
           ),
-          hint: const Text(
-            'Pilih kategori',
-            style:
-                TextStyle(color: AppColors.textMuted, fontSize: 14),
-          ),
+          hint: const Text('Pilih kategori', style: AppType.hint),
           style: const TextStyle(
             color: AppColors.textPrimary,
             fontSize: 14,

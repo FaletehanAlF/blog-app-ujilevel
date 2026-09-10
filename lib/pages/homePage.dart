@@ -31,9 +31,8 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // --- LOGIC SAMA: ambil daftar artikel dari API ---
+  // --- LOGIC SAMA: GET /posts ---
   Future<void> fetchPosts() async {
-    // Refresh tenang (tanpa skeleton penuh) saat pull-to-refresh.
     if (posts.isEmpty && errorMessage == null) {
       setState(() => isLoading = true);
     }
@@ -47,8 +46,7 @@ class _HomePageState extends State<HomePage> {
         isLoading = false;
         errorMessage = null;
       });
-      // Kategori untuk filter diambil dari endpoint yang sudah ada.
-      fetchCategories(silent: true);
+      fetchCategories();
     } catch (error) {
       if (!mounted) return;
 
@@ -63,17 +61,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> fetchCategories({bool silent = false}) async {
+  // --- LOGIC SAMA: GET /categories (untuk filter lokal) ---
+  Future<void> fetchCategories() async {
     try {
       final data = await apiService.getCategories();
       if (!mounted) return;
       setState(() => categories = data);
     } catch (_) {
-      // Filter kategori opsional — kegagalan tidak mengganggu daftar artikel.
+      // Filter opsional — gagal tidak mengganggu daftar artikel.
     }
   }
 
-  // --- LOGIC SAMA: konfirmasi + hapus via API ---
+  // --- LOGIC SAMA: konfirmasi + DELETE /posts/:id ---
   Future<void> confirmDelete(Post post) async {
     final result = await showDeleteDialog(context, title: post.title);
     if (result == true) {
@@ -116,7 +115,7 @@ class _HomePageState extends State<HomePage> {
     ).then((_) => fetchPosts());
   }
 
-  // --- Filter lokal (tidak mengubah API): cari + kategori ---
+  // Filter lokal (tidak mengubah API): cari + kategori.
   List<Post> get filteredPosts {
     return posts.where((p) {
       final q = searchQuery.trim().toLowerCase();
@@ -142,16 +141,17 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Row(
           children: [
-            Icon(Icons.article_rounded, size: 21),
+            Icon(Icons.auto_stories_rounded,
+                size: 19, color: AppColors.accent),
             SizedBox(width: 8),
-            Text('Blog'),
+            Text('Journal'),
           ],
         ),
         actions: [
           IconButton(
             onPressed: fetchPosts,
             tooltip: 'Muat ulang',
-            icon: const Icon(Icons.refresh_rounded, size: 21),
+            icon: const Icon(Icons.refresh_rounded, size: 20),
           ),
           const SizedBox(width: 4),
         ],
@@ -162,36 +162,55 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: openAddArticle,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 2,
+        backgroundColor: AppColors.accent,
+        foregroundColor: AppColors.onAccent,
+        elevation: 0,
         icon: const Icon(Icons.add_rounded, size: 20),
         label: const Text(
           'Tulis',
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
       body: RefreshIndicator(
-        color: AppColors.primary,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface2,
+        color: AppColors.accent,
         onRefresh: fetchPosts,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 680),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeader(),
-                  const SizedBox(height: 16),
+                  // ── Page title + deskripsi singkat ──
+                  const Text('TERKINI', style: AppType.sectionLabel),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Cerita yang\nlayak dibaca.',
+                    style: AppType.pageTitle,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isLoading
+                        ? 'Memuat artikel…'
+                        : posts.isEmpty
+                            ? 'Ruang untuk ide-ide terbaik Anda.'
+                            : '${posts.length} artikel · diperbarui dari server',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.6,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   _buildSearch(),
                   if (categories.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     _buildCategoryFilter(),
                   ],
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   _buildBody(),
                 ],
               ),
@@ -202,53 +221,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHeader() {
-    final total = posts.length;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Artikel Terbaru',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-            letterSpacing: -0.4,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          isLoading
-              ? 'Memuat artikel…'
-              : total == 0
-                  ? 'Belum ada artikel'
-                  : '$total artikel tersedia',
-          style: const TextStyle(
-            fontSize: 13,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildSearch() {
     return TextField(
       controller: searchController,
       onChanged: (v) => setState(() => searchQuery = v),
       textInputAction: TextInputAction.search,
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+      cursorColor: AppColors.accent,
       decoration: appInputDecoration(
-        hint: 'Cari judul atau isi artikel…',
+        hint: 'Cari artikel…',
         suffixIcon: searchQuery.isEmpty
-            ? const Icon(Icons.search_rounded,
-                color: AppColors.textMuted, size: 20)
+            ? const Icon(Icons.search_rounded, size: 20)
             : IconButton(
                 onPressed: () {
                   searchController.clear();
                   setState(() => searchQuery = '');
                 },
-                icon: const Icon(Icons.close_rounded,
-                    color: AppColors.textMuted, size: 20),
+                icon: const Icon(Icons.close_rounded, size: 20),
               ),
       ),
     );
@@ -259,8 +248,11 @@ class _HomePageState extends State<HomePage> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _filterChip(label: 'Semua', selected: selectedCategoryId == null,
-              onTap: () => setState(() => selectedCategoryId = null)),
+          _filterChip(
+            label: 'Semua',
+            selected: selectedCategoryId == null,
+            onTap: () => setState(() => selectedCategoryId = null),
+          ),
           const SizedBox(width: 8),
           ...categories.map((c) {
             final id = c['id'] as int;
@@ -287,12 +279,13 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.white,
+          color: selected ? AppColors.accent : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? AppColors.accent : AppColors.border,
           ),
         ),
         child: Text(
@@ -300,7 +293,9 @@ class _HomePageState extends State<HomePage> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : AppColors.textSecondary,
+            color: selected
+                ? AppColors.onAccent
+                : AppColors.textSecondary,
           ),
         ),
       ),
@@ -326,14 +321,15 @@ class _HomePageState extends State<HomePage> {
     if (posts.isEmpty) {
       return EmptyStateView(
         title: 'Belum ada artikel',
-        subtitle: 'Buat artikel pertama Anda dan bagikan ide terbaik Anda.',
+        subtitle:
+            'Buat artikel pertama Anda dan bagikan ide terbaik Anda.',
         actionLabel: 'Tulis artikel pertama',
         onAction: openAddArticle,
       );
     }
     final items = filteredPosts;
     if (items.isEmpty) {
-      return EmptyStateView(
+      return const EmptyStateView(
         title: 'Tidak ditemukan',
         subtitle: 'Coba kata kunci lain atau ubah filter kategori.',
         icon: Icons.search_off_rounded,

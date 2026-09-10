@@ -5,41 +5,42 @@ import 'package:belajar_flutter/pages/detail_post_screen.dart';
 import 'package:belajar_flutter/widgets/post_card.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 
-import 'addproduct.dart';
+/// Artikel berdasarkan kategori (filter lokal dari GET /posts).
+/// Dibuka dari tab Kategori — memiliki AppBar + back sendiri,
+/// sehingga bottom navigation tidak tampil di sini.
+class CategoryArticlesPage extends StatefulWidget {
+  final int categoryId;
+  final String categoryName;
 
-/// Konten tab Beranda (tanpa Scaffold sendiri).
-/// Scaffold + AppBar + BottomNav + FAB dimiliki oleh MainShell
-/// agar tidak ada AppBar ganda dan state tab tetap terjaga.
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const CategoryArticlesPage({
+    super.key,
+    required this.categoryId,
+    required this.categoryName,
+  });
 
   @override
-  State<HomePage> createState() => HomePageState();
+  State<CategoryArticlesPage> createState() =>
+      _CategoryArticlesPageState();
 }
 
-class HomePageState extends State<HomePage>
-    with AutomaticKeepAliveClientMixin {
+class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
   final ApiService apiService = ApiService();
 
   List<Post> posts = [];
   bool isLoading = true;
   String? errorMessage;
 
-  @override
-  bool get wantKeepAlive => true;
-
-  // --- LOGIC SAMA: GET /posts ---
+  // --- LOGIC SAMA: GET /posts, filter per kategori secara lokal ---
   Future<void> fetchPosts() async {
-    if (posts.isEmpty && errorMessage == null) {
-      setState(() => isLoading = true);
-    }
     try {
       final data = await apiService.getPosts();
 
       if (!mounted) return;
 
       setState(() {
-        posts = data;
+        posts = data
+            .where((p) => p.categoryId == widget.categoryId)
+            .toList();
         isLoading = false;
         errorMessage = null;
       });
@@ -56,9 +57,6 @@ class HomePageState extends State<HomePage>
       }
     }
   }
-
-  /// Dipanggil Shell setelah kembali dari Tambah Artikel.
-  Future<void> refresh() => fetchPosts();
 
   // --- LOGIC SAMA: konfirmasi + DELETE /posts/:id ---
   Future<void> confirmDelete(Post post) async {
@@ -85,15 +83,6 @@ class HomePageState extends State<HomePage>
     }
   }
 
-  Future<void> openAddArticle() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddProductPage()),
-    );
-
-    fetchPosts();
-  }
-
   void openDetail(Post post) {
     Navigator.push(
       context,
@@ -111,42 +100,47 @@ class HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    return RefreshIndicator(
-      backgroundColor: AppColors.surface2,
-      color: AppColors.accent,
-      onRefresh: fetchPosts,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header seksi (judul halaman ada di AppBar Shell) ──
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('ARTIKEL TERBARU',
-                        style: AppType.sectionLabel),
-                    Text(
-                      isLoading
-                          ? 'Memuat…'
-                          : posts.isEmpty
-                              ? 'Kosong'
-                              : '${posts.length} artikel',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textMuted,
-                      ),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
+        ),
+        title: Text(widget.categoryName),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: AppColors.border),
+        ),
+      ),
+      body: RefreshIndicator(
+        backgroundColor: AppColors.surface2,
+        color: AppColors.accent,
+        onRefresh: fetchPosts,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isLoading
+                        ? 'Memuat artikel…'
+                        : posts.isEmpty
+                            ? 'Belum ada artikel'
+                            : '${posts.length} artikel',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildBody(),
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBody(),
+                ],
+              ),
             ),
           ),
         ),
@@ -171,12 +165,10 @@ class HomePageState extends State<HomePage>
       );
     }
     if (posts.isEmpty) {
-      return EmptyStateView(
+      return const EmptyStateView(
         title: 'Belum ada artikel',
         subtitle:
-            'Buat artikel pertama Anda dan bagikan ide terbaik Anda.',
-        actionLabel: 'Tulis artikel pertama',
-        onAction: openAddArticle,
+            'Belum ada artikel pada kategori ini. Coba kategori lain.',
       );
     }
     return ListView.builder(

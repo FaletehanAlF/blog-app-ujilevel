@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pages/homePage.dart';
+import 'pages/main_shell.dart';
 import 'widgets/app_ui.dart';
 
 void main() {
@@ -72,7 +72,7 @@ class BlogApp extends StatelessWidget {
           color: AppColors.accent,
         ),
       ),
-      home: const HomePage(),
+      home: const MainShell(),
     );
   }
 }

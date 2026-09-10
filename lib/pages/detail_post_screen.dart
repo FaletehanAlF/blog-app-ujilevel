@@ -106,6 +106,61 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
           icon: const Icon(Icons.arrow_back_rounded, size: 22),
         ),
         title: const Text('Artikel'),
+        actions: [
+          if (post != null && !isLoading)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded, size: 20),
+              tooltip: 'Kelola artikel',
+              color: AppColors.surface2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                side: const BorderSide(color: AppColors.border),
+              ),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  openEdit();
+                } else if (value == 'delete') {
+                  confirmDelete();
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_outlined,
+                          size: 18,
+                          color: AppColors.textSecondary),
+                      SizedBox(width: 12),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded,
+                          size: 18, color: AppColors.danger),
+                      SizedBox(width: 12),
+                      Text(
+                        'Hapus',
+                        style: TextStyle(
+                            color: AppColors.danger,
+                            fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(width: 4),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: AppColors.border),
@@ -169,9 +224,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
               const SizedBox(height: 20),
               // ── Content ──
               Text(post!.content, style: AppType.body),
-              const SizedBox(height: 32),
-              // ── Action: Edit primary, Delete subtle ──
-              _buildActions(),
             ],
           ),
         ),
@@ -210,56 +262,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(height: 1, color: AppColors.border),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: 48,
-                child: FilledButton.icon(
-                  onPressed: openEdit,
-                  icon: const Icon(Icons.edit_outlined, size: 17),
-                  label: const Text('Edit'),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 48,
-                child: OutlinedButton.icon(
-                  onPressed: isDeleting ? null : confirmDelete,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.danger,
-                    side: const BorderSide(
-                        color: AppColors.dangerBorder),
-                  ),
-                  icon: isDeleting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.danger),
-                        )
-                      : const Icon(Icons.delete_outline_rounded,
-                          size: 17),
-                  label:
-                      Text(isDeleting ? 'Menghapus…' : 'Hapus'),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

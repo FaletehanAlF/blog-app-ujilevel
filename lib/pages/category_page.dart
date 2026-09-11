@@ -16,6 +16,7 @@ class _CategoryPageState extends State<CategoryPage>
   final ApiService apiService = ApiService();
 
   List<dynamic> categories = [];
+
   bool isLoading = true;
   String? errorMessage;
 
@@ -29,12 +30,12 @@ class _CategoryPageState extends State<CategoryPage>
   }
 
   Future<void> fetchData() async {
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
 
     try {
       final data = await apiService.getCategories();
@@ -50,99 +51,88 @@ class _CategoryPageState extends State<CategoryPage>
 
       setState(() {
         isLoading = false;
-        errorMessage = error.toString();
+        errorMessage = error.toString().replaceFirst('Exception: ', '');
       });
     }
   }
 
-  Future<void> showAddCategoryDialog() async {
-    final controller = TextEditingController();
-
-    await showDialog<void>(
+  Future<void> addCategory() async {
+    final result = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
+      builder: (_) {
         return _CategoryFormDialog(
           title: 'Tambah Kategori',
+          subtitle: 'Tambahkan kategori baru untuk artikel.',
           buttonText: 'Simpan',
-          controller: controller,
-          apiService: apiService,
-          onSave: () async {
-            await apiService.createCategory(
-              controller.text.trim(),
-            );
-          },
-          onSuccess: () async {
-            if (!mounted) return;
-
-            Navigator.pop(dialogContext);
-
-            await fetchData();
-
-            if (!mounted) return;
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Kategori berhasil ditambahkan'),
-              ),
-            );
-          },
+          initialValue: '',
+          onSave: apiService.createCategory,
         );
       },
     );
 
-    controller.dispose();
+    if (result != true || !mounted) return;
+
+    await fetchData();
+
+    if (!mounted) return;
+
+    showAppSnack(
+      context,
+      'Kategori berhasil ditambahkan',
+    );
   }
 
-  Future<void> showEditCategoryDialog(
-    Map<String, dynamic> category,
-  ) async {
-    final controller = TextEditingController(
-      text: category['name'].toString(),
-    );
+  Future<void> editCategory(Map<String, dynamic> category) async {
+    final id = _toInt(category['id']);
 
-    await showDialog<void>(
+    if (id == null) {
+      showAppSnack(
+        context,
+        'ID kategori tidak valid',
+        isError: true,
+      );
+      return;
+    }
+
+    final result = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
+      builder: (_) {
         return _CategoryFormDialog(
           title: 'Edit Kategori',
+          subtitle: 'Perbarui nama kategori yang dipilih.',
           buttonText: 'Simpan Perubahan',
-          controller: controller,
-          apiService: apiService,
-          onSave: () async {
-            final id = category['id'] as int;
-
-            await apiService.updateCategory(
-              id,
-              controller.text.trim(),
-            );
-          },
-          onSuccess: () async {
-            if (!mounted) return;
-
-            Navigator.pop(dialogContext);
-
-            await fetchData();
-
-            if (!mounted) return;
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Kategori berhasil diubah'),
-              ),
-            );
+          initialValue: category['name']?.toString() ?? '',
+          onSave: (name) {
+            return apiService.updateCategory(id, name);
           },
         );
       },
     );
 
-    controller.dispose();
+    if (result != true || !mounted) return;
+
+    await fetchData();
+
+    if (!mounted) return;
+
+    showAppSnack(
+      context,
+      'Kategori berhasil diubah',
+    );
   }
 
-  Future<void> deleteCategory(
-    Map<String, dynamic> category,
-  ) async {
-    final id = category['id'] as int;
-    final name = category['name'].toString();
+  Future<void> deleteCategory(Map<String, dynamic> category) async {
+    final id = _toInt(category['id']);
+    final name = category['name']?.toString() ?? '';
+
+    if (id == null) {
+      showAppSnack(
+        context,
+        'ID kategori tidak valid',
+        isError: true,
+      );
+      return;
+    }
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -181,32 +171,32 @@ class _CategoryPageState extends State<CategoryPage>
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Kategori berhasil dihapus'),
-        ),
+      showAppSnack(
+        context,
+        'Kategori berhasil dihapus',
       );
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error.toString().replaceFirst('Exception: ', ''),
-          ),
-        ),
+      showAppSnack(
+        context,
+        error.toString().replaceFirst('Exception: ', ''),
+        isError: true,
       );
     }
   }
 
   void openCategory(Map<String, dynamic> category) {
-    final id = category['id'] as int;
-    final name = category['name'].toString();
+    final id = _toInt(category['id']);
+
+    if (id == null) return;
+
+    final name = category['name']?.toString() ?? 'Kategori';
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CategoryArticlesPage(
+        builder: (_) => CategoryArticlesPage(
           categoryId: id,
           categoryName: name,
         ),
@@ -214,30 +204,12 @@ class _CategoryPageState extends State<CategoryPage>
     );
   }
 
-  IconData getCategoryIcon(String name) {
-    switch (name.toLowerCase()) {
-      case 'pemrograman':
-        return Icons.code_rounded;
-      case 'teknologi':
-        return Icons.memory_rounded;
-      case 'mobile':
-        return Icons.smartphone_rounded;
-      default:
-        return Icons.category_outlined;
-    }
-  }
+  int? _toInt(dynamic value) {
+    if (value is int) return value;
 
-  String getCategoryDescription(String name) {
-    switch (name.toLowerCase()) {
-      case 'pemrograman':
-        return 'Coding, development, dan teknologi software.';
-      case 'teknologi':
-        return 'Informasi seputar perkembangan teknologi.';
-      case 'mobile':
-        return 'Dunia aplikasi dan teknologi mobile.';
-      default:
-        return 'Artikel berdasarkan topik pilihan.';
-    }
+    return int.tryParse(
+      value?.toString() ?? '',
+    );
   }
 
   @override
@@ -261,7 +233,12 @@ class _CategoryPageState extends State<CategoryPage>
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      padding: const EdgeInsets.fromLTRB(
+        20,
+        24,
+        20,
+        32,
+      ),
       children: [
         Text(
           'Categories',
@@ -269,7 +246,7 @@ class _CategoryPageState extends State<CategoryPage>
         ),
         const SizedBox(height: 6),
         Text(
-          'Temukan artikel berdasarkan topik yang kamu minati.',
+          'Kelola kategori artikel yang tersedia.',
           style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 13,
@@ -280,7 +257,7 @@ class _CategoryPageState extends State<CategoryPage>
         Align(
           alignment: Alignment.centerLeft,
           child: ElevatedButton.icon(
-            onPressed: showAddCategoryDialog,
+            onPressed: addCategory,
             icon: const Icon(Icons.add_rounded),
             label: const Text('Tambah Kategori'),
           ),
@@ -295,8 +272,11 @@ class _CategoryPageState extends State<CategoryPage>
   }
 
   Widget _buildCategoryCard(dynamic category) {
-    final data = Map<String, dynamic>.from(category as Map);
-    final name = data['name'].toString();
+    final data = Map<String, dynamic>.from(
+      category as Map,
+    );
+
+    final name = data['name']?.toString() ?? '';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -304,62 +284,39 @@ class _CategoryPageState extends State<CategoryPage>
         color: Colors.transparent,
         child: InkWell(
           onTap: () => openCategory(data),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(
+            AppRadius.lg,
+          ),
           child: Ink(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 14,
+            ),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderRadius: BorderRadius.circular(
+                AppRadius.lg,
+              ),
               border: Border.all(
                 color: AppColors.border,
               ),
             ),
             child: Row(
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Icon(
-                    getCategoryIcon(name),
-                    color: Colors.blue,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        getCategoryDescription(name),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 IconButton(
-                  onPressed: () => showEditCategoryDialog(data),
+                  onPressed: () => editCategory(data),
                   icon: const Icon(
                     Icons.edit_outlined,
                     size: 20,
@@ -385,7 +342,12 @@ class _CategoryPageState extends State<CategoryPage>
   Widget _buildLoading() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      padding: const EdgeInsets.fromLTRB(
+        20,
+        24,
+        20,
+        32,
+      ),
       children: [
         Container(
           width: 140,
@@ -416,13 +378,15 @@ class _CategoryPageState extends State<CategoryPage>
         const SizedBox(height: 24),
         ...List.generate(
           3,
-          (index) => Padding(
+          (_) => Padding(
             padding: const EdgeInsets.only(bottom: 14),
             child: Container(
-              height: 88,
+              height: 68,
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderRadius: BorderRadius.circular(
+                  AppRadius.lg,
+                ),
               ),
             ),
           ),
@@ -448,7 +412,9 @@ class _CategoryPageState extends State<CategoryPage>
 
   Widget _buildEmpty() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 50),
+      padding: const EdgeInsets.symmetric(
+        vertical: 50,
+      ),
       child: Column(
         children: [
           Icon(
@@ -482,51 +448,74 @@ class _CategoryPageState extends State<CategoryPage>
 
 class _CategoryFormDialog extends StatefulWidget {
   final String title;
+  final String subtitle;
   final String buttonText;
-  final TextEditingController controller;
-  final ApiService apiService;
-  final Future<void> Function() onSave;
-  final Future<void> Function() onSuccess;
+  final String initialValue;
+  final Future<void> Function(String name) onSave;
 
   const _CategoryFormDialog({
     required this.title,
+    required this.subtitle,
     required this.buttonText,
-    required this.controller,
-    required this.apiService,
+    required this.initialValue,
     required this.onSave,
-    required this.onSuccess,
   });
 
   @override
-  State<_CategoryFormDialog> createState() => _CategoryFormDialogState();
+  State<_CategoryFormDialog> createState() =>
+      _CategoryFormDialogState();
 }
 
-class _CategoryFormDialogState extends State<_CategoryFormDialog> {
+class _CategoryFormDialogState
+    extends State<_CategoryFormDialog> {
+  late final TextEditingController controller;
+
   bool isSaving = false;
 
+  @override
+  void initState() {
+    super.initState();
+
+    controller = TextEditingController(
+      text: widget.initialValue,
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
   Future<void> saveCategory() async {
-    final name = widget.controller.text.trim();
+    final name = controller.text.trim();
 
     if (name.isEmpty) {
-      _showMessage('Nama kategori tidak boleh kosong');
+      _showMessage(
+        'Nama kategori tidak boleh kosong',
+      );
       return;
     }
 
     if (name.length < 3) {
-      _showMessage('Nama kategori minimal 3 karakter');
+      _showMessage(
+        'Nama kategori minimal 3 karakter',
+      );
       return;
     }
+
+    if (isSaving) return;
 
     setState(() {
       isSaving = true;
     });
 
     try {
-      await widget.onSave();
+      await widget.onSave(name);
 
       if (!mounted) return;
 
-      await widget.onSuccess();
+      Navigator.pop(context, true);
     } catch (error) {
       if (!mounted) return;
 
@@ -535,12 +524,17 @@ class _CategoryFormDialogState extends State<_CategoryFormDialog> {
       });
 
       _showMessage(
-        error.toString().replaceFirst('Exception: ', ''),
+        error.toString().replaceFirst(
+              'Exception: ',
+              '',
+            ),
       );
     }
   }
 
   void _showMessage(String message) {
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -550,44 +544,212 @@ class _CategoryFormDialogState extends State<_CategoryFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.title),
-      content: TextField(
-        controller: widget.controller,
-        autofocus: true,
-        enabled: !isSaving,
-        textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(
-          labelText: 'Nama Kategori',
-          hintText: 'Contoh: Teknologi',
-          border: OutlineInputBorder(),
-        ),
-        onSubmitted: (_) {
-          if (!isSaving) {
-            saveCategory();
-          }
-        },
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: 24,
+        vertical: 24,
       ),
-      actions: [
-        TextButton(
-          onPressed: isSaving
-              ? null
-              : () => Navigator.pop(context),
-          child: const Text('Batal'),
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(
+          maxWidth: 480,
         ),
-        ElevatedButton(
-          onPressed: isSaving ? null : saveCategory,
-          child: isSaving
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(
+            AppRadius.lg,
+          ),
+          border: Border.all(
+            color: AppColors.border,
+          ),
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 30,
+              offset: const Offset(0, 12),
+              color: Colors.black.withValues(
+                alpha: 0.18,
+              ),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(
+                      alpha: 0.10,
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(12),
                   ),
-                )
-              : Text(widget.buttonText),
+                  child: Icon(
+                    widget.initialValue.isEmpty
+                        ? Icons.add_rounded
+                        : Icons.edit_outlined,
+                    color: Colors.blue,
+                    size: 21,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.title,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        widget.subtitle,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const FieldLabel(
+              'Nama kategori',
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              enabled: !isSaving,
+              textCapitalization:
+                  TextCapitalization.words,
+              textInputAction:
+                  TextInputAction.done,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+              ),
+              cursorColor: AppColors.accent,
+              decoration: appInputDecoration(
+                hint: 'Contoh: Pendidikan',
+              ),
+              onSubmitted: (_) {
+                if (!isSaving) {
+                  saveCategory();
+                }
+              },
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: isSaving
+                        ? null
+                        : () {
+                            Navigator.pop(
+                              context,
+                              false,
+                            );
+                          },
+                    style: OutlinedButton.styleFrom(
+                      minimumSize:
+                          const Size.fromHeight(46),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                          AppRadius.md,
+                        ),
+                      ),
+                      side: BorderSide(
+                        color: AppColors.border,
+                      ),
+                    ),
+                    child: Text(
+                      'Batal',
+                      style: TextStyle(
+                        color:
+                            AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: isSaving
+                        ? () {}
+                        : saveCategory,
+                    style: ButtonStyle(
+                      minimumSize:
+                          WidgetStateProperty.all(
+                        const Size.fromHeight(46),
+                      ),
+                      backgroundColor:
+                          WidgetStateProperty.all(
+                        Colors.blue,
+                      ),
+                      foregroundColor:
+                          WidgetStateProperty.all(
+                        Colors.white,
+                      ),
+                      overlayColor:
+                          WidgetStateProperty.all(
+                        Colors.blue.shade700,
+                      ),
+                      elevation:
+                          WidgetStateProperty.all(0),
+                      shape:
+                          WidgetStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(
+                            AppRadius.md,
+                          ),
+                        ),
+                      ),
+                    ),
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 19,
+                            height: 19,
+                            child:
+                                CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            widget.buttonText,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight:
+                                  FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

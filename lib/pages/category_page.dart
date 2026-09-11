@@ -11,17 +11,13 @@ class CategoryPage extends StatefulWidget {
   State<CategoryPage> createState() => _CategoryPageState();
 }
 
-class _CategoryPageState extends State<CategoryPage>
-    with AutomaticKeepAliveClientMixin {
+class _CategoryPageState extends State<CategoryPage> {
   final ApiService apiService = ApiService();
 
   List<dynamic> categories = [];
 
   bool isLoading = true;
   String? errorMessage;
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -214,11 +210,33 @@ class _CategoryPageState extends State<CategoryPage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    return RefreshIndicator(
-      onRefresh: fetchData,
-      child: _buildContent(),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(
+          'Kelola Kategori',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: AppColors.border,
+          ),
+        ),
+      ),
+      body: RefreshIndicator(
+        onRefresh: fetchData,
+        child: _buildContent(),
+      ),
     );
   }
 

@@ -3,7 +3,7 @@ import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'home_page.dart';
-import 'category_page.dart';
+import 'articles_page.dart';
 import 'addproduct.dart';
 import 'about_page.dart';
 import 'settings_page.dart';
@@ -20,15 +20,15 @@ class _MainShellState extends State<MainShell> {
   int _index = 0;
 
   final List<String> _titles = [
-    'Blog',
+    'Home',
     'Articles',
-    'Tentang',
+    'About',
     'Settings',
   ];
 
   final List<Widget> _pages = const [
     HomePage(),
-    CategoryPage(),
+    ArticlesPage(),
     AboutPage(),
     SettingsPage(),
   ];
@@ -218,12 +218,12 @@ class _MainShellState extends State<MainShell> {
             NavigationDestination(
               icon: Icon(Icons.info_outline_rounded),
               selectedIcon: Icon(Icons.info_rounded),
-              label: 'Tentang',
+              label: 'About',
             ),
             NavigationDestination(
               icon: Icon(Icons.settings_outlined),
               selectedIcon: Icon(Icons.settings_rounded),
-              label: 'Pengaturan',
+              label: 'Settings',
             ),
           ],
         ),

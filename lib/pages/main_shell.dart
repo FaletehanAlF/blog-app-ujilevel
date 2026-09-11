@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'homePage.dart';
+import 'home_page.dart';
 import 'category_page.dart';
 import 'addproduct.dart';
 import 'about_page.dart';

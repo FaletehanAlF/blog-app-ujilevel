@@ -19,9 +19,9 @@ class ApiService {
       return (data['data'] as List)
           .map((e) => Post.fromJson(e))
           .toList();
-    } else {
-      throw Exception('Gagal mengambil data artikel');
     }
+
+    throw Exception('Gagal mengambil data artikel');
   }
 
   Future<Post> getPostById(int id) async {
@@ -33,9 +33,9 @@ class ApiService {
       final data = jsonDecode(response.body);
 
       return Post.fromJson(data['data']);
-    } else {
-      throw Exception('Gagal mengambil detail artikel');
     }
+
+    throw Exception('Gagal mengambil detail artikel');
   }
 
   Future<void> deletePost(int id) async {
@@ -78,9 +78,6 @@ class ApiService {
     final response = await request.send();
     final responseBody = await response.stream.bytesToString();
 
-    print('STATUS CREATE: ${response.statusCode}');
-    print('RESPONSE CREATE: $responseBody');
-
     if (response.statusCode != 201) {
       throw Exception(
         'Gagal menambahkan artikel: $responseBody',
@@ -104,8 +101,6 @@ class ApiService {
     request.fields['content'] = content;
     request.fields['category_id'] = categoryId.toString();
 
-    // Jika user memilih gambar baru,
-    // gambar tersebut dikirim ke backend.
     if (image != null) {
       final bytes = await image.readAsBytes();
 
@@ -120,9 +115,6 @@ class ApiService {
 
     final response = await request.send();
     final responseBody = await response.stream.bytesToString();
-
-    print('STATUS UPDATE: ${response.statusCode}');
-    print('RESPONSE UPDATE: $responseBody');
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -140,8 +132,55 @@ class ApiService {
       final data = jsonDecode(response.body);
 
       return data['data'];
-    } else {
-      throw Exception('Gagal mengambil data kategori');
+    }
+
+    throw Exception('Gagal mengambil data kategori');
+  }
+
+  Future<void> createCategory(String name) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/categories'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception(
+        'Gagal menambahkan kategori: ${response.body}',
+      );
     }
   }
+  Future<void> updateCategory(int id, String name) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/categories/$id'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'name': name,
+    }),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception(
+      'Gagal memperbarui kategori: ${response.body}',
+    );
+  }
+}
+
+Future<void> deleteCategory(int id) async {
+  final response = await http.delete(
+    Uri.parse('$baseUrl/categories/$id'),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception(
+      'Gagal menghapus kategori: ${response.body}',
+    );
+  }
+}
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'pages/main_shell.dart';
 import 'widgets/app_theme.dart';
 import 'widgets/app_ui.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: 'assets/.env');
   await AppTheme.load();
   runApp(const BlogApp());
 }

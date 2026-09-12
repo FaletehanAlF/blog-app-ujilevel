@@ -41,6 +41,7 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   dio: ^5.11.1
   cached_network_image: ^4.0.0
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +69,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/.env
 
   # To add assets to your application, add an assets section, like this:
   # assets:

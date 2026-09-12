@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/post.dart';
 
 class ApiService {
-  static const String baseUrl = 'http:';
+  static const String baseUrl = 'http://localhost:8000';
 
   final Dio _dio = Dio(
     BaseOptions(
@@ -14,7 +14,6 @@ class ApiService {
       },
     ),
   );
-
   // Posts
 
   Future<List<Post>> getPosts() async {

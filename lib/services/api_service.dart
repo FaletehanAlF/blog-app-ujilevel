@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/post.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.11.6:8000';
+  static const String baseUrl = 'http:';
 
   final Dio _dio = Dio(
     BaseOptions(

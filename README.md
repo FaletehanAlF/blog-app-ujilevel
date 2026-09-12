@@ -2,12 +2,11 @@
 
 NARATA merupakan aplikasi mobile untuk mengelola dan menampilkan artikel secara terstruktur. Aplikasi ini dikembangkan sebagai bagian dari **Uji Level Kompetensi Keahlian Rekayasa Perangkat Lunak (RPL)**.
 
-NARATA memungkinkan pengguna untuk melihat, menambahkan, mengedit, dan menghapus artikel serta mengelola kategori artikel.
+Pengguna dapat melihat, menambahkan, mengedit, dan menghapus artikel serta mengelola kategori artikel melalui aplikasi mobile.
 
 ## Features
 
-- Menampilkan daftar artikel
-- Melihat detail artikel
+- Menampilkan daftar dan detail artikel
 - Menambahkan, mengedit, dan menghapus artikel
 - Mengelola kategori artikel
 - Menampilkan artikel berdasarkan kategori
@@ -35,43 +34,3 @@ Flutter Mobile
 Node.js + Express.js
       ↓
     MySQL
-
-Aplikasi mobile berkomunikasi dengan backend melalui REST API untuk mengambil dan mengelola data.
-
-Installation
-
-Clone repository:
-
-git clone https://github.com/FaletehanAlF/blog-app-ujilevel.git
-cd blog-app-ujilevel
-
-Install dependencies:
-
-flutter pub get
-
-Buat file assets/.env:
-
-API_URL=http://YOUR_IP_ADDRESS:8000
-
-Kemudian jalankan aplikasi:
-
-flutter run
-
-Pastikan backend REST API sudah berjalan pada port 8000.
-
-Project Information
-
-Project: NARATA — Aplikasi Blog
-Category: Uji Level Kompetensi Keahlian RPL
-School: SMK Taruna Bhakti
-Major: Rekayasa Perangkat Lunak
-Academic Year: 2026/2027
-
-Developer
-
-Faletehan Al Farabi
-
-GitHub: @FaletehanAlF
-Instagram: @faalen_portofolio
-
-Made for Uji Level Kompetensi Keahlian RPL 2026/2027.

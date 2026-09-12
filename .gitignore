@@ -46,3 +46,13 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Environment variables
+.env
+.env.*
+!.env.example

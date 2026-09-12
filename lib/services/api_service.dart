@@ -74,13 +74,12 @@ class ApiService {
       );
     }
   }
-
   Future<void> updatePost(
     int id,
     String title,
     String content,
     int categoryId,
-    XFile? image,
+    XFile? image,  
   ) async {
     final formData = FormData.fromMap({
       'title': title,

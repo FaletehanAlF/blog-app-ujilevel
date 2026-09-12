@@ -1,6 +1,4 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/post.dart';
@@ -8,15 +6,22 @@ import '../models/post.dart';
 class ApiService {
   static const String baseUrl = 'http://10.2.11.6:8000';
 
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: baseUrl,
+      headers: {
+        'Accept': 'application/json',
+      },
+    ),
+  );
+
+  // Posts
+
   Future<List<Post>> getPosts() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/posts'),
-    );
+    final response = await _dio.get('/posts');
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      return (data['data'] as List)
+      return (response.data['data'] as List)
           .map((e) => Post.fromJson(e))
           .toList();
     }
@@ -25,27 +30,13 @@ class ApiService {
   }
 
   Future<Post> getPostById(int id) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/posts/$id'),
-    );
+    final response = await _dio.get('/posts/$id');
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      return Post.fromJson(data['data']);
+      return Post.fromJson(response.data['data']);
     }
 
     throw Exception('Gagal mengambil detail artikel');
-  }
-
-  Future<void> deletePost(int id) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/posts/$id'),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Gagal menghapus artikel');
-    }
   }
 
   Future<void> createPost(
@@ -54,33 +45,32 @@ class ApiService {
     int categoryId,
     XFile? image,
   ) async {
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$baseUrl/posts'),
-    );
-
-    request.fields['title'] = title;
-    request.fields['content'] = content;
-    request.fields['category_id'] = categoryId.toString();
+    final formData = FormData.fromMap({
+      'title': title,
+      'content': content,
+      'category_id': categoryId.toString(),
+    });
 
     if (image != null) {
-      final bytes = await image.readAsBytes();
-
-      request.files.add(
-        http.MultipartFile.fromBytes(
+      formData.files.add(
+        MapEntry(
           'image',
-          bytes,
-          filename: image.name,
+          await MultipartFile.fromFile(
+            image.path,
+            filename: image.name,
+          ),
         ),
       );
     }
 
-    final response = await request.send();
-    final responseBody = await response.stream.bytesToString();
+    final response = await _dio.post(
+      '/posts',
+      data: formData,
+    );
 
     if (response.statusCode != 201) {
       throw Exception(
-        'Gagal menambahkan artikel: $responseBody',
+        'Gagal menambahkan artikel: ${response.data}',
       );
     }
   }
@@ -92,95 +82,98 @@ class ApiService {
     int categoryId,
     XFile? image,
   ) async {
-    final request = http.MultipartRequest(
-      'PUT',
-      Uri.parse('$baseUrl/posts/$id'),
-    );
-
-    request.fields['title'] = title;
-    request.fields['content'] = content;
-    request.fields['category_id'] = categoryId.toString();
+    final formData = FormData.fromMap({
+      'title': title,
+      'content': content,
+      'category_id': categoryId.toString(),
+    });
 
     if (image != null) {
-      final bytes = await image.readAsBytes();
-
-      request.files.add(
-        http.MultipartFile.fromBytes(
+      formData.files.add(
+        MapEntry(
           'image',
-          bytes,
-          filename: image.name,
+          await MultipartFile.fromFile(
+            image.path,
+            filename: image.name,
+          ),
         ),
       );
     }
 
-    final response = await request.send();
-    final responseBody = await response.stream.bytesToString();
+    final response = await _dio.put(
+      '/posts/$id',
+      data: formData,
+    );
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Gagal memperbarui artikel: $responseBody',
+        'Gagal memperbarui artikel: ${response.data}',
       );
     }
   }
 
+  Future<void> deletePost(int id) async {
+    final response = await _dio.delete('/posts/$id');
+
+    if (response.statusCode != 200) {
+      throw Exception('Gagal menghapus artikel');
+    }
+  }
+
+  // Categories
+
   Future<List<dynamic>> getCategories() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/categories'),
-    );
+    final response = await _dio.get('/categories');
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      return data['data'];
+      return response.data['data'];
     }
 
     throw Exception('Gagal mengambil data kategori');
   }
 
   Future<void> createCategory(String name) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/categories'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
+    final response = await _dio.post(
+      '/categories',
+      data: {
         'name': name,
-      }),
+      },
     );
 
     if (response.statusCode != 201) {
       throw Exception(
-        'Gagal menambahkan kategori: ${response.body}',
+        'Gagal menambahkan kategori: ${response.data}',
       );
     }
   }
-  Future<void> updateCategory(int id, String name) async {
-  final response = await http.put(
-    Uri.parse('$baseUrl/categories/$id'),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: jsonEncode({
-      'name': name,
-    }),
-  );
 
-  if (response.statusCode != 200) {
-    throw Exception(
-      'Gagal memperbarui kategori: ${response.body}',
+  Future<void> updateCategory(
+    int id,
+    String name,
+  ) async {
+    final response = await _dio.put(
+      '/categories/$id',
+      data: {
+        'name': name,
+      },
     );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Gagal memperbarui kategori: ${response.data}',
+      );
+    }
   }
-}
 
-Future<void> deleteCategory(int id) async {
-  final response = await http.delete(
-    Uri.parse('$baseUrl/categories/$id'),
-  );
-
-  if (response.statusCode != 200) {
-    throw Exception(
-      'Gagal menghapus kategori: ${response.body}',
+  Future<void> deleteCategory(int id) async {
+    final response = await _dio.delete(
+      '/categories/$id',
     );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Gagal menghapus kategori: ${response.data}',
+      );
+    }
   }
-}
 }

@@ -38,6 +38,8 @@ dependencies:
   http: ^1.6.0
   google_fonts: ^8.2.1
   image_picker: ^1.2.3
+  flutter_launcher_icons: ^0.14.4
+  dio: ^5.11.1
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +51,11 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/narata.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

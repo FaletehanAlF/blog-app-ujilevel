@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/post.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8000';
+  static String get baseUrl => dotenv.env['API_URL'] ?? '';
 
   final Dio _dio = Dio(
     BaseOptions(

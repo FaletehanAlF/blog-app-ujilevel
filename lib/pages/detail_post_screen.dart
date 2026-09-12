@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../models/post.dart';
@@ -323,38 +324,41 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
           borderRadius: BorderRadius.circular(
             AppRadius.lg,
           ),
-          child: Image.network(
-            '${ApiService.baseUrl}${post!.image}',
+          child: CachedNetworkImage(
+            imageUrl: '${ApiService.baseUrl}${post!.image}',
             width: double.infinity,
             fit: BoxFit.cover,
-            errorBuilder: (
-              context,
-              error,
-              stackTrace,
-            ) {
-              return Container(
-                color: AppColors.surface2,
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.image_not_supported_outlined,
+            placeholder: (context, url) => Container(
+              color: AppColors.surface2,
+              alignment: Alignment.center,
+              child: const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
+              color: AppColors.surface2,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.image_not_supported_outlined,
+                    color: AppColors.textMuted,
+                    size: 30,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Gambar tidak dapat dimuat',
+                    style: TextStyle(
                       color: AppColors.textMuted,
-                      size: 30,
+                      fontSize: 12,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Gambar tidak dapat dimuat',
-                      style: TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

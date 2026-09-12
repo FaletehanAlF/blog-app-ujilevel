@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/models/post.dart';
 import 'package:belajar_flutter/services/api_service.dart';
@@ -196,12 +197,33 @@ class HomePageState extends State<HomePage> {
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            if (post.image != null)
-              Image.network(
-                '${ApiService.baseUrl}${post.image}',
+            if (post.image != null && post.image!.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: '${ApiService.baseUrl}${post.image}',
                 width: double.infinity,
                 height: double.infinity,
                 fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: const Color(0xFF1C1C1C),
+                  alignment: Alignment.center,
+                  child: const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: const Color(0xFF1C1C1C),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.image_not_supported_outlined,
+                    color: Colors.grey,
+                    size: 28,
+                  ),
+                ),
               ),
 
             Positioned(
@@ -252,14 +274,39 @@ class HomePageState extends State<HomePage> {
         ),
         child: Row(
           children: [
-            if (post.image != null)
+            if (post.image != null && post.image!.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  '${ApiService.baseUrl}${post.image}',
+                child: CachedNetworkImage(
+                  imageUrl: '${ApiService.baseUrl}${post.image}',
                   width: 90,
                   height: 90,
                   fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    width: 90,
+                    height: 90,
+                    color: const Color(0xFF1C1C1C),
+                    alignment: Alignment.center,
+                    child: const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    width: 90,
+                    height: 90,
+                    color: const Color(0xFF1C1C1C),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.image_outlined,
+                      color: Colors.grey,
+                      size: 22,
+                    ),
+                  ),
                 ),
               ),
 

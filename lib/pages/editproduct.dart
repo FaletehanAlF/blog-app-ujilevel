@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/services/api_service.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
@@ -276,27 +277,31 @@ class _EditProductPageState extends State<EditProductPage> {
                             },
                           )
                         : hasImage
-                        ? Image.network(
-                            imageUrl,
+                        ? CachedNetworkImage(
+                            imageUrl: imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (
-                              context,
-                              error,
-                              stackTrace,
-                            ) {
-                              return Container(
-                                color: AppColors.surface,
-                                child: Center(
-                                  child: Text(
-                                    'Gambar tidak dapat dimuat',
-                                    style: TextStyle(
-                                      color: AppColors.textMuted,
-                                      fontSize: 12,
-                                    ),
-                                  ),
+                            placeholder: (context, url) => Container(
+                              color: AppColors.surface2,
+                              alignment: Alignment.center,
+                              child: const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
                                 ),
-                              );
-                            },
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: AppColors.surface,
+                              alignment: Alignment.center,
+                              child: Text(
+                                'Gambar tidak dapat dimuat',
+                                style: TextStyle(
+                                  color: AppColors.textMuted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
                           )
                         : Container(
                             color: AppColors.surface,

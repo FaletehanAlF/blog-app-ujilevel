@@ -50,11 +50,22 @@ class PostCard extends StatelessWidget {
                     top: Radius.circular(AppRadius.lg),
                   ),
                   child: _imageUrl.isNotEmpty
-                      ? Image.network(
-                          _imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: _imageUrl,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
+                          placeholder: (context, url) => Container(
+                            color: AppColors.surface2,
+                            alignment: Alignment.center,
+                            child: const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) =>
                               _placeholder(),
                         )
                       : _placeholder(),

@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/models/post.dart';
-import 'package:belajar_flutter/services/api_service.dart';
+import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/pages/detail_post_screen.dart';
 
 class HomePage extends StatefulWidget {

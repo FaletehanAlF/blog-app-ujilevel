@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:belajar_flutter/services/api_service.dart';
+import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:image_picker/image_picker.dart';
 

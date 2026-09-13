@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../services/api_service.dart';
+import '../services/api.dart';
 import '../models/post.dart';
 import '../pages/detail_post_screen.dart';
 import '../widgets/post_card.dart';

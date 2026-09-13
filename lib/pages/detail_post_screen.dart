@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../models/post.dart';
-import '../services/api_service.dart';
+import '../services/api.dart';
 import '../widgets/app_ui.dart';
 import 'editproduct.dart';
 

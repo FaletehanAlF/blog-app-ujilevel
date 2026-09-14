@@ -25,10 +25,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   String? errorMessage;
 
   final ApiService apiService = ApiService();
-
-  // =========================
-  // GET DETAIL ARTIKEL
-  // =========================
   Future<void> fetchPost() async {
     setState(() {
       isLoading = true;
@@ -54,9 +50,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     }
   }
 
-  // =========================
-  // EDIT ARTIKEL
-  // =========================
   Future<void> openEdit() async {
     if (post == null) return;
 
@@ -76,13 +69,9 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       ),
     );
 
-    // Ambil ulang data setelah kembali dari halaman edit
     fetchPost();
   }
 
-  // =========================
-  // HAPUS ARTIKEL
-  // =========================
   Future<void> confirmDelete() async {
     if (post == null || isDeleting) return;
 
@@ -128,10 +117,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
-      // =========================
-      // APP BAR
-      // =========================
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -166,10 +151,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       ),
 
       body: _buildBody(),
-
-      // =========================
-      // ACTION BAR
-      // =========================
       bottomNavigationBar:
           post != null && !isLoading && errorMessage == null
               ? _buildActionBar()
@@ -177,9 +158,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     );
   }
 
-  // =========================
-  // BODY
-  // =========================
   Widget _buildBody() {
     if (isLoading) {
       return const Center(

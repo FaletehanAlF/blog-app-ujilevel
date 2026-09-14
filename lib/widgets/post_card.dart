@@ -5,8 +5,6 @@ import '../models/post.dart';
 import '../services/api.dart';
 import 'app_ui.dart';
 
-/// Editorial card: IMAGE → CATEGORY → TITLE → excerpt.
-/// Aspect ratio gambar konsisten 16/9, card tidak terlalu tinggi.
 class PostCard extends StatelessWidget {
   final Post post;
   final VoidCallback onDelete;
@@ -42,7 +40,6 @@ class PostCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── IMAGE (16/9 konsisten) ──
               AspectRatio(
                 aspectRatio: 16 / 9,
                 child: ClipRRect(

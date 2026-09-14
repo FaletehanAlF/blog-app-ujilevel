@@ -75,9 +75,6 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       backgroundColor: AppColors.background,
 
-      // =========================
-      // APP BAR
-      // =========================
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -142,23 +139,16 @@ class _MainShellState extends State<MainShell> {
         ),
       ),
 
-      // =========================
-      // CONTENT
-      // =========================
       body: IndexedStack(
         index: _pageIndex,
         children: _pages,
       ),
 
-      // =========================
-      // BOTTOM NAVIGATION
-      // =========================
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           backgroundColor: AppColors.surface,
           indicatorColor: Colors.blue.withValues(alpha: 0.15),
 
-          // Warna icon aktif dan tidak aktif
           iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
             (states) {
               if (states.contains(WidgetState.selected)) {
@@ -173,7 +163,6 @@ class _MainShellState extends State<MainShell> {
             },
           ),
 
-          // Warna tulisan aktif dan tidak aktif
           labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
             (states) {
               if (states.contains(WidgetState.selected)) {

@@ -145,7 +145,6 @@ class HomePageState extends State<HomePage> {
           ),
 
           const SizedBox(height: 14),
-
           // Artikel utama
           if (isLoading)
             const Center(

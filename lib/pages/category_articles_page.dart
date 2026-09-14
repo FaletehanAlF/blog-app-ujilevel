@@ -28,9 +28,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
   bool isLoading = true;
   String? errorMessage;
 
-  // =========================
-  // GET ARTICLES BY CATEGORY
-  // =========================
   Future<void> fetchPosts() async {
     setState(() {
       isLoading = true;
@@ -59,9 +56,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
     }
   }
 
-  // =========================
-  // DELETE CONFIRMATION
-  // =========================
   Future<void> confirmDelete(Post post) async {
     if (!mounted) return;
 
@@ -72,9 +66,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
     }
   }
 
-  // =========================
-  // DELETE ARTICLE
-  // =========================
   Future<void> deletePost(int id) async {
     try {
       await apiService.deletePost(id);
@@ -93,9 +84,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
     }
   }
 
-  // =========================
-  // OPEN DETAIL
-  // =========================
   Future<void> openDetail(Post post) async {
     await Navigator.push(
       context,
@@ -104,7 +92,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
       ),
     );
 
-    // Refresh data setelah kembali
     fetchPosts();
   }
 
@@ -118,10 +105,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
-      // =========================
-      // APP BAR
-      // =========================
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -146,9 +129,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
         ),
       ),
 
-      // =========================
-      // BODY
-      // =========================
       body: RefreshIndicator(
         backgroundColor: AppColors.surface2,
         color: Colors.blue,
@@ -157,10 +137,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
       ),
     );
   }
-
-  // =========================
-  // MAIN BODY
-  // =========================
   Widget _buildBody() {
     if (isLoading) {
       return _buildLoading();
@@ -178,9 +154,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
       children: [
-        // =========================
-        // HEADER
-        // =========================
         Text(widget.categoryName, style: AppType.pageTitle),
 
         const SizedBox(height: 6),
@@ -195,10 +168,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
         ),
 
         const SizedBox(height: 24),
-
-        // =========================
-        // ARTICLE LIST
-        // =========================
         ...posts.map(
           (post) => Padding(
             padding: const EdgeInsets.only(bottom: 14),
@@ -213,9 +182,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
     );
   }
 
-  // =========================
-  // LOADING
-  // =========================
   Widget _buildLoading() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -248,9 +214,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
     );
   }
 
-  // =========================
-  // ERROR
-  // =========================
   Widget _buildError() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -266,9 +229,6 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
     );
   }
 
-  // =========================
-  // EMPTY
-  // =========================
   Widget _buildEmpty() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),

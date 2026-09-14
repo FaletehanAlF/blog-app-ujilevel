@@ -1,51 +1,26 @@
 import 'package:flutter/material.dart';
 
-import 'app_theme.dart';
-
-/// ─────────────────────────────────────────────────────────────
-/// DARK MODERN EDITORIAL BLOG — design system tunggal.
-/// Hierarki: typography → whitespace → image → layout.
-/// Satu aksen (paper white) + satu warna destruktif (red).
-/// Tanpa gradient, tanpa glassmorphism, tanpa shadow berat.
-/// ─────────────────────────────────────────────────────────────
 class AppColors {
-  static bool get _dark => AppTheme.isDark;
+  static const Color background = Color(0xFF0B0B0B);
+  static const Color surface = Color(0xFF141414);
+  static const Color surface2 = Color(0xFF1C1C1C);
+  static const Color border = Color(0xFF292929);
 
-  static Color get background =>
-      _dark ? const Color(0xFF0B0B0B) : const Color(0xFFF7F8FA);
-  static Color get surface => _dark ? const Color(0xFF141414) : Colors.white;
-  static Color get surface2 =>
-      _dark ? const Color(0xFF1C1C1C) : const Color(0xFFF3F4F6);
-  static Color get border =>
-      _dark ? const Color(0xFF292929) : const Color(0xFFE5E7EB);
+  static const Color textPrimary = Color(0xFFF5F5F5);
+  static const Color textSecondary = Color(0xFFA3A3A3);
+  static const Color textMuted = Color(0xFF737373);
 
-  static Color get textPrimary =>
-      _dark ? const Color(0xFFF5F5F5) : const Color(0xFF111827);
-  static Color get textSecondary =>
-      _dark ? const Color(0xFFA3A3A3) : const Color(0xFF6B7280);
-  static Color get textMuted =>
-      _dark ? const Color(0xFF737373) : const Color(0xFF9CA3AF);
+  static const Color accent = Color(0xFFF5F5F5);
+  static const Color onAccent = Color(0xFF0B0B0B);
 
-  /// Satu-satunya aksen: paper white di mode gelap,
-  /// slate-900 di mode terang. Dipakai untuk primary
-  /// action / active / link / focus saja.
-  static Color get accent =>
-      _dark ? const Color(0xFFF5F5F5) : const Color(0xFF111827);
-  static Color get onAccent => _dark ? const Color(0xFF0B0B0B) : Colors.white;
+  static const Color danger = Color(0xFFE5484D);
+  static const Color dangerSoft = Color(0xFF241719);
+  static const Color dangerBorder = Color(0xFF4A2526);
 
-  static Color get danger => const Color(0xFFE5484D);
-  static Color get dangerSoft =>
-      _dark ? const Color(0xFF241719) : const Color(0xFFFEF2F2);
-  static Color get dangerBorder =>
-      _dark ? const Color(0xFF4A2526) : const Color(0xFFF3C2C2);
-
-  static Color get skeleton =>
-      _dark ? const Color(0xFF1C1C1C) : const Color(0xFFEEF0F3);
-  static Color get skeletonHi =>
-      _dark ? const Color(0xFF262626) : const Color(0xFFE2E5EA);
+  static const Color skeleton = Color(0xFF1C1C1C);
+  static const Color skeletonHi = Color(0xFF262626);
 }
 
-/// Spacing: hanya 8 · 12 · 16 · 20 · 24 · 32.
 class AppSpace {
   static const double xs = 8;
   static const double sm = 12;
@@ -55,7 +30,6 @@ class AppSpace {
   static const double xxl = 32;
 }
 
-/// Radius konsisten: kecil 8 · input/button 12 · card/image 16.
 class AppRadius {
   static const double sm = 8;
   static const double md = 12;
@@ -84,11 +58,9 @@ class AppType {
     fontWeight: FontWeight.w800,
     letterSpacing: -0.6,
   );
-  static TextStyle get body => TextStyle(
-    color: AppTheme.isDark ? const Color(0xFFD4D4D4) : const Color(0xFF374151),
-    fontSize: 15,
-    height: 1.75,
-  );
+  static TextStyle get body =>
+      const TextStyle(color: Color(0xFFD4D4D4), fontSize: 15, height: 1.75);
+
   static TextStyle get excerpt =>
       TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.6);
   static TextStyle get category => TextStyle(
@@ -107,7 +79,6 @@ class AppType {
       TextStyle(color: AppColors.textMuted, fontSize: 14);
 }
 
-/// Kategori: kecil & subtle, tidak mendominasi.
 class CategoryLabel extends StatelessWidget {
   final String label;
   const CategoryLabel({super.key, required this.label});
@@ -123,7 +94,6 @@ class CategoryLabel extends StatelessWidget {
   }
 }
 
-/// Label form: jelas, satu gaya di Add & Edit.
 class FieldLabel extends StatelessWidget {
   final String text;
   final bool optional;
@@ -156,7 +126,6 @@ class FieldLabel extends StatelessWidget {
   }
 }
 
-/// Error validasi inline tepat di bawah field.
 class FieldError extends StatelessWidget {
   final String? message;
   const FieldError({super.key, this.message});
@@ -187,7 +156,6 @@ class FieldError extends StatelessWidget {
   }
 }
 
-/// Input dark: surface + border subtle, focus memakai aksen.
 InputDecoration appInputDecoration({
   required String hint,
   bool hasError = false,
@@ -251,7 +219,6 @@ void showAppSnack(
     );
 }
 
-/// Dialog konfirmasi hapus — dark, clean, eksplisit.
 Future<bool> showDeleteDialog(BuildContext context, {required String title}) {
   return showDialog<bool>(
     context: context,
@@ -347,7 +314,6 @@ Future<bool> showDeleteDialog(BuildContext context, {required String title}) {
   ).then((v) => v ?? false);
 }
 
-/// Tombol primary editorial: aksen paper, tinggi konsisten 50.
 Widget primaryButton({
   required String label,
   required VoidCallback? onPressed,
@@ -398,7 +364,6 @@ Widget primaryButton({
   );
 }
 
-/// Skeleton loading editorial — blok netral, tanpa animasi berlebihan.
 class LoadingSkeletonList extends StatelessWidget {
   const LoadingSkeletonList({super.key});
 

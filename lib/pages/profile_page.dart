@@ -23,10 +23,7 @@ class ProfilePage extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            size: 22,
-          ),
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
         ),
       ),
       body: ListView(
@@ -42,10 +39,7 @@ class ProfilePage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.surface2,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.border,
-                      width: 1,
-                    ),
+                    border: Border.all(color: AppColors.border, width: 1),
                   ),
                   child: Icon(
                     Icons.person_outline_rounded,
@@ -92,7 +86,7 @@ class ProfilePage extends StatelessWidget {
           _infoItem(
             icon: Icons.person_outline_rounded,
             title: 'Nama',
-            value: 'Blog Reader',
+            value: 'Narata User',
           ),
 
           _infoItem(
@@ -155,9 +149,7 @@ class ProfilePage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -168,11 +160,7 @@ class ProfilePage extends StatelessWidget {
               color: AppColors.surface2,
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(
-              icon,
-              color: AppColors.textSecondary,
-              size: 20,
-            ),
+            child: Icon(icon, color: AppColors.textSecondary, size: 20),
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -214,16 +202,11 @@ class ProfilePage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: ListTile(
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 15,
-          vertical: 4,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
         leading: Container(
           width: 40,
           height: 40,
@@ -231,11 +214,7 @@ class ProfilePage extends StatelessWidget {
             color: AppColors.surface2,
             borderRadius: BorderRadius.circular(11),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.textSecondary,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppColors.textSecondary, size: 20),
         ),
         title: Text(
           title,
@@ -247,10 +226,7 @@ class ProfilePage extends StatelessWidget {
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         trailing: Icon(
           Icons.chevron_right_rounded,

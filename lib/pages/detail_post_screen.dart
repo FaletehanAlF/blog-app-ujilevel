@@ -19,12 +19,19 @@ class DetailPostScreen extends StatefulWidget {
 }
 
 class _DetailPostScreenState extends State<DetailPostScreen> {
+  final ApiService apiService = ApiService();
+
   Post? post;
   bool isLoading = true;
   bool isDeleting = false;
   String? errorMessage;
 
-  final ApiService apiService = ApiService();
+  @override
+  void initState() {
+    super.initState();
+    fetchPost();
+  }
+
   Future<void> fetchPost() async {
     setState(() {
       isLoading = true;
@@ -108,12 +115,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    fetchPost();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -121,18 +122,14 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
-
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
           icon: const Icon(
             Icons.arrow_back_rounded,
             size: 22,
           ),
           tooltip: 'Kembali',
         ),
-
         title: const Text(
           'Detail Artikel',
           style: TextStyle(
@@ -140,7 +137,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
-
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -149,7 +145,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
           ),
         ),
       ),
-
       body: _buildBody(),
       bottomNavigationBar:
           post != null && !isLoading && errorMessage == null
@@ -175,7 +170,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       return SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: 500,
           child: ErrorStateView(
             message: errorMessage ?? 'Artikel tidak ditemukan.',
             onRetry: fetchPost,
@@ -199,24 +194,15 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // =========================
-              // HERO IMAGE
-              // =========================
               if (post!.image != null && post!.image!.isNotEmpty)
                 _buildHeroImage(),
 
-              // =========================
-              // CATEGORY
-              // =========================
               CategoryLabel(
                 label: post!.category,
               ),
 
               const SizedBox(height: 14),
 
-              // =========================
-              // TITLE
-              // =========================
               Text(
                 post!.title,
                 style: AppType.detailTitle,
@@ -224,9 +210,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
               const SizedBox(height: 20),
 
-              // =========================
-              // DIVIDER
-              // =========================
               Container(
                 height: 1,
                 color: AppColors.border,
@@ -234,9 +217,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
               const SizedBox(height: 20),
 
-              // =========================
-              // CONTENT
-              // =========================
               Text(
                 post!.content,
                 style: AppType.body,
@@ -244,9 +224,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
               const SizedBox(height: 24),
 
-              // =========================
-              // PETUNJUK
-              // =========================
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -288,9 +265,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     );
   }
 
-  // =========================
-  // HERO IMAGE
-  // =========================
   Widget _buildHeroImage() {
     return Padding(
       padding: const EdgeInsets.only(
@@ -312,7 +286,9 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
               child: const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                ),
               ),
             ),
             errorWidget: (context, url, error) => Container(
@@ -343,9 +319,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     );
   }
 
-  // =========================
-  // ACTION BAR
-  // =========================
   Widget _buildActionBar() {
     return SafeArea(
       child: Container(
@@ -365,9 +338,6 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         ),
         child: Row(
           children: [
-            // =========================
-            // EDIT
-            // =========================
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: isDeleting ? null : openEdit,
@@ -394,17 +364,10 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                 ),
               ),
             ),
-
             const SizedBox(width: 10),
-
-            // =========================
-            // HAPUS
-            // =========================
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: isDeleting
-                    ? null
-                    : confirmDelete,
+                onPressed: isDeleting ? null : confirmDelete,
                 icon: isDeleting
                     ? const SizedBox(
                         width: 17,

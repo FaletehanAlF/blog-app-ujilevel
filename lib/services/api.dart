@@ -17,11 +17,11 @@ class ApiService {
   static const String _kId = 'user_id';
   static const String _kName = 'user_name';
 
-  String? _token;
-  String? _role;
-  String? _email;
-  int? _userId;
-  String? _name;
+  static String? _token;
+  static String? _role;
+  static String? _email;
+  static int? _userId;
+  static String? _name;
 
   final Dio _dio = Dio(
     BaseOptions(

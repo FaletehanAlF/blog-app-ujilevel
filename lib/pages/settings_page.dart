@@ -1,9 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/pages/profile_page.dart';
+import 'package:belajar_flutter/services/api.dart';
+import 'package:belajar_flutter/pages/login_page.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  final ApiService _api = ApiService();
+  String? _email;
+  String? _role;
+  String? _name;
+  bool _loggingOut = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    await _api.init();
+    final email = await _api.getEmail();
+    final role = await _api.getRole();
+    final name = await _api.getUserName();
+    if (!mounted) return;
+    setState(() {
+      _email = email;
+      _role = role;
+      _name = name;
+    });
+  }
+
+  Future<void> _doLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: AppColors.border),
+        ),
+        title: Text('Keluar akun?',
+            style: TextStyle(color: AppColors.textPrimary)),
+        content: Text(
+          'Sesi login akan dihapus dan kamu perlu login kembali.',
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal',
+                style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Log Out'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    setState(() => _loggingOut = true);
+    await _api.logout();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,18 +178,27 @@ class SettingsPage extends StatelessWidget {
 
         const SizedBox(height: 28),
 
-        // Logout - visual only
+        // Logout - sekarang aktif
         SizedBox(
           height: 52,
           child: ElevatedButton.icon(
-            onPressed: null,
-            icon: const Icon(
-              Icons.logout_rounded,
-              size: 19,
-            ),
-            label: const Text(
-              'Log Out',
-              style: TextStyle(
+            onPressed: _loggingOut ? null : _doLogout,
+            icon: _loggingOut
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.textMuted,
+                    ),
+                  )
+                : const Icon(
+                    Icons.logout_rounded,
+                    size: 19,
+                  ),
+            label: Text(
+              _loggingOut ? 'Keluar...' : 'Log Out',
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -152,6 +236,13 @@ class SettingsPage extends StatelessWidget {
   // =========================
 
   Widget _profileCard(BuildContext context) {
+    final displayName = _name != null && _name!.isNotEmpty
+        ? _name!
+        : 'Blog Reader';
+    final displayEmail = _email != null && _email!.isNotEmpty
+        ? _email!
+        : 'reader@blog.com';
+    final displayRole = _role != null && _role!.isNotEmpty ? _role! : 'user';
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -195,7 +286,7 @@ class SettingsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Blog Reader',
+                    displayName,
                     style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 15,
@@ -204,7 +295,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'reader@blog.com',
+                    '$displayEmail • $displayRole',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,

@@ -1,8 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final ApiService _api = ApiService();
+  String _name = 'Narata User';
+  String _email = 'reader@blog.com';
+  String _role = 'Pembaca';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    await _api.init();
+    final name = await _api.getUserName();
+    final email = await _api.getEmail();
+    final role = await _api.getRole();
+    if (!mounted) return;
+    setState(() {
+      if (name != null && name.isNotEmpty) _name = name;
+      if (email != null && email.isNotEmpty) _email = email;
+      if (role != null && role.isNotEmpty) {
+        // Tampilkan role apa adanya, misal admin / user
+        _role = role;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +82,7 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Blog Reader',
+                  _name,
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 21,
@@ -58,10 +91,18 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  'Pembaca Artikel',
+                  _role,
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _email,
+                  style: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -86,19 +127,19 @@ class ProfilePage extends StatelessWidget {
           _infoItem(
             icon: Icons.person_outline_rounded,
             title: 'Nama',
-            value: 'Narata User',
+            value: _name,
           ),
 
           _infoItem(
             icon: Icons.email_outlined,
             title: 'Email',
-            value: 'reader@blog.com',
+            value: _email,
           ),
 
           _infoItem(
             icon: Icons.article_outlined,
             title: 'Peran',
-            value: 'Pembaca',
+            value: _role,
           ),
 
           const SizedBox(height: 28),

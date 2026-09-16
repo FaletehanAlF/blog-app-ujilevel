@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'pages/login_page.dart';
 import 'pages/main_shell.dart';
+import 'services/api.dart';
 import 'widgets/app_ui.dart';
 
 Future<void> main() async {
@@ -10,6 +12,11 @@ Future<void> main() async {
   await dotenv.load(
     fileName: 'assets/.env',
   );
+
+  // Load token dari SharedPreferences sebelum app dibuka
+  // agar Dio interceptor bisa langsung mengirim Authorization header
+  final api = ApiService();
+  await api.init();
 
   runApp(const BlogApp());
 }
@@ -74,7 +81,58 @@ class BlogApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'NARATA',
       theme: _buildTheme(),
-      home: const MainShell(),
+      home: const AuthGate(),
     );
+  }
+}
+
+/// Mengecek apakah user sudah login (token ada di SharedPreferences)
+/// Jika sudah -> MainShell, jika belum -> LoginPage
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  final ApiService _api = ApiService();
+  bool _checking = true;
+  bool _loggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    await _api.init();
+    final loggedIn = await _api.isLoggedIn();
+    if (!mounted) return;
+    setState(() {
+      _loggedIn = loggedIn;
+      _checking = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_checking) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.textMuted,
+            ),
+          ),
+        ),
+      );
+    }
+    return _loggedIn ? const MainShell() : const LoginPage();
   }
 }

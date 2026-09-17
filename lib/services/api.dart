@@ -557,10 +557,13 @@ class ApiService {
   // Posts
   // =========================
 
-  Future<List<Post>> getPosts() async {
+  Future<List<Post>> getPosts({String? search}) async {
     try {
       final response = await _dio.get(
         '/posts',
+        queryParameters: search != null && search.trim().isNotEmpty
+            ? {'search': search.trim()}
+            : null,
       );
 
       if (response.statusCode != 200) {

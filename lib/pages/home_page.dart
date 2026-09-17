@@ -21,31 +21,55 @@ class HomePageState extends State<HomePage> {
   List<Post> posts = [];
   bool isLoading = true;
   String? errorMessage;
+  String searchQuery = '';
+  bool _showClear = false;
 
   @override
   void initState() {
     super.initState();
+    searchController.addListener(_onSearchTextChanged);
     fetchPosts();
+  }
+
+  void _onSearchTextChanged() {
+    final show = searchController.text.isNotEmpty;
+    if (show != _showClear && mounted) {
+      setState(() {
+        _showClear = show;
+      });
+    }
   }
 
   @override
   void dispose() {
+    searchController.removeListener(_onSearchTextChanged);
     searchController.dispose();
     super.dispose();
   }
 
-  Future<void> fetchPosts() async {
+  Future<void> fetchPosts({String? keyword}) async {
+    final query = (keyword ?? searchQuery).trim();
+    final bool isExplicitSearch = keyword != null;
+
     if (mounted) {
       setState(() {
-        // Tampilkan loading hanya saat daftar masih kosong agar
-        // pull-to-refresh tidak mengosongkan layar.
-        if (posts.isEmpty) isLoading = true;
+        searchQuery = query;
+        // Saat pencarian eksplisit, kosongkan daftar agar loading,
+        // error, dan empty state tampil jelas untuk keyword tersebut.
+        // Saat refresh/detail-back (tanpa keyword), pertahankan daftar
+        // agar layar tidak berkedip dan query tetap dipakai.
+        if (posts.isEmpty || isExplicitSearch) {
+          isLoading = true;
+          if (isExplicitSearch) posts = [];
+        }
         errorMessage = null;
       });
     }
 
     try {
-      final data = await apiService.getPosts();
+      final data = await apiService.getPosts(
+        search: query.isEmpty ? null : query,
+      );
 
       if (!mounted) return;
 
@@ -82,7 +106,7 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: fetchPosts,
+      onRefresh: () => fetchPosts(),
       child: ListView(
         padding: const EdgeInsets.all(18),
         children: [
@@ -111,6 +135,17 @@ class HomePageState extends State<HomePage> {
           // Search bar
           TextField(
             controller: searchController,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (value) {
+              FocusScope.of(context).unfocus();
+              fetchPosts(keyword: value);
+            },
+            onChanged: (value) {
+              // Jika dikosongkan saat mengetik, kembali ke semua artikel.
+              if (value.trim().isEmpty && searchQuery.isNotEmpty) {
+                fetchPosts(keyword: '');
+              }
+            },
             style: const TextStyle(
               color: Colors.white,
               fontSize: 14,
@@ -127,6 +162,20 @@ class HomePageState extends State<HomePage> {
                 color: Colors.grey,
                 size: 21,
               ),
+              suffixIcon: _showClear
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.clear_rounded,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        searchController.clear();
+                        FocusScope.of(context).unfocus();
+                        fetchPosts(keyword: '');
+                      },
+                    )
+                  : null,
               filled: true,
               fillColor: const Color(0xFF1C1C1C),
               contentPadding: const EdgeInsets.symmetric(

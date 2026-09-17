@@ -743,6 +743,197 @@ class ApiService {
   }
 
   // =========================
+  // Bookmarks
+  // =========================
+
+  /// Bookmark milik user yang sedang login.
+  /// Backend menentukan kepemilikan dari JWT, tanpa filter user
+  /// secara hardcode di Flutter. Item daftar memakai struktur Post
+  /// yang sudah ada (langsung atau nested di key `post`).
+
+  Future<void> addBookmark(int postId) async {
+    try {
+      final response = await _dio.post(
+        '/bookmarks/$postId',
+      );
+
+      if (response.statusCode != 200 &&
+          response.statusCode != 201) {
+        throw Exception(
+          'Gagal menambahkan bookmark.',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  Future<void> removeBookmark(int postId) async {
+    try {
+      final response = await _dio.delete(
+        '/bookmarks/$postId',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal menghapus bookmark.',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  /// True jika artikel sudah dibookmark user yang sedang login.
+  /// 404 berarti belum dibookmark (bukan error); error lain
+  /// (mis. 401 sesi habis) tetap dilempar agar tidak disamarkan.
+  Future<bool> getBookmarkStatus(int postId) async {
+    try {
+      final response = await _dio.get(
+        '/bookmarks/$postId',
+      );
+
+      if (response.statusCode != 200) {
+        return false;
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        return false;
+      }
+
+      final data = body['data'];
+
+      for (final source in [data, body]) {
+        if (source is Map) {
+          final flag = source['bookmarked'] ??
+              source['is_bookmarked'] ??
+              source['isBookmarked'];
+
+          if (flag is bool) {
+            return flag;
+          }
+
+          if (flag != null) {
+            final normalized = flag.toString().toLowerCase();
+
+            if (normalized == 'true' || normalized == '1') {
+              return true;
+            }
+
+            if (normalized == 'false' || normalized == '0') {
+              return false;
+            }
+          }
+        } else if (source is bool) {
+          return source;
+        }
+      }
+
+      // Payload data non-kosong tanpa flag eksplisit (mis. detail
+      // bookmark {id, post_id, ...}) berarti sudah dibookmark.
+      if (data is Map && data.isNotEmpty) {
+        return true;
+      }
+
+      return false;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return false;
+      }
+
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  Future<PaginatedPosts> getBookmarks({
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/bookmarks',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil data bookmark.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        return PaginatedPosts(
+          posts: const [],
+          page: page,
+          limit: limit,
+          total: 0,
+          totalPages: page,
+        );
+      }
+
+      final rawData = body['data'];
+
+      final List<Post> posts = [];
+
+      if (rawData is List) {
+        for (final item in rawData.whereType<Map>()) {
+          final map = Map<String, dynamic>.from(item);
+
+          // Item bisa berupa Post langsung atau wrapper {post: {...}}.
+          final postJson = map['post'] is Map
+              ? Map<String, dynamic>.from(map['post'] as Map)
+              : map;
+
+          posts.add(Post.fromJson(postJson));
+        }
+      }
+
+      final rawPagination = body['pagination'] is Map
+          ? body['pagination'] as Map
+          : (body['meta'] is Map ? body['meta'] as Map : null);
+
+      if (rawPagination != null) {
+        final meta = Map<String, dynamic>.from(rawPagination);
+
+        return PaginatedPosts(
+          posts: posts,
+          page: _toInt(meta['page'] ?? meta['current_page']) ?? page,
+          limit: _toInt(meta['limit'] ?? meta['per_page']) ?? limit,
+          total: _toInt(meta['total']) ?? posts.length,
+          totalPages: _toInt(meta['totalPages'] ?? meta['total_pages']) ?? 1,
+        );
+      }
+
+      // Fallback jika backend tidak mengirim metadata: halaman terakhir
+      // adalah halaman yang datanya kurang dari limit yang diminta.
+      return PaginatedPosts(
+        posts: posts,
+        page: page,
+        limit: limit,
+        total: posts.length,
+        totalPages: posts.length < limit ? page : page + 1,
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  // =========================
   // Create Post
   // =========================
 

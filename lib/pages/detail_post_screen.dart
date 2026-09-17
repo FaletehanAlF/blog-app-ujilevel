@@ -26,6 +26,10 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   bool isDeleting = false;
   String? errorMessage;
 
+  /// null = status bookmark belum dimuat.
+  bool? _isBookmarked;
+  bool _isBookmarkWorking = false;
+
   int? _currentUserId;
   String? _currentRole;
 
@@ -64,6 +68,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
     setState(() {
       isLoading = true;
       errorMessage = null;
+      _isBookmarked = null;
     });
 
     try {
@@ -75,6 +80,8 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         post = fetchedPost;
         isLoading = false;
       });
+
+      _loadBookmarkStatus();
     } catch (error) {
       if (!mounted) return;
 
@@ -82,6 +89,76 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         isLoading = false;
         errorMessage = error.toString();
       });
+    }
+  }
+
+  /// Status bookmark dari backend (GET /bookmarks/:postId).
+  /// Gagal memuat bukan error fatal: tombol memakai ikon default dan
+  /// aksi toggle akan menampilkan error sebenarnya jika ada.
+  Future<void> _loadBookmarkStatus() async {
+    try {
+      final bookmarked =
+          await apiService.getBookmarkStatus(widget.postId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _isBookmarked = bookmarked;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isBookmarked = false;
+      });
+    }
+  }
+
+  Future<void> _toggleBookmark() async {
+    if (post == null || _isBookmarkWorking) return;
+
+    // Status belum diketahui, muat dulu sebelum beraksi.
+    if (_isBookmarked == null) {
+      await _loadBookmarkStatus();
+      if (!mounted || _isBookmarked == null) return;
+    }
+
+    setState(() {
+      _isBookmarkWorking = true;
+    });
+
+    final wasBookmarked = _isBookmarked ?? false;
+
+    try {
+      if (wasBookmarked) {
+        await apiService.removeBookmark(post!.id);
+      } else {
+        await apiService.addBookmark(post!.id);
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _isBookmarked = !wasBookmarked;
+        _isBookmarkWorking = false;
+      });
+
+      showAppSnack(
+        context,
+        wasBookmarked ? 'Bookmark dihapus' : 'Bookmark ditambahkan',
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _isBookmarkWorking = false;
+      });
+
+      showAppSnack(
+        context,
+        error.toString().replaceFirst('Exception: ', ''),
+        isError: true,
+      );
     }
   }
 
@@ -183,6 +260,10 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: [
+          if (post != null && !isLoading && errorMessage == null)
+            _buildBookmarkButton(),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -312,6 +393,35 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBookmarkButton() {
+    if (_isBookmarkWorking || _isBookmarked == null) {
+      return const Padding(
+        padding: EdgeInsets.only(right: 12),
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    final bookmarked = _isBookmarked ?? false;
+
+    return IconButton(
+      onPressed: _toggleBookmark,
+      icon: Icon(
+        bookmarked
+            ? Icons.bookmark_rounded
+            : Icons.bookmark_border_rounded,
+        size: 22,
+      ),
+      color: bookmarked ? Colors.blue : null,
+      tooltip: bookmarked ? 'Hapus bookmark' : 'Simpan bookmark',
     );
   }
 

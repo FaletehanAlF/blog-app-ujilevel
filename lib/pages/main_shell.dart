@@ -8,6 +8,7 @@ import 'addproduct.dart';
 import 'about_page.dart';
 import 'settings_page.dart';
 import 'profile_page.dart';
+import 'bookmark_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -94,6 +95,15 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  void _openBookmarks() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const BookmarkPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,6 +153,14 @@ class _MainShellState extends State<MainShell> {
         // Profile hanya pada Home
         actions: _index == 0
             ? [
+                IconButton(
+                  onPressed: _openBookmarks,
+                  icon: const Icon(
+                    Icons.bookmark_border_rounded,
+                    size: 22,
+                  ),
+                  tooltip: 'Bookmark',
+                ),
                 IconButton(
                   onPressed: _openProfile,
                   icon: const Icon(

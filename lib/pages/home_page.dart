@@ -219,10 +219,17 @@ class HomePageState extends State<HomePage> {
           else if (errorMessage != null && posts.isEmpty)
             ErrorStateView(
               message: errorMessage!,
-              onRetry: fetchPosts,
+              onRetry: () => fetchPosts(),
             )
           else if (posts.isNotEmpty)
             _featuredArticle(posts.first)
+          else if (searchQuery.isNotEmpty)
+            Text(
+              'Tidak ada artikel ditemukan untuk "$searchQuery".',
+              style: const TextStyle(
+                color: Colors.grey,
+              ),
+            )
           else
             const Text(
               'Belum ada artikel.',

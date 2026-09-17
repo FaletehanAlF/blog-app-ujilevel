@@ -9,6 +9,7 @@ import 'about_page.dart';
 import 'settings_page.dart';
 import 'profile_page.dart';
 import 'bookmark_page.dart';
+import 'like_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -104,6 +105,15 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  void _openLikes() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LikePage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,6 +163,14 @@ class _MainShellState extends State<MainShell> {
         // Profile hanya pada Home
         actions: _index == 0
             ? [
+                IconButton(
+                  onPressed: _openLikes,
+                  icon: const Icon(
+                    Icons.favorite_border_rounded,
+                    size: 22,
+                  ),
+                  tooltip: 'Like',
+                ),
                 IconButton(
                   onPressed: _openBookmarks,
                   icon: const Icon(

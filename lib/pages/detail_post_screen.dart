@@ -30,6 +30,10 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   bool? _isBookmarked;
   bool _isBookmarkWorking = false;
 
+  /// null = status like belum dimuat.
+  bool? _isLiked;
+  bool _isLikeWorking = false;
+
   int? _currentUserId;
   String? _currentRole;
 
@@ -82,6 +86,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       });
 
       _loadBookmarkStatus();
+      _loadLikeStatus();
     } catch (error) {
       if (!mounted) return;
 
@@ -152,6 +157,73 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
       setState(() {
         _isBookmarkWorking = false;
+      });
+
+      showAppSnack(
+        context,
+        error.toString().replaceFirst('Exception: ', ''),
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _loadLikeStatus() async {
+    try {
+      final liked =
+          await apiService.getLikeStatus(widget.postId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLiked = liked;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLiked = false;
+      });
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    if (post == null || _isLikeWorking) return;
+
+    // Status belum diketahui, muat dulu sebelum beraksi.
+    if (_isLiked == null) {
+      await _loadLikeStatus();
+      if (!mounted || _isLiked == null) return;
+    }
+
+    setState(() {
+      _isLikeWorking = true;
+    });
+
+    final wasLiked = _isLiked ?? false;
+
+    try {
+      if (wasLiked) {
+        await apiService.removeLike(post!.id);
+      } else {
+        await apiService.addLike(post!.id);
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLiked = !wasLiked;
+        _isLikeWorking = false;
+      });
+
+      showAppSnack(
+        context,
+        wasLiked ? 'Like dihapus' : 'Like ditambahkan',
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLikeWorking = false;
       });
 
       showAppSnack(
@@ -261,6 +333,8 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
           ),
         ),
         actions: [
+          if (post != null && !isLoading && errorMessage == null)
+            _buildLikeButton(),
           if (post != null && !isLoading && errorMessage == null)
             _buildBookmarkButton(),
         ],
@@ -422,6 +496,33 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       ),
       color: bookmarked ? Colors.blue : null,
       tooltip: bookmarked ? 'Hapus bookmark' : 'Simpan bookmark',
+    );
+  }
+
+  Widget _buildLikeButton() {
+    if (_isLikeWorking || _isLiked == null) {
+      return const Padding(
+        padding: EdgeInsets.only(right: 12),
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    final liked = _isLiked ?? false;
+
+    return IconButton(
+      onPressed: _toggleLike,
+      icon: Icon(
+        liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+        size: 22,
+      ),
+      color: liked ? const Color(0xFFE5484D) : null,
+      tooltip: liked ? 'Hapus like' : 'Suka artikel',
     );
   }
 

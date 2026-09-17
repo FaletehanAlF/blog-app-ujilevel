@@ -934,6 +934,192 @@ class ApiService {
   }
 
   // =========================
+  // Likes
+  // =========================
+
+  /// Tambah Like pada artikel. Kepemilikan ditentukan backend via JWT.
+  Future<void> addLike(int postId) async {
+    try {
+      final response = await _dio.post(
+        '/likes/$postId',
+      );
+
+      if (response.statusCode != 200 &&
+          response.statusCode != 201) {
+        throw Exception(
+          'Gagal menambahkan like.',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  Future<void> removeLike(int postId) async {
+    try {
+      final response = await _dio.delete(
+        '/likes/$postId',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal menghapus like.',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  /// True jika artikel sudah di-like user yang sedang login.
+  /// 404 berarti belum di-like (bukan error); error lain
+  /// (mis. 401 sesi habis) tetap dilempar.
+  Future<bool> getLikeStatus(int postId) async {
+    try {
+      final response = await _dio.get(
+        '/likes/$postId',
+      );
+
+      if (response.statusCode != 200) {
+        return false;
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        return false;
+      }
+
+      final data = body['data'];
+
+      for (final source in [data, body]) {
+        if (source is Map) {
+          final flag = source['liked'] ??
+              source['is_liked'] ??
+              source['isLiked'];
+
+          if (flag is bool) {
+            return flag;
+          }
+
+          if (flag != null) {
+            final normalized = flag.toString().toLowerCase();
+
+            if (normalized == 'true' || normalized == '1') {
+              return true;
+            }
+
+            if (normalized == 'false' || normalized == '0') {
+              return false;
+            }
+          }
+        } else if (source is bool) {
+          return source;
+        }
+      }
+
+      if (data is Map && data.isNotEmpty) {
+        return true;
+      }
+
+      return false;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return false;
+      }
+
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  /// Daftar artikel yang di-like user yang sedang login.
+  /// Backend menentukan kepemilikan dari JWT.
+  Future<PaginatedPosts> getLikes({
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/likes',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil data like.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        return PaginatedPosts(
+          posts: const [],
+          page: page,
+          limit: limit,
+          total: 0,
+          totalPages: page,
+        );
+      }
+
+      final rawData = body['data'];
+
+      final List<Post> posts = [];
+
+      if (rawData is List) {
+        for (final item in rawData.whereType<Map>()) {
+          final map = Map<String, dynamic>.from(item);
+
+          // Item bisa berupa Post langsung atau wrapper {post: {...}}.
+          final postJson = map['post'] is Map
+              ? Map<String, dynamic>.from(map['post'] as Map)
+              : map;
+
+          posts.add(Post.fromJson(postJson));
+        }
+      }
+
+      final rawPagination = body['pagination'] is Map
+          ? body['pagination'] as Map
+          : (body['meta'] is Map ? body['meta'] as Map : null);
+
+      if (rawPagination != null) {
+        final meta = Map<String, dynamic>.from(rawPagination);
+
+        return PaginatedPosts(
+          posts: posts,
+          page: _toInt(meta['page'] ?? meta['current_page']) ?? page,
+          limit: _toInt(meta['limit'] ?? meta['per_page']) ?? limit,
+          total: _toInt(meta['total']) ?? posts.length,
+          totalPages: _toInt(meta['totalPages'] ?? meta['total_pages']) ?? 1,
+        );
+      }
+
+      // Fallback jika backend tidak mengirim metadata.
+      return PaginatedPosts(
+        posts: posts,
+        page: page,
+        limit: limit,
+        total: posts.length,
+        totalPages: posts.length < limit ? page : page + 1,
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  // =========================
   // Create Post
   // =========================
 

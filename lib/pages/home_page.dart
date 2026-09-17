@@ -20,9 +20,18 @@ class HomePageState extends State<HomePage> {
 
   List<Post> posts = [];
   bool isLoading = true;
+  bool _isLoadingMore = false;
   String? errorMessage;
+  String? loadMoreError;
   String searchQuery = '';
+  PostSort _sort = PostSort.latest;
+  int _currentPage = 1;
+  int _totalPages = 1;
   bool _showClear = false;
+
+  static const int _pageSize = 10;
+
+  bool get _hasMore => _currentPage < _totalPages;
 
   @override
   void initState() {
@@ -47,34 +56,50 @@ class HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<void> fetchPosts({String? keyword}) async {
+  Future<void> fetchPosts({String? keyword, PostSort? sort}) async {
     final query = (keyword ?? searchQuery).trim();
+    final newSort = sort ?? _sort;
     final bool isExplicitSearch = keyword != null;
+    final bool isSortChanged = sort != null && sort != _sort;
+    // Sort berubah atau pencarian baru: reset ke page 1 dan hapus
+    // hasil lama, lalu ambil data sesuai sort yang aktif.
+    final bool isReload = isExplicitSearch || isSortChanged;
 
     if (mounted) {
       setState(() {
         searchQuery = query;
-        // Saat pencarian eksplisit, kosongkan daftar agar loading,
-        // error, dan empty state tampil jelas untuk keyword tersebut.
-        // Saat refresh/detail-back (tanpa keyword), pertahankan daftar
-        // agar layar tidak berkedip dan query tetap dipakai.
-        if (posts.isEmpty || isExplicitSearch) {
+        _sort = newSort;
+        // Muat ulang dari page 1: pencarian baru, clear pencarian,
+        // ganti sort, pull-to-refresh, dan kembali dari detail selalu
+        // mulai dari awal.
+        // Saat pencarian eksplisit atau ganti sort, kosongkan daftar
+        // agar loading, error, dan empty state tampil jelas.
+        // Saat refresh/detail-back (tanpa keyword/sort), pertahankan
+        // daftar agar layar tidak berkedip dan query tetap dipakai.
+        if (posts.isEmpty || isReload) {
           isLoading = true;
-          if (isExplicitSearch) posts = [];
+          if (isReload) posts = [];
         }
         errorMessage = null;
+        loadMoreError = null;
+        _isLoadingMore = false;
       });
     }
 
     try {
-      final data = await apiService.getPosts(
+      final result = await apiService.getPostsPaginated(
         search: query.isEmpty ? null : query,
+        sort: newSort,
+        page: 1,
+        limit: _pageSize,
       );
 
       if (!mounted) return;
 
       setState(() {
-        posts = data;
+        posts = result.posts;
+        _currentPage = result.page;
+        _totalPages = result.totalPages;
         isLoading = false;
         errorMessage = null;
       });
@@ -84,6 +109,51 @@ class HomePageState extends State<HomePage> {
       setState(() {
         isLoading = false;
         errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
+  /// Mengambil halaman berikutnya dan menggabungkannya dengan artikel
+  /// yang sudah tampil. Artikel lama tidak dihapus; saat error, daftar
+  /// tetap dipertahankan dan pengguna bisa mencoba lagi.
+  Future<void> loadMore() async {
+    if (_isLoadingMore || isLoading || !_hasMore) return;
+
+    if (mounted) {
+      setState(() {
+        _isLoadingMore = true;
+        loadMoreError = null;
+      });
+    }
+
+    try {
+      final result = await apiService.getPostsPaginated(
+        search: searchQuery.isEmpty ? null : searchQuery,
+        sort: _sort,
+        page: _currentPage + 1,
+        limit: _pageSize,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        final existingIds = posts.map((post) => post.id).toSet();
+        posts = [
+          ...posts,
+          ...result.posts.where(
+            (post) => !existingIds.contains(post.id),
+          ),
+        ];
+        _currentPage = result.page;
+        _totalPages = result.totalPages;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingMore = false;
+        loadMoreError = e.toString().replaceFirst('Exception: ', '');
       });
     }
   }
@@ -201,13 +271,89 @@ class HomePageState extends State<HomePage> {
 
           const SizedBox(height: 28),
 
-          const Text(
-            'Artikel Pilihan',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 19,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Artikel Pilihan',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              PopupMenuButton<PostSort>(
+                tooltip: 'Urutkan artikel',
+                color: const Color(0xFF1C1C1C),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                onSelected: (value) {
+                  if (value != _sort) fetchPosts(sort: value);
+                },
+                itemBuilder: (context) => PostSort.values
+                    .map(
+                      (option) => PopupMenuItem<PostSort>(
+                        value: option,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                option.label,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            if (option == _sort)
+                              const Icon(
+                                Icons.check_rounded,
+                                color: Colors.grey,
+                                size: 18,
+                              ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1C1C),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.sort_rounded,
+                        color: Colors.grey,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _sort.label,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.grey,
+                        size: 18,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 14),
@@ -256,6 +402,75 @@ class HomePageState extends State<HomePage> {
             ...posts.skip(1).map(
               (post) => _articleItem(post),
             ),
+          ],
+
+          // Pagination: Muat Lebih Banyak.
+          // Hanya tampil jika masih ada halaman berikutnya.
+          if (!isLoading && errorMessage == null && posts.isNotEmpty) ...[
+            const SizedBox(height: 8),
+
+            if (_isLoadingMore)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              )
+            else if (loadMoreError != null)
+              Column(
+                children: [
+                  Text(
+                    loadMoreError!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: loadMore,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.25),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              )
+            else if (_hasMore)
+              Center(
+                child: OutlinedButton(
+                  onPressed: loadMore,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.25),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: const Text('Muat Lebih Banyak'),
+                ),
+              ),
           ],
         ],
       ),

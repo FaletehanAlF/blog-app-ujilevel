@@ -76,6 +76,30 @@ class Post {
   }
 }
 
+/// Hasil daftar artikel beserta metadata pagination dari backend.
+///
+/// Format backend yang terverifikasi:
+/// `{ "data": [...], "pagination": { "page": 1, "limit": 10,
+/// "total": 9, "totalPages": 1 } }`
+class PaginatedPosts {
+  final List<Post> posts;
+  final int page;
+  final int limit;
+  final int total;
+  final int totalPages;
+
+  const PaginatedPosts({
+    required this.posts,
+    required this.page,
+    required this.limit,
+    required this.total,
+    required this.totalPages,
+  });
+
+  /// True jika masih ada halaman berikutnya yang bisa dimuat.
+  bool get hasMore => page < totalPages;
+}
+
 int? _toInt(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;

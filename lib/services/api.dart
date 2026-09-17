@@ -8,6 +8,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/post.dart';
 import '../models/category.dart';
 
+/// Urutan artikel yang didukung backend pada `GET /posts`.
+///
+/// Nilai dikirim apa adanya sebagai query parameter `sort`.
+/// Urutan data ditentukan backend; Flutter tidak mengurutkan ulang.
+enum PostSort {
+  latest('latest', 'Terbaru'),
+  oldest('oldest', 'Terlama'),
+  titleAsc('title_asc', 'Judul A-Z'),
+  titleDesc('title_desc', 'Judul Z-A');
+
+  const PostSort(this.value, this.label);
+
+  final String value;
+  final String label;
+}
+
 class ApiService {
   static String get baseUrl => dotenv.env['API_URL'] ?? '';
 
@@ -599,6 +615,103 @@ class ApiService {
     }
   }
 
+  /// Daftar artikel dengan pagination backend.
+  ///
+  /// Memanggil `GET /posts?page=X&limit=Y` (plus `search` dan `sort`
+  /// jika ada) dan membaca metadata dari
+  /// `pagination: {page, limit, total, totalPages}`.
+  /// Tanpa parameter page/limit, backend tidak mengirim metadata, jadi
+  /// method ini selalu mengirim keduanya agar respons konsisten.
+  /// Contoh: `GET /posts?search=teknologi&sort=title_asc&page=1&limit=10`.
+  Future<PaginatedPosts> getPostsPaginated({
+    String? search,
+    PostSort sort = PostSort.latest,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final queryParameters = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+        'sort': sort.value,
+      };
+
+      if (search != null && search.trim().isNotEmpty) {
+        queryParameters['search'] = search.trim();
+      }
+
+      final response = await _dio.get(
+        '/posts',
+        queryParameters: queryParameters,
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil data artikel.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        return PaginatedPosts(
+          posts: const [],
+          page: page,
+          limit: limit,
+          total: 0,
+          totalPages: page,
+        );
+      }
+
+      final rawData = body['data'];
+
+      final List<Post> posts;
+
+      if (rawData is List) {
+        posts = rawData
+            .whereType<Map>()
+            .map(
+              (item) => Post.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .toList();
+      } else {
+        posts = [];
+      }
+
+      final rawPagination = body['pagination'] is Map
+          ? body['pagination'] as Map
+          : (body['meta'] is Map ? body['meta'] as Map : null);
+
+      if (rawPagination != null) {
+        final meta = Map<String, dynamic>.from(rawPagination);
+
+        return PaginatedPosts(
+          posts: posts,
+          page: _toInt(meta['page'] ?? meta['current_page']) ?? page,
+          limit: _toInt(meta['limit'] ?? meta['per_page']) ?? limit,
+          total: _toInt(meta['total']) ?? posts.length,
+          totalPages: _toInt(meta['totalPages'] ?? meta['total_pages']) ?? 1,
+        );
+      }
+
+      // Fallback jika backend tidak mengirim metadata: halaman terakhir
+      // adalah halaman yang datanya kurang dari limit yang diminta.
+      return PaginatedPosts(
+        posts: posts,
+        page: page,
+        limit: limit,
+        total: posts.length,
+        totalPages: posts.length < limit ? page : page + 1,
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
   Future<Post> getPostById(int id) async {
     try {
       final response = await _dio.get(
@@ -902,4 +1015,10 @@ class ApiService {
       );
     }
   }
+}
+
+int? _toInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  return int.tryParse(value.toString());
 }

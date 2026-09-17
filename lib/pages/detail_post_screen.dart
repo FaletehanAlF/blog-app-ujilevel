@@ -208,6 +208,10 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                 style: AppType.detailTitle,
               ),
 
+              const SizedBox(height: 12),
+
+              _buildAuthorRow(),
+
               const SizedBox(height: 20),
 
               Container(
@@ -262,6 +266,59 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildAuthorRow() {
+    final name = post?.authorName;
+
+    return Row(
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: AppColors.surface2,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.border,
+            ),
+          ),
+          child: Icon(
+            Icons.person_outline_rounded,
+            color: AppColors.textSecondary,
+            size: 19,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Oleh',
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                (name == null || name.isEmpty)
+                    ? 'Penulis tidak diketahui'
+                    : name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

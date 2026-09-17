@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/category.dart';
 import '../services/api.dart';
 import '../widgets/app_ui.dart';
 import 'category_articles_page.dart';
@@ -14,7 +15,7 @@ class CategoryPage extends StatefulWidget {
 class _CategoryPageState extends State<CategoryPage> {
   final ApiService apiService = ApiService();
 
-  List<dynamic> categories = [];
+  List<Category> categories = [];
 
   bool isLoading = true;
   String? errorMessage;
@@ -39,7 +40,7 @@ class _CategoryPageState extends State<CategoryPage> {
       if (!mounted) return;
 
       setState(() {
-        categories = List<dynamic>.from(data);
+        categories = data;
         isLoading = false;
       });
     } catch (error) {
@@ -78,17 +79,8 @@ class _CategoryPageState extends State<CategoryPage> {
     );
   }
 
-  Future<void> editCategory(Map<String, dynamic> category) async {
-    final id = _toInt(category['id']);
-
-    if (id == null) {
-      showAppSnack(
-        context,
-        'ID kategori tidak valid',
-        isError: true,
-      );
-      return;
-    }
+  Future<void> editCategory(Category category) async {
+    final id = category.id;
 
     final result = await showDialog<bool>(
       context: context,
@@ -97,7 +89,7 @@ class _CategoryPageState extends State<CategoryPage> {
           title: 'Edit Kategori',
           subtitle: 'Perbarui nama kategori yang dipilih.',
           buttonText: 'Simpan Perubahan',
-          initialValue: category['name']?.toString() ?? '',
+          initialValue: category.name,
           onSave: (name) {
             return apiService.updateCategory(id, name);
           },
@@ -117,18 +109,9 @@ class _CategoryPageState extends State<CategoryPage> {
     );
   }
 
-  Future<void> deleteCategory(Map<String, dynamic> category) async {
-    final id = _toInt(category['id']);
-    final name = category['name']?.toString() ?? '';
-
-    if (id == null) {
-      showAppSnack(
-        context,
-        'ID kategori tidak valid',
-        isError: true,
-      );
-      return;
-    }
+  Future<void> deleteCategory(Category category) async {
+    final id = category.id;
+    final name = category.name;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -182,12 +165,9 @@ class _CategoryPageState extends State<CategoryPage> {
     }
   }
 
-  void openCategory(Map<String, dynamic> category) {
-    final id = _toInt(category['id']);
-
-    if (id == null) return;
-
-    final name = category['name']?.toString() ?? 'Kategori';
+  void openCategory(Category category) {
+    final id = category.id;
+    final name = category.name.isNotEmpty ? category.name : 'Kategori';
 
     Navigator.push(
       context,
@@ -197,14 +177,6 @@ class _CategoryPageState extends State<CategoryPage> {
           categoryName: name,
         ),
       ),
-    );
-  }
-
-  int? _toInt(dynamic value) {
-    if (value is int) return value;
-
-    return int.tryParse(
-      value?.toString() ?? '',
     );
   }
 
@@ -289,12 +261,9 @@ class _CategoryPageState extends State<CategoryPage> {
     );
   }
 
-  Widget _buildCategoryCard(dynamic category) {
-    final data = Map<String, dynamic>.from(
-      category as Map,
-    );
-
-    final name = data['name']?.toString() ?? '';
+  Widget _buildCategoryCard(Category category) {
+    final data = category;
+    final name = data.name;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),

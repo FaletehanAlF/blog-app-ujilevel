@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:belajar_flutter/models/category.dart';
 import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,7 +24,7 @@ class _EditProductPageState extends State<EditProductPage> {
   late final TextEditingController titleController;
   late final TextEditingController contentController;
 
-  List<dynamic> categories = [];
+  List<Category> categories = [];
   XFile? selectedImage;
 
   int? selectedCategory;
@@ -64,7 +65,8 @@ class _EditProductPageState extends State<EditProductPage> {
 
   int? _toInt(dynamic value) {
     if (value is int) return value;
-    return int.tryParse(value?.toString() ?? '');
+    if (value == null) return null;
+    return int.tryParse(value.toString());
   }
 
   Future<void> fetchCategories() async {
@@ -469,7 +471,7 @@ class _EditProductPageState extends State<EditProductPage> {
                       child: DropdownButton<int>(
                         value: categories.any(
                           (category) =>
-                              _toInt(category['id']) ==
+                              category.id ==
                               selectedCategory,
                         )
                             ? selectedCategory
@@ -492,9 +494,9 @@ class _EditProductPageState extends State<EditProductPage> {
                             .map<DropdownMenuItem<int>>(
                           (category) {
                             return DropdownMenuItem<int>(
-                              value: _toInt(category['id']),
+                              value: category.id,
                               child: Text(
-                                category['name'].toString(),
+                                category.name,
                               ),
                             );
                           },

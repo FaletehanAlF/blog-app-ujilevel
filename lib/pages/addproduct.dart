@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:belajar_flutter/models/category.dart';
 import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,7 +20,7 @@ class _AddProductPageState extends State<AddProductPage> {
   final titleController = TextEditingController();
   final contentController = TextEditingController();
 
-  List<dynamic> categories = [];
+  List<Category> categories = [];
   int? selectedCategory;
 
   XFile? selectedImage;
@@ -442,9 +443,9 @@ class _AddProductPageState extends State<AddProductPage> {
               .map<DropdownMenuItem<int>>(
                 (category) {
                   return DropdownMenuItem<int>(
-                    value: category['id'],
+                    value: category.id,
                     child: Text(
-                      category['name'].toString(),
+                      category.name,
                     ),
                   );
                 },

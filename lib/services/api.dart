@@ -6,22 +6,34 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/post.dart';
+import '../models/category.dart';
 
 class ApiService {
   static String get baseUrl => dotenv.env['API_URL'] ?? '';
 
-  // Kunci SharedPreferences - jangan hardcode token di source code
+  // =========================
+  // SharedPreferences Keys
+  // =========================
+
   static const String _kToken = 'jwt_token';
   static const String _kRole = 'user_role';
   static const String _kEmail = 'user_email';
   static const String _kId = 'user_id';
   static const String _kName = 'user_name';
 
+  // =========================
+  // Session
+  // =========================
+
   static String? _token;
   static String? _role;
   static String? _email;
   static int? _userId;
   static String? _name;
+
+  // =========================
+  // Dio
+  // =========================
 
   final Dio _dio = Dio(
     BaseOptions(
@@ -35,32 +47,29 @@ class ApiService {
   ApiService() {
     _dio.interceptors.add(
       InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          // Pastikan baseUrl selalu terupdate dari .env (dotenv.load bisa terlambat)
-          if (_dio.options.baseUrl.isEmpty && baseUrl.isNotEmpty) {
-            _dio.options.baseUrl = baseUrl;
-            options.baseUrl = baseUrl;
-          } else if (_dio.options.baseUrl != baseUrl && baseUrl.isNotEmpty) {
+        onRequest: (options, handler) {
+          if (baseUrl.isNotEmpty) {
             _dio.options.baseUrl = baseUrl;
             options.baseUrl = baseUrl;
           }
 
-          // Kirim token jika ada
           if (_token != null && _token!.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $_token';
           }
-          return handler.next(options);
+
+          handler.next(options);
         },
       ),
     );
   }
 
-  // ========== Token & Session Helpers ==========
+  // =========================
+  // Session Helpers
+  // =========================
 
-  /// Load token & role dari SharedPreferences ke memory.
-  /// Harus dipanggil sekali saat aplikasi dijalankan (di main.dart).
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
+
     _token = prefs.getString(_kToken);
     _role = prefs.getString(_kRole);
     _email = prefs.getString(_kEmail);
@@ -68,43 +77,61 @@ class ApiService {
     _name = prefs.getString(_kName);
   }
 
-  /// Ambil token, coba load dari prefs jika memory masih kosong.
   Future<String?> getToken() async {
-    if (_token != null && _token!.isNotEmpty) return _token;
+    if (_token != null && _token!.isNotEmpty) {
+      return _token;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString(_kToken);
+
     return _token;
   }
 
   Future<String?> getRole() async {
-    if (_role != null) return _role;
+    if (_role != null) {
+      return _role;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     _role = prefs.getString(_kRole);
+
     return _role;
   }
 
   Future<String?> getEmail() async {
-    if (_email != null) return _email;
+    if (_email != null) {
+      return _email;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     _email = prefs.getString(_kEmail);
+
     return _email;
   }
 
   Future<int?> getUserId() async {
-    if (_userId != null) return _userId;
+    if (_userId != null) {
+      return _userId;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     _userId = prefs.getInt(_kId);
+
     return _userId;
   }
 
   Future<String?> getUserName() async {
-    if (_name != null) return _name;
+    if (_name != null) {
+      return _name;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     _name = prefs.getString(_kName);
+
     return _name;
   }
 
-  // Getter sync untuk kebutuhan UI tanpa async
   String? get token => _token;
   String? get role => _role;
   String? get email => _email;
@@ -112,41 +139,64 @@ class ApiService {
   String? get userName => _name;
 
   Future<bool> isLoggedIn() async {
-    final t = await getToken();
-    return t != null && t.isNotEmpty;
+    final currentToken = await getToken();
+
+    return currentToken != null && currentToken.isNotEmpty;
   }
 
-  bool get isLoggedInSync => _token != null && _token!.isNotEmpty;
+  bool get isLoggedInSync {
+    return _token != null && _token!.isNotEmpty;
+  }
 
-  /// Decode payload JWT sederhana tanpa library tambahan.
+  // =========================
+  // JWT
+  // =========================
+
   Map<String, dynamic>? _decodeJwt(String token) {
     try {
       final parts = token.split('.');
-      if (parts.length != 3) return null;
-      String payload = parts[1];
-      // base64Url -> base64
-      payload = payload.replaceAll('-', '+').replaceAll('_', '/');
-      switch (payload.length % 4) {
-        case 0:
-          break;
-        case 2:
-          payload += '==';
-          break;
-        case 3:
-          payload += '=';
-          break;
-        default:
-          return null;
+
+      if (parts.length != 3) {
+        return null;
       }
-      final decoded = utf8.decode(base64.decode(payload));
-      final map = jsonDecode(decoded);
-      if (map is Map<String, dynamic>) return map;
-      if (map is Map) return Map<String, dynamic>.from(map);
+
+      String payload = parts[1];
+
+      payload = payload.replaceAll('-', '+').replaceAll('_', '/');
+
+      final remainder = payload.length % 4;
+
+      if (remainder == 2) {
+        payload += '==';
+      } else if (remainder == 3) {
+        payload += '=';
+      } else if (remainder != 0) {
+        return null;
+      }
+
+      final decoded = utf8.decode(
+        base64.decode(payload),
+      );
+
+      final data = jsonDecode(decoded);
+
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+
+      if (data is Map) {
+        return Map<String, dynamic>.from(data);
+      }
+
       return null;
     } catch (_) {
       return null;
     }
   }
+
+  // =========================
+  // Save Auth Data
+  // =========================
 
   Future<void> _saveAuthData(
     String token, {
@@ -155,25 +205,23 @@ class ApiService {
     int? id,
     String? name,
   }) async {
-    // Coba decode JWT jika role/email/id masih kosong
-    if ((role == null || email == null || id == null) &&
-        token.split('.').length == 3) {
-      final payload = _decodeJwt(token);
-      if (payload != null) {
-        role ??= payload['role']?.toString();
-        email ??= payload['email']?.toString();
-        // id bisa bernama id, userId, user_id
-        final rawId = payload['id'] ?? payload['userId'] ?? payload['user_id'];
-        if (id == null && rawId != null) {
-          if (rawId is int) {
-            id = rawId;
-          } else {
-            id = int.tryParse(rawId.toString());
-          }
-        }
-        name ??= payload['name']?.toString() ??
-            payload['username']?.toString() ??
-            payload['user']?.toString();
+    final payload = _decodeJwt(token);
+
+    if (payload != null) {
+      role ??= payload['role']?.toString();
+      email ??= payload['email']?.toString();
+      name ??=
+          payload['name']?.toString() ??
+          payload['username']?.toString() ??
+          payload['user']?.toString();
+
+      final rawId =
+          payload['id'] ??
+          payload['userId'] ??
+          payload['user_id'];
+
+      if (id == null && rawId != null) {
+        id = int.tryParse(rawId.toString());
       }
     }
 
@@ -184,62 +232,96 @@ class ApiService {
     _name = name;
 
     final prefs = await SharedPreferences.getInstance();
+
     await prefs.setString(_kToken, token);
+
     if (role != null) {
       await prefs.setString(_kRole, role);
     }
+
     if (email != null) {
       await prefs.setString(_kEmail, email);
     }
+
     if (id != null) {
       await prefs.setInt(_kId, id);
     }
+
     if (name != null) {
       await prefs.setString(_kName, name);
     }
   }
 
+  // =========================
+  // Error Handler
+  // =========================
+
   String _extractDioError(DioException e) {
-    // Coba ambil pesan dari response backend
-    if (e.response != null && e.response?.data != null) {
-      final d = e.response!.data;
-      if (d is Map) {
-        if (d['message'] != null) return d['message'].toString();
-        if (d['error'] != null) return d['error'].toString();
-        if (d['msg'] != null) return d['msg'].toString();
-        if (d['errors'] != null) return d['errors'].toString();
-        if (d['data'] is Map) {
-          final inner = d['data'] as Map;
-          if (inner['message'] != null) return inner['message'].toString();
-          if (inner['error'] != null) return inner['error'].toString();
+    final response = e.response;
+
+    if (response?.data != null) {
+      final data = response!.data;
+
+      if (data is Map) {
+        final message = data['message'];
+
+        if (message != null) {
+          return message.toString();
         }
-      } else if (d is String && d.isNotEmpty) {
-        return d;
+
+        final error = data['error'];
+
+        if (error != null) {
+          return error.toString();
+        }
+
+        final errors = data['errors'];
+
+        if (errors != null) {
+          return errors.toString();
+        }
       }
-      // status code info
-      final code = e.response?.statusCode;
-      if (code == 401) return 'Email atau password salah, atau sesi habis.';
-      if (code == 403) return 'Akses ditolak. Periksa role akun.';
-      if (code == 422) return 'Data tidak valid. Periksa input.';
+
+      if (data is String && data.isNotEmpty) {
+        return data;
+      }
+
+      switch (response.statusCode) {
+        case 401:
+          return 'Email atau password salah, atau sesi habis.';
+        case 403:
+          return 'Akses ditolak. Periksa role akun.';
+        case 404:
+          return 'Data tidak ditemukan.';
+        case 422:
+          return 'Data tidak valid. Periksa input.';
+      }
     }
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.sendTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return 'Koneksi timeout. Periksa koneksi atau API_URL.';
+
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Koneksi timeout. Periksa koneksi atau API_URL.';
+
+      case DioExceptionType.connectionError:
+        return 'Tidak dapat terhubung ke server. Periksa API_URL di assets/.env dan pastikan backend berjalan.';
+
+      default:
+        break;
     }
-    if (e.type == DioExceptionType.connectionError) {
-      return 'Tidak dapat terhubung ke server. Periksa API_URL di assets/.env dan pastikan backend berjalan.';
-    }
+
     if (e.message != null && e.message!.isNotEmpty) {
       return e.message!;
     }
-    return 'Terjadi kesalahan jaringan';
+
+    return 'Terjadi kesalahan jaringan.';
   }
 
-  // ========== Auth ==========
+  // =========================
+  // Authentication
+  // =========================
 
-  /// Login ke POST /auth/login dan simpan JWT.
-  /// Mengirim {email, password}
   Future<void> login({
     required String email,
     required String password,
@@ -253,85 +335,104 @@ class ApiService {
         },
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = response.data;
-        String? token;
-        String? role;
-        String? resEmail;
-        int? id;
-        String? name;
-
-        if (data is Map<String, dynamic>) {
-          token = data['token']?.toString() ??
-              data['accessToken']?.toString() ??
-              data['access_token']?.toString() ??
-              (data['data'] is Map ? (data['data']['token']?.toString() ?? data['data']['accessToken']?.toString()) : null);
-
-          // Cari user object di berbagai bentuk response
-          dynamic user = data['user'] ?? data['data']?['user'];
-          // Jika data['data'] sendiri adalah user tanpa wrapper token
-          if (user == null && data['data'] is Map && token == null) {
-            // fallback: jika response data adalah user langsung
-          }
-          // Jika token ada di dalam data['data'] yang bukan user, user bisa terpisah
-          if (user == null && data['data'] is Map && data['data']['user'] == null) {
-            // cek apakah data['data'] berisi field user
-            final maybeUser = data['data'];
-            if (maybeUser is Map && (maybeUser['email'] != null || maybeUser['role'] != null)) {
-              user = maybeUser;
-            }
-          }
-
-          if (user is Map) {
-            role = user['role']?.toString();
-            resEmail = user['email']?.toString();
-            final rawId = user['id'] ?? user['userId'] ?? user['user_id'];
-            if (rawId is int) {
-              id = rawId;
-            } else if (rawId != null) {
-              id = int.tryParse(rawId.toString());
-            }
-            name = user['name']?.toString() ??
-                user['username']?.toString() ??
-                user['nama']?.toString();
-          }
-
-          // Fallback role/email di top-level
-          role ??= data['role']?.toString() ??
-              (data['data'] is Map ? data['data']['role']?.toString() : null);
-          resEmail ??= data['email']?.toString() ??
-              (data['data'] is Map ? data['data']['email']?.toString() : null);
-          if (id == null) {
-            final rawId = data['id'] ?? (data['data'] is Map ? data['data']['id'] : null);
-            if (rawId is int) {
-              id = rawId;
-            } else if (rawId != null) {
-              id = int.tryParse(rawId.toString());
-            }
-          }
-        }
-
-        if (token == null || token.isEmpty) {
-          throw Exception('Token tidak ditemukan pada response server');
-        }
-
-        await _saveAuthData(
-          token,
-          role: role,
-          email: resEmail ?? email,
-          id: id,
-          name: name,
+      if (response.statusCode != 200 &&
+          response.statusCode != 201) {
+        throw Exception(
+          'Login gagal: ${response.statusCode}',
         );
-        return;
       }
-      throw Exception('Login gagal: ${response.statusCode}');
+
+      final data = response.data;
+
+      if (data is! Map) {
+        throw Exception(
+          'Response login tidak valid.',
+        );
+      }
+
+      String? token;
+      String? role;
+      String? responseEmail;
+      String? name;
+      int? id;
+
+      token =
+          data['token']?.toString() ??
+          data['accessToken']?.toString() ??
+          data['access_token']?.toString();
+
+      dynamic nestedData = data['data'];
+
+      if (token == null && nestedData is Map) {
+        token =
+            nestedData['token']?.toString() ??
+            nestedData['accessToken']?.toString() ??
+            nestedData['access_token']?.toString();
+      }
+
+      dynamic user = data['user'];
+
+      if (user == null && nestedData is Map) {
+        user = nestedData['user'];
+
+        if (user == null &&
+            (nestedData['email'] != null ||
+                nestedData['role'] != null ||
+                nestedData['id'] != null)) {
+          user = nestedData;
+        }
+      }
+
+      if (user is Map) {
+        role = user['role']?.toString();
+
+        responseEmail = user['email']?.toString();
+
+        name =
+            user['name']?.toString() ??
+            user['username']?.toString() ??
+            user['nama']?.toString();
+
+        final rawId =
+            user['id'] ??
+            user['userId'] ??
+            user['user_id'];
+
+        if (rawId != null) {
+          id = int.tryParse(rawId.toString());
+        }
+      }
+
+      role ??= data['role']?.toString();
+      responseEmail ??= data['email']?.toString();
+      name ??= data['name']?.toString();
+
+      if (id == null && data['id'] != null) {
+        id = int.tryParse(
+          data['id'].toString(),
+        );
+      }
+
+      if (token == null || token.isEmpty) {
+        throw Exception(
+          'Token tidak ditemukan pada response server.',
+        );
+      }
+
+      await _saveAuthData(
+        token,
+        role: role,
+        email: responseEmail ?? email,
+        id: id,
+        name: name,
+      );
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
 
-  /// Register ke POST /auth/register
-  /// Mengirim {name, email, password}
   Future<void> register({
     required String name,
     required String email,
@@ -347,57 +448,102 @@ class ApiService {
         },
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = response.data;
-        // Jika backend langsung mengembalikan token setelah register, simpan juga
-        String? token;
-        String? role;
-        String? resEmail;
-        int? id;
-        String? resName;
+      if (response.statusCode != 200 &&
+          response.statusCode != 201) {
+        throw Exception(
+          'Registrasi gagal: ${response.statusCode}',
+        );
+      }
 
-        if (data is Map<String, dynamic>) {
-          token = data['token']?.toString() ??
-              data['accessToken']?.toString() ??
-              (data['data'] is Map ? (data['data']['token']?.toString() ?? data['data']['accessToken']?.toString()) : null);
-          if (token != null && token.isNotEmpty) {
-            dynamic user = data['user'] ?? data['data']?['user'] ?? data['data'];
-            if (user is Map) {
-              role = user['role']?.toString();
-              resEmail = user['email']?.toString();
-              final rawId = user['id'] ?? user['userId'];
-              if (rawId is int) {
-                id = rawId;
-              } else if (rawId != null) {
-                id = int.tryParse(rawId.toString());
-              }
-              resName = user['name']?.toString() ?? user['username']?.toString();
-            }
-            await _saveAuthData(
-              token,
-              role: role,
-              email: resEmail ?? email,
-              id: id,
-              name: resName ?? name,
-            );
-          }
-        }
+      final data = response.data;
+
+      if (data is! Map) {
         return;
       }
-      throw Exception('Registrasi gagal: ${response.statusCode}');
+
+      String? token;
+
+      token =
+          data['token']?.toString() ??
+          data['accessToken']?.toString() ??
+          data['access_token']?.toString();
+
+      final nestedData = data['data'];
+
+      if (token == null && nestedData is Map) {
+        token =
+            nestedData['token']?.toString() ??
+            nestedData['accessToken']?.toString() ??
+            nestedData['access_token']?.toString();
+      }
+
+      // Backend boleh mengembalikan token setelah register.
+      // Jika tidak, user cukup diarahkan ke halaman login.
+      if (token == null || token.isEmpty) {
+        return;
+      }
+
+      String? role;
+      String? responseEmail;
+      String? responseName;
+      int? id;
+
+      dynamic user = data['user'];
+
+      if (user == null && nestedData is Map) {
+        user = nestedData['user'];
+        user ??= nestedData;
+      }
+
+      if (user is Map) {
+        role = user['role']?.toString();
+        responseEmail = user['email']?.toString();
+
+        responseName =
+            user['name']?.toString() ??
+            user['username']?.toString();
+
+        final rawId =
+            user['id'] ??
+            user['userId'] ??
+            user['user_id'];
+
+        if (rawId != null) {
+          id = int.tryParse(
+            rawId.toString(),
+          );
+        }
+      }
+
+      await _saveAuthData(
+        token,
+        role: role ?? data['role']?.toString(),
+        email:
+            responseEmail ??
+            data['email']?.toString() ??
+            email,
+        id: id,
+        name:
+            responseName ??
+            data['name']?.toString() ??
+            name,
+      );
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
 
-  /// Hapus token & data user dari SharedPreferences
   Future<void> logout() async {
     _token = null;
     _role = null;
     _email = null;
     _userId = null;
     _name = null;
+
     final prefs = await SharedPreferences.getInstance();
+
     await prefs.remove(_kToken);
     await prefs.remove(_kRole);
     await prefs.remove(_kEmail);
@@ -405,37 +551,65 @@ class ApiService {
     await prefs.remove(_kName);
   }
 
-  // ========== Posts ==========
+  // =========================
+  // Posts
+  // =========================
 
   Future<List<Post>> getPosts() async {
     try {
-      final response = await _dio.get('/posts');
+      final response = await _dio.get(
+        '/posts',
+      );
 
-      if (response.statusCode == 200) {
-        return (response.data['data'] as List)
-            .map((e) => Post.fromJson(e))
-            .toList();
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil data artikel.',
+        );
       }
 
-      throw Exception('Gagal mengambil data artikel');
+      final data = response.data['data'];
+
+      if (data is! List) {
+        return [];
+      }
+
+      return data
+          .map(
+            (item) => Post.fromJson(item),
+          )
+          .toList();
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
 
   Future<Post> getPostById(int id) async {
     try {
-      final response = await _dio.get('/posts/$id');
+      final response = await _dio.get(
+        '/posts/$id',
+      );
 
-      if (response.statusCode == 200) {
-        return Post.fromJson(response.data['data']);
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil detail artikel.',
+        );
       }
 
-      throw Exception('Gagal mengambil detail artikel');
+      return Post.fromJson(
+        response.data['data'],
+      );
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
+
+  // =========================
+  // Create Post
+  // =========================
 
   Future<void> createPost(
     String title,
@@ -451,11 +625,13 @@ class ApiService {
       });
 
       if (image != null) {
+        final bytes = await image.readAsBytes();
+
         formData.files.add(
           MapEntry(
             'image',
-            await MultipartFile.fromFile(
-              image.path,
+            MultipartFile.fromBytes(
+              bytes,
               filename: image.name,
             ),
           ),
@@ -473,9 +649,15 @@ class ApiService {
         );
       }
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
+
+  // =========================
+  // Update Post
+  // =========================
 
   Future<void> updatePost(
     int id,
@@ -492,11 +674,13 @@ class ApiService {
       });
 
       if (image != null) {
+        final bytes = await image.readAsBytes();
+
         formData.files.add(
           MapEntry(
             'image',
-            await MultipartFile.fromFile(
-              image.path,
+            MultipartFile.fromBytes(
+              bytes,
               filename: image.name,
             ),
           ),
@@ -514,39 +698,111 @@ class ApiService {
         );
       }
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
+
+  // =========================
+  // Delete Post
+  // =========================
 
   Future<void> deletePost(int id) async {
     try {
-      final response = await _dio.delete('/posts/$id');
+      final response = await _dio.delete(
+        '/posts/$id',
+      );
 
       if (response.statusCode != 200) {
-        throw Exception('Gagal menghapus artikel');
+        throw Exception(
+          'Gagal menghapus artikel.',
+        );
       }
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
 
-  // ========== Categories ==========
+  // =========================
+  // Profile
+  // =========================
 
-  Future<List<dynamic>> getCategories() async {
+  /// Profil user yang sedang login beserta jumlah artikel miliknya.
+  /// Daftar "Artikel Saya" difilter client-side dari getPosts()
+  /// memakai posts.user_id == userId.
+  Future<Map<String, dynamic>> getMe() async {
     try {
-      final response = await _dio.get('/categories');
+      final response = await _dio.get(
+        '/auth/me',
+      );
 
-      if (response.statusCode == 200) {
-        return response.data['data'];
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil profil.',
+        );
       }
 
-      throw Exception('Gagal mengambil data kategori');
+      final data = response.data['data'];
+
+      if (data is Map) {
+        return Map<String, dynamic>.from(data);
+      }
+
+      throw Exception(
+        'Response profil tidak valid.',
+      );
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
 
-  Future<void> createCategory(String name) async {
+  // =========================
+  // Categories
+  // =========================
+
+  /// Kategori milik user yang sedang login.
+  /// Backend memfilter berdasarkan JWT, jadi tidak ada kategori user lain.
+  Future<List<Category>> getCategories() async {
+    try {
+      final response = await _dio.get(
+        '/categories',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil data kategori.',
+        );
+      }
+
+      final data = response.data['data'];
+
+      if (data is List) {
+        return data
+            .whereType<Map>()
+            .map(
+              (item) => Category.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .toList();
+      }
+
+      return [];
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  Future<void> createCategory(
+    String name,
+  ) async {
     try {
       final response = await _dio.post(
         '/categories',
@@ -561,7 +817,9 @@ class ApiService {
         );
       }
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
 
@@ -583,11 +841,15 @@ class ApiService {
         );
       }
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
 
-  Future<void> deleteCategory(int id) async {
+  Future<void> deleteCategory(
+    int id,
+  ) async {
     try {
       final response = await _dio.delete(
         '/categories/$id',
@@ -599,7 +861,9 @@ class ApiService {
         );
       }
     } on DioException catch (e) {
-      throw Exception(_extractDioError(e));
+      throw Exception(
+        _extractDioError(e),
+      );
     }
   }
 }

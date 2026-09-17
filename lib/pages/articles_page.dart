@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/category.dart';
 import '../services/api.dart';
 import '../widgets/app_ui.dart';
 import 'category_articles_page.dart';
@@ -16,7 +17,7 @@ class _ArticlesPageState extends State<ArticlesPage>
     with AutomaticKeepAliveClientMixin {
   final ApiService apiService = ApiService();
 
-  List<dynamic> categories = [];
+  List<Category> categories = [];
 
   bool isLoading = true;
   String? errorMessage;
@@ -44,7 +45,7 @@ class _ArticlesPageState extends State<ArticlesPage>
       if (!mounted) return;
 
       setState(() {
-        categories = List<dynamic>.from(data);
+        categories = data;
         isLoading = false;
       });
     } catch (error) {
@@ -57,12 +58,9 @@ class _ArticlesPageState extends State<ArticlesPage>
     }
   }
 
-  void openCategory(Map<String, dynamic> category) {
-    final id = _toInt(category['id']);
-
-    if (id == null) return;
-
-    final name = category['name']?.toString() ?? 'Kategori';
+  void openCategory(Category category) {
+    final id = category.id;
+    final name = category.name.isNotEmpty ? category.name : 'Kategori';
 
     Navigator.push(
       context,
@@ -84,14 +82,6 @@ class _ArticlesPageState extends State<ArticlesPage>
     ).then((_) {
       fetchData();
     });
-  }
-
-  int? _toInt(dynamic value) {
-    if (value is int) return value;
-
-    return int.tryParse(
-      value?.toString() ?? '',
-    );
   }
 
   @override
@@ -158,12 +148,9 @@ class _ArticlesPageState extends State<ArticlesPage>
     );
   }
 
-  Widget _buildCategoryCard(dynamic category) {
-    final data = Map<String, dynamic>.from(
-      category as Map,
-    );
-
-    final name = data['name']?.toString() ?? '';
+  Widget _buildCategoryCard(Category category) {
+    final data = category;
+    final name = data.name;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),

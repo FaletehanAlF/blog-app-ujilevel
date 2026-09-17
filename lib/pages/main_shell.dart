@@ -19,6 +19,11 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
+  final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
+  final GlobalKey _articlesKey = GlobalKey();
+
+  late final List<Widget> _pages;
+
   final List<String> _titles = [
     'Home',
     'Articles',
@@ -26,12 +31,16 @@ class _MainShellState extends State<MainShell> {
     'Settings',
   ];
 
-  final List<Widget> _pages = const [
-    HomePage(),
-    ArticlesPage(),
-    AboutPage(),
-    SettingsPage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      HomePage(key: _homeKey),
+      ArticlesPage(key: _articlesKey),
+      const AboutPage(),
+      const SettingsPage(),
+    ];
+  }
 
   int get _pageIndex {
     if (_index > 2) {
@@ -42,12 +51,27 @@ class _MainShellState extends State<MainShell> {
   }
 
   Future<void> _openAddArticle() async {
-    await Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const AddProductPage(),
       ),
     );
+
+    // Refresh daftar setelah tambah artikel agar Home/Articles tidak basi.
+    // IndexedStack mempertahankan state, jadi panggil fetch secara eksplisit.
+    if (result == true) {
+      try {
+        await _homeKey.currentState?.fetchPosts();
+      } catch (_) {}
+
+      try {
+        final articlesState = _articlesKey.currentState;
+        if (articlesState != null) {
+          await (articlesState as dynamic).fetchData();
+        }
+      } catch (_) {}
+    }
   }
 
   void _onTap(int index) {

@@ -28,6 +28,15 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
   bool isLoading = true;
   String? errorMessage;
 
+  int? _currentUserId;
+  String? _currentRole;
+
+  bool _canManage(Post post) {
+    if (_currentRole == 'admin') return true;
+    if (_currentUserId == null || post.userId == null) return false;
+    return post.userId == _currentUserId;
+  }
+
   Future<void> fetchPosts() async {
     setState(() {
       isLoading = true;
@@ -58,6 +67,15 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
 
   Future<void> confirmDelete(Post post) async {
     if (!mounted) return;
+
+    if (!_canManage(post)) {
+      showAppSnack(
+        context,
+        'Anda tidak memiliki akses untuk menghapus artikel ini.',
+        isError: true,
+      );
+      return;
+    }
 
     final result = await showDeleteDialog(context, title: post.title);
 
@@ -98,7 +116,23 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
   @override
   void initState() {
     super.initState();
+    _loadSession();
     fetchPosts();
+  }
+
+  Future<void> _loadSession() async {
+    try {
+      await apiService.init();
+      final userId = await apiService.getUserId();
+      final role = await apiService.getRole();
+      if (!mounted) return;
+      setState(() {
+        _currentUserId = userId;
+        _currentRole = role;
+      });
+    } catch (_) {
+      // Abaikan, backend tetap menolak aksi yang tidak diizinkan (403).
+    }
   }
 
   @override

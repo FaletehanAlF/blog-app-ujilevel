@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:belajar_flutter/models/post.dart';
 import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/pages/detail_post_screen.dart';
+import 'package:belajar_flutter/widgets/app_ui.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,6 +20,7 @@ class HomePageState extends State<HomePage> {
 
   List<Post> posts = [];
   bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
@@ -33,6 +35,15 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<void> fetchPosts() async {
+    if (mounted) {
+      setState(() {
+        // Tampilkan loading hanya saat daftar masih kosong agar
+        // pull-to-refresh tidak mengosongkan layar.
+        if (posts.isEmpty) isLoading = true;
+        errorMessage = null;
+      });
+    }
+
     try {
       final data = await apiService.getPosts();
 
@@ -41,18 +52,20 @@ class HomePageState extends State<HomePage> {
       setState(() {
         posts = data;
         isLoading = false;
+        errorMessage = null;
       });
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
         isLoading = false;
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
       });
     }
   }
 
-  void openDetail(Post post) {
-    Navigator.push(
+  Future<void> openDetail(Post post) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DetailPostScreen(
@@ -60,6 +73,10 @@ class HomePageState extends State<HomePage> {
         ),
       ),
     );
+
+    if (!mounted) return;
+    // Refresh setelah kembali dari detail (edit/hapus dari halaman detail).
+    fetchPosts();
   }
 
   @override
@@ -149,6 +166,11 @@ class HomePageState extends State<HomePage> {
           if (isLoading)
             const Center(
               child: CircularProgressIndicator(),
+            )
+          else if (errorMessage != null && posts.isEmpty)
+            ErrorStateView(
+              message: errorMessage!,
+              onRetry: fetchPosts,
             )
           else if (posts.isNotEmpty)
             _featuredArticle(posts.first)

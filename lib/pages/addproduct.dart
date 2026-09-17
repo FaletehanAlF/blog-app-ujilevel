@@ -137,7 +137,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
       if (!mounted) return;
 
-      Navigator.pop(context);
+      Navigator.pop(context, true);
       showAppSnack(context, 'Artikel berhasil ditambahkan');
     } catch (error) {
       if (!mounted) return;

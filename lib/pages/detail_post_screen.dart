@@ -26,10 +26,38 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   bool isDeleting = false;
   String? errorMessage;
 
+  int? _currentUserId;
+  String? _currentRole;
+
+  /// True jika user boleh edit/hapus: pemilik artikel atau admin.
+  /// Backend tetap menjadi penegak utama (403), UI hanya menyembunyikan aksi.
+  bool get _canManage {
+    if (post == null) return false;
+    if (_currentRole == 'admin') return true;
+    if (_currentUserId == null || post!.userId == null) return false;
+    return post!.userId == _currentUserId;
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadSession();
     fetchPost();
+  }
+
+  Future<void> _loadSession() async {
+    try {
+      await apiService.init();
+      final userId = await apiService.getUserId();
+      final role = await apiService.getRole();
+      if (!mounted) return;
+      setState(() {
+        _currentUserId = userId;
+        _currentRole = role;
+      });
+    } catch (_) {
+      // Abaikan, backend tetap menolak aksi yang tidak diizinkan (403).
+    }
   }
 
   Future<void> fetchPost() async {
@@ -60,6 +88,15 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   Future<void> openEdit() async {
     if (post == null) return;
 
+    if (!_canManage) {
+      showAppSnack(
+        context,
+        'Anda tidak memiliki akses untuk mengedit artikel ini.',
+        isError: true,
+      );
+      return;
+    }
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -81,6 +118,15 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
   Future<void> confirmDelete() async {
     if (post == null || isDeleting) return;
+
+    if (!_canManage) {
+      showAppSnack(
+        context,
+        'Anda tidak memiliki akses untuk menghapus artikel ini.',
+        isError: true,
+      );
+      return;
+    }
 
     final ok = await showDeleteDialog(
       context,
@@ -147,7 +193,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       ),
       body: _buildBody(),
       bottomNavigationBar:
-          post != null && !isLoading && errorMessage == null
+          post != null && !isLoading && errorMessage == null && _canManage
               ? _buildActionBar()
               : null,
     );

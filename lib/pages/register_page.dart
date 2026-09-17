@@ -50,8 +50,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
       passwordError = password.isEmpty
           ? 'Password wajib diisi'
-          : password.length < 6
-              ? 'Password minimal 6 karakter'
+          : password.length < 8
+              ? 'Password minimal 8 karakter'
               : null;
     });
 
@@ -179,7 +179,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
                   cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
-                    hint: 'Minimal 6 karakter',
+                    hint: 'Minimal 8 karakter',
                     hasError: passwordError != null,
                     suffixIcon: IconButton(
                       onPressed: () => setState(() => obscure = !obscure),

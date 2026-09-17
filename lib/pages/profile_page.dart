@@ -31,7 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadUser() async {
     await _api.init();
-    final userId = await _api.getUserId();
+    int? userId = await _api.getUserId();
 
     String? name = await _api.getUserName();
     String? email = await _api.getEmail();
@@ -48,6 +48,15 @@ class _ProfilePageState extends State<ProfilePage> {
       articleCount = int.tryParse(
         me['article_count']?.toString() ?? '',
       );
+
+      // Sinkronkan userId dari server agar filter "Artikel Saya"
+      // tetap benar walau cache lokal belum menyimpan id.
+      final serverId = int.tryParse(
+        me['id']?.toString() ?? '',
+      );
+      if (serverId != null) {
+        userId = serverId;
+      }
     } catch (_) {
       // Abaikan, gunakan data tersimpan lokal.
     }

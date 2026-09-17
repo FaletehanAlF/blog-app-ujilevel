@@ -285,8 +285,10 @@ class ApiService {
       if (data is String && data.isNotEmpty) {
         return data;
       }
+    }
 
-      switch (response.statusCode) {
+    if (response?.statusCode != null) {
+      switch (response!.statusCode) {
         case 401:
           return 'Email atau password salah, atau sesi habis.';
         case 403:
@@ -567,15 +569,24 @@ class ApiService {
         );
       }
 
-      final data = response.data['data'];
+      final body = response.data;
+
+      if (body is! Map) {
+        return [];
+      }
+
+      final data = body['data'];
 
       if (data is! List) {
         return [];
       }
 
       return data
+          .whereType<Map>()
           .map(
-            (item) => Post.fromJson(item),
+            (item) => Post.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
           )
           .toList();
     } on DioException catch (e) {
@@ -597,8 +608,16 @@ class ApiService {
         );
       }
 
+      final body = response.data;
+
+      if (body is! Map || body['data'] is! Map) {
+        throw Exception(
+          'Response detail artikel tidak valid.',
+        );
+      }
+
       return Post.fromJson(
-        response.data['data'],
+        Map<String, dynamic>.from(body['data'] as Map),
       );
     } on DioException catch (e) {
       throw Exception(
@@ -745,7 +764,15 @@ class ApiService {
         );
       }
 
-      final data = response.data['data'];
+      final body = response.data;
+
+      if (body is! Map) {
+        throw Exception(
+          'Response profil tidak valid.',
+        );
+      }
+
+      final data = body['data'];
 
       if (data is Map) {
         return Map<String, dynamic>.from(data);
@@ -779,7 +806,13 @@ class ApiService {
         );
       }
 
-      final data = response.data['data'];
+      final body = response.data;
+
+      if (body is! Map) {
+        return [];
+      }
+
+      final data = body['data'];
 
       if (data is List) {
         return data

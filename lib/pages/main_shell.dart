@@ -10,6 +10,7 @@ import 'settings_page.dart';
 import 'profile_page.dart';
 import 'bookmark_page.dart';
 import 'like_page.dart';
+import 'notification_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -114,6 +115,15 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  void _openNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NotificationPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,9 +159,7 @@ class _MainShellState extends State<MainShell> {
         // Icon kiri hanya pada Home
         leading: _index == 0
             ? IconButton(
-                onPressed: () {
-                  // Fitur notifikasi belum digunakan
-                },
+                onPressed: _openNotifications,
                 icon: const Icon(
                   Icons.notifications_none_rounded,
                   size: 22,

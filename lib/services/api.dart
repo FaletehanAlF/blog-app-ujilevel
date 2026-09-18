@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/post.dart';
 import '../models/category.dart';
+import '../models/notification.dart';
 
 /// Urutan artikel yang didukung backend pada `GET /posts`.
 ///
@@ -1112,6 +1113,62 @@ class ApiService {
         total: posts.length,
         totalPages: posts.length < limit ? page : page + 1,
       );
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  // =========================
+  // Notifications
+  // =========================
+
+  /// Notifikasi milik user yang sedang login.
+  /// Backend menentukan kepemilikan dari JWT, tanpa filter user
+  /// secara hardcode di Flutter.
+  Future<List<NotificationModel>> getNotifications() async {
+    try {
+      final response = await _dio.get(
+        '/notifications',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil data notifikasi.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        return [];
+      }
+
+      if (body['success'] == false) {
+        final message = body['message']?.toString();
+
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal mengambil data notifikasi.',
+        );
+      }
+
+      final data = body['data'];
+
+      if (data is! List) {
+        return [];
+      }
+
+      return data
+          .whereType<Map>()
+          .map(
+            (item) => NotificationModel.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList();
     } on DioException catch (e) {
       throw Exception(
         _extractDioError(e),

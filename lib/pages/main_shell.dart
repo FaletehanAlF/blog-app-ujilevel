@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:belajar_flutter/services/api.dart';
+import 'package:belajar_flutter/services/socket_service.dart';
+import 'package:belajar_flutter/models/notification.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'home_page.dart';
@@ -25,6 +29,7 @@ class _MainShellState extends State<MainShell> {
   int _unreadCount = 0;
 
   final ApiService _api = ApiService();
+  final SocketService _socketService = SocketService();
   final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
   final GlobalKey _articlesKey = GlobalKey();
 
@@ -47,6 +52,9 @@ class _MainShellState extends State<MainShell> {
       const SettingsPage(),
     ];
     _fetchUnreadCount();
+    // Realtime: connect sekali, listener dilepas di dispose.
+    _socketService.addListener(_onRealtimeNotification);
+    unawaited(_socketService.connect());
   }
 
   int get _pageIndex {
@@ -154,6 +162,30 @@ class _MainShellState extends State<MainShell> {
     }
   }
 
+  /// Dipanggil setiap event Socket.IO `notification:new`.
+  /// Badge naik secara lokal tanpa reload; nilai absolut tetap
+  /// disinkronkan dari server saat kembali dari NotificationPage.
+  void _onRealtimeNotification(NotificationModel notification) {
+    if (!mounted) return;
+
+    setState(() {
+      _unreadCount += 1;
+    });
+
+    final message = notification.message.trim();
+
+    if (message.isNotEmpty) {
+      showAppSnack(context, message);
+    }
+  }
+
+  @override
+  void dispose() {
+    _socketService.removeListener(_onRealtimeNotification);
+    _socketService.disconnect();
+    super.dispose();
+  }
+
   /// Badge pill kecil untuk jumlah belum dibaca.
   /// 1-99 tampil apa adanya, >99 tampil "99+".
   /// Overlay via Positioned sehingga ukuran icon tetap dan layout
@@ -185,7 +217,8 @@ class _MainShellState extends State<MainShell> {
   }
 
   @override
-  Widget build(BuildContext context) {    return Scaffold(
+  Widget build(BuildContext context) {
+    return Scaffold(
       backgroundColor: AppColors.background,
 
       appBar: AppBar(

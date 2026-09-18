@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/notification.dart';
 import '../services/api.dart';
+import '../services/socket_service.dart';
 import '../pages/detail_post_screen.dart';
 import '../widgets/app_ui.dart';
 
@@ -17,6 +20,7 @@ class NotificationPage extends StatefulWidget {
 
 class _NotificationPageState extends State<NotificationPage> {
   final ApiService apiService = ApiService();
+  final SocketService _socketService = SocketService();
 
   List<NotificationModel> notifications = [];
 
@@ -27,6 +31,30 @@ class _NotificationPageState extends State<NotificationPage> {
   void initState() {
     super.initState();
     fetchNotifications();
+    _socketService.addListener(_onRealtimeNotification);
+  }
+
+  @override
+  void dispose() {
+    _socketService.removeListener(_onRealtimeNotification);
+    super.dispose();
+  }
+
+  /// Sisipan lokal agar notifikasi realtime langsung terlihat tanpa
+  /// menunggu refresh. Dedupe berdasarkan id: item yang sama akan
+  /// muncul lagi dari `GET /notifications` saat refresh (yang me-replace
+  /// seluruh list), sehingga tidak terjadi duplikat.
+  void _onRealtimeNotification(NotificationModel notification) {
+    if (!mounted) return;
+
+    if (notification.id != 0 &&
+        notifications.any((item) => item.id == notification.id)) {
+      return;
+    }
+
+    setState(() {
+      notifications.insert(0, notification);
+    });
   }
 
   Future<void> fetchNotifications() async {
@@ -46,6 +74,10 @@ class _NotificationPageState extends State<NotificationPage> {
         notifications = result;
         isLoading = false;
       });
+
+      // Daftar sudah tampil; tandai dibaca di background tanpa
+      // memengaruhi daftar. Badge disegarkan MainShell saat kembali.
+      unawaited(_markAllAsRead());
     } catch (error) {
       if (!mounted) return;
 
@@ -54,6 +86,17 @@ class _NotificationPageState extends State<NotificationPage> {
         errorMessage =
             error.toString().replaceFirst('Exception: ', '');
       });
+    }
+  }
+
+  /// Menandai semua notifikasi sebagai dibaca tanpa mengganggu daftar.
+  /// Gagal menandai bukan error fatal: tidak ada setState, tidak ada
+  /// snackbar, daftar tetap ditampilkan apa adanya.
+  Future<void> _markAllAsRead() async {
+    try {
+      await apiService.markAllNotificationsAsRead();
+    } catch (_) {
+      // Abaikan: badge akan disegarkan saat kembali ke MainShell.
     }
   }
 

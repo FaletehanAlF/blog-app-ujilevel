@@ -1227,6 +1227,43 @@ class ApiService {
     }
   }
 
+  /// Menandai semua notifikasi user yang sedang login sebagai dibaca.
+  /// Backend menentukan kepemilikan dari JWT, tanpa filter user
+  /// secara hardcode di Flutter.
+  Future<void> markAllNotificationsAsRead() async {
+    try {
+      final response = await _dio.patch(
+        '/notifications/read-all',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal menandai notifikasi sebagai dibaca.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        return;
+      }
+
+      if (body['success'] == false) {
+        final message = body['message']?.toString();
+
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal menandai notifikasi sebagai dibaca.',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
   // =========================
   // Create Post
   // =========================

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/pages/profile_page.dart';
 import 'package:belajar_flutter/services/api.dart';
+import 'package:belajar_flutter/services/socket_service.dart';
 import 'package:belajar_flutter/pages/login_page.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 
@@ -71,6 +72,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     if (confirm != true) return;
     setState(() => _loggingOut = true);
+    // Putus socket realtime sebelum token dihapus.
+    SocketService().disconnect();
     await _api.logout();
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(

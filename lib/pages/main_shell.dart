@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
+import 'package:belajar_flutter/services/api.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'home_page.dart';
@@ -21,7 +22,9 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
+  int _unreadCount = 0;
 
+  final ApiService _api = ApiService();
   final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
   final GlobalKey _articlesKey = GlobalKey();
 
@@ -43,6 +46,7 @@ class _MainShellState extends State<MainShell> {
       const AboutPage(),
       const SettingsPage(),
     ];
+    _fetchUnreadCount();
   }
 
   int get _pageIndex {
@@ -115,18 +119,73 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  void _openNotifications() {
-    Navigator.push(
+  void _openNotifications() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const NotificationPage(),
       ),
     );
+
+    if (!mounted) return;
+
+    // Badge bisa berubah selama di NotificationPage, muat ulang sekali.
+    _fetchUnreadCount();
+  }
+
+  /// Jumlah notifikasi belum dibaca untuk badge bell.
+  /// Gagal dimuat bukan error fatal: fallback 0 (badge disembunyikan)
+  /// agar Home tetap bisa digunakan tanpa error besar.
+  Future<void> _fetchUnreadCount() async {
+    try {
+      final count = await _api.getUnreadNotificationCount();
+
+      if (!mounted) return;
+
+      setState(() {
+        _unreadCount = count;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _unreadCount = 0;
+      });
+    }
+  }
+
+  /// Badge pill kecil untuk jumlah belum dibaca.
+  /// 1-99 tampil apa adanya, >99 tampil "99+".
+  /// Overlay via Positioned sehingga ukuran icon tetap dan layout
+  /// tidak bergeser.
+  Widget _buildUnreadBadge(int count) {
+    final label = count > 99 ? '99+' : count.toString();
+
+    return Container(
+      constraints: const BoxConstraints(
+        minWidth: 16,
+        minHeight: 16,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE5484D),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          height: 1,
+        ),
+      ),
+    );
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) {    return Scaffold(
       backgroundColor: AppColors.background,
 
       appBar: AppBar(
@@ -160,9 +219,20 @@ class _MainShellState extends State<MainShell> {
         leading: _index == 0
             ? IconButton(
                 onPressed: _openNotifications,
-                icon: const Icon(
-                  Icons.notifications_none_rounded,
-                  size: 22,
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(
+                      Icons.notifications_none_rounded,
+                      size: 22,
+                    ),
+                    if (_unreadCount > 0)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: _buildUnreadBadge(_unreadCount),
+                      ),
+                  ],
                 ),
                 tooltip: 'Notifikasi',
               )

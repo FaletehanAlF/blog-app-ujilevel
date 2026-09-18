@@ -33,6 +33,34 @@ class _LikeCount extends StatelessWidget {
   }
 }
 
+class _ViewCount extends StatelessWidget {
+  final int count;
+  const _ViewCount({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.visibility_outlined,
+          color: AppColors.textMuted,
+          size: 14,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          count.toString(),
+          style: TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -574,7 +602,13 @@ class HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  _LikeCount(count: post.likeCount),
+                  Row(
+                    children: [
+                      _ViewCount(count: post.viewCount),
+                      const SizedBox(width: 12),
+                      _LikeCount(count: post.likeCount),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -663,6 +697,10 @@ class HomePageState extends State<HomePage> {
             ),
 
             const SizedBox(width: 8),
+
+            _ViewCount(count: post.viewCount),
+
+            const SizedBox(width: 10),
 
             _LikeCount(count: post.likeCount),
           ],

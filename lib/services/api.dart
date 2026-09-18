@@ -743,6 +743,59 @@ class ApiService {
     }
   }
 
+  /// Mencatat satu view pada artikel dan mengembalikan view_count
+  /// terbaru dari backend. Kepemilikan/rate-limit ditentukan backend
+  /// via JWT.
+  Future<int> addPostView(int postId) async {
+    try {
+      final response = await _dio.post(
+        '/posts/$postId/view',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal menambahkan view.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        throw Exception(
+          'Response view tidak valid.',
+        );
+      }
+
+      if (body['success'] == false) {
+        final message = body['message']?.toString();
+
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal menambahkan view.',
+        );
+      }
+
+      final data = body['data'];
+
+      if (data is Map) {
+        final count = _toInt(data['view_count']);
+
+        if (count != null && count >= 0) {
+          return count;
+        }
+      }
+
+      throw Exception(
+        'Response view tidak valid.',
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
   // =========================
   // Bookmarks
   // =========================

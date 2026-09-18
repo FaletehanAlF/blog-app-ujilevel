@@ -36,6 +36,11 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   bool? _isLiked;
   bool _isLikeWorking = false;
   int _likeCount = 0;
+  int _viewCount = 0;
+
+  /// True setelah view dicatat sekali. Mencegah POST berulang akibat
+  /// rebuild maupun pemuatan ulang detail dari halaman edit.
+  bool _viewRecorded = false;
 
   int? _currentUserId;
   String? _currentRole;
@@ -87,8 +92,10 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         post = fetchedPost;
         isLoading = false;
         _likeCount = fetchedPost.likeCount;
+        _viewCount = fetchedPost.viewCount;
       });
 
+      _recordView();
       _loadBookmarkStatus();
       _loadLikeStatus();
     } catch (error) {
@@ -98,6 +105,27 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         isLoading = false;
         errorMessage = error.toString();
       });
+    }
+  }
+
+  /// Mencatat satu view setelah detail berhasil dimuat.
+  /// Hanya sekali per pembukaan halaman (bukan per rebuild).
+  /// Gagal mencatat bukan error fatal: artikel tetap tampil dengan
+  /// count sebelumnya dan tidak ada error view di halaman.
+  Future<void> _recordView() async {
+    if (_viewRecorded) return;
+    _viewRecorded = true;
+
+    try {
+      final latest = await apiService.addPostView(widget.postId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _viewCount = latest;
+      });
+    } catch (_) {
+      // Abaikan: halaman detail tetap bisa digunakan.
     }
   }
 
@@ -420,6 +448,10 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
               _buildAuthorRow(),
 
+              const SizedBox(height: 8),
+
+              _buildViewRow(),
+
               const SizedBox(height: 20),
 
               Container(
@@ -605,6 +637,28 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       MaterialPageRoute(
         builder: (_) => PublicProfilePage(userId: authorId),
       ),
+    );
+  }
+
+  /// Jumlah view artikel dari backend. Diperbarui ke angka terbaru
+  /// setelah POST view berhasil; sebelumnya memakai angka dari GET.
+  Widget _buildViewRow() {
+    return Row(
+      children: [
+        Icon(
+          Icons.visibility_outlined,
+          color: AppColors.textMuted,
+          size: 14,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          '$_viewCount dilihat',
+          style: TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 12,
+          ),
+        ),
+      ],
     );
   }
 

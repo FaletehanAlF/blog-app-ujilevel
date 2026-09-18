@@ -32,6 +32,7 @@ class Post {
   final int? userId;
   final Author? author;
   final int likeCount;
+  final int viewCount;
 
   Post({
     required this.id,
@@ -43,6 +44,7 @@ class Post {
     this.userId,
     this.author,
     this.likeCount = 0,
+    this.viewCount = 0,
   });
 
   /// Nama pembuat artikel dari relasi posts.user_id -> users.id.
@@ -84,6 +86,7 @@ class Post {
       userId: _toInt(json['user_id']),
       author: author,
       likeCount: _toInt(json['like_count']) ?? 0,
+      viewCount: _toInt(json['view_count']) ?? 0,
     );
   }
 }

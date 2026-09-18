@@ -1176,6 +1176,57 @@ class ApiService {
     }
   }
 
+  /// Jumlah notifikasi yang belum dibaca milik user yang sedang login.
+  /// Backend menentukan kepemilikan dari JWT, tanpa filter user
+  /// secara hardcode di Flutter. Gagal parsing aman: fallback 0.
+  Future<int> getUnreadNotificationCount() async {
+    try {
+      final response = await _dio.get(
+        '/notifications/unread-count',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil jumlah notifikasi.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        return 0;
+      }
+
+      if (body['success'] == false) {
+        final message = body['message']?.toString();
+
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal mengambil jumlah notifikasi.',
+        );
+      }
+
+      final data = body['data'];
+
+      if (data is Map) {
+        final count = _toInt(data['count']);
+
+        if (count == null || count < 0) {
+          return 0;
+        }
+
+        return count;
+      }
+
+      return 0;
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
   // =========================
   // Create Post
   // =========================

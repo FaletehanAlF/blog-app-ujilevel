@@ -2,11 +2,13 @@ class Author {
   final int id;
   final String? name;
   final String? email;
+  final String? profileImage;
 
   const Author({
     required this.id,
     this.name,
     this.email,
+    this.profileImage,
   });
 
   factory Author.fromJson(Map<String, dynamic> json) {
@@ -14,6 +16,8 @@ class Author {
       id: _toInt(json['id']) ?? 0,
       name: json['name']?.toString(),
       email: json['email']?.toString(),
+      profileImage: (json['profile_image'] ?? json['profileImage'])
+          ?.toString(),
     );
   }
 }
@@ -47,6 +51,8 @@ class Post {
 
   String? get authorEmail => author?.email;
 
+  String? get authorProfileImage => author?.profileImage;
+
   factory Post.fromJson(Map<String, dynamic> json) {
     Author? author;
     final authorJson = json['author'];
@@ -62,6 +68,9 @@ class Post {
         id: _toInt(json['user_id']) ?? 0,
         name: json['author_name']?.toString(),
         email: json['author_email']?.toString(),
+        profileImage: (json['author_profile_image'] ??
+                json['author_profileImage'])
+            ?.toString(),
       );
     }
 

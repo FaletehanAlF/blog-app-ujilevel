@@ -1426,6 +1426,118 @@ class ApiService {
     }
   }
 
+  /// Profil publik user lain beserta daftar artikelnya.
+  /// Hanya data publik yang dipakai UI (nama, foto, jumlah artikel,
+  /// daftar artikel); tidak ada password/JWT di response backend.
+  Future<Map<String, dynamic>> getPublicProfile(int userId) async {
+    try {
+      final response = await _dio.get(
+        '/profile/$userId',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil profil pengguna.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        throw Exception(
+          'Response profil tidak valid.',
+        );
+      }
+
+      if (body['success'] == false) {
+        final message = body['message']?.toString();
+
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal mengambil profil pengguna.',
+        );
+      }
+
+      final data = body['data'];
+
+      if (data is Map) {
+        return Map<String, dynamic>.from(data);
+      }
+
+      throw Exception(
+        'Response profil tidak valid.',
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  /// Memperbarui nama dan/atau foto profil user yang sedang login.
+  /// Foto dikirim multipart seperti upload gambar artikel; update nama
+  /// saja tetap bisa tanpa memilih foto. Kepemilikan ditentukan
+  /// backend via JWT. Cache nama lokal disegarkan agar tampilan
+  /// aplikasi langsung konsisten tanpa auth ulang.
+  Future<void> updateProfile({
+    required String name,
+    XFile? profileImage,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'name': name,
+      });
+
+      if (profileImage != null) {
+        final bytes = await profileImage.readAsBytes();
+
+        formData.files.add(
+          MapEntry(
+            'profile_image',
+            MultipartFile.fromBytes(
+              bytes,
+              filename: profileImage.name,
+            ),
+          ),
+        );
+      }
+
+      final response = await _dio.put(
+        '/profile',
+        data: formData,
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal memperbarui profil.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is Map && body['success'] == false) {
+        final message = body['message']?.toString();
+
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal memperbarui profil.',
+        );
+      }
+
+      _name = name;
+
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString(_kName, name);
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
   // =========================
   // Categories
   // =========================

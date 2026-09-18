@@ -27,6 +27,7 @@ class Post {
   final String? image;
   final int? userId;
   final Author? author;
+  final int likeCount;
 
   Post({
     required this.id,
@@ -37,6 +38,7 @@ class Post {
     this.image,
     this.userId,
     this.author,
+    this.likeCount = 0,
   });
 
   /// Nama pembuat artikel dari relasi posts.user_id -> users.id.
@@ -72,6 +74,7 @@ class Post {
       image: json['image']?.toString(),
       userId: _toInt(json['user_id']),
       author: author,
+      likeCount: _toInt(json['like_count']) ?? 0,
     );
   }
 }

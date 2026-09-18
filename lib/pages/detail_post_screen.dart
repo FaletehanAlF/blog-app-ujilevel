@@ -33,6 +33,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   /// null = status like belum dimuat.
   bool? _isLiked;
   bool _isLikeWorking = false;
+  int _likeCount = 0;
 
   int? _currentUserId;
   String? _currentRole;
@@ -83,6 +84,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       setState(() {
         post = fetchedPost;
         isLoading = false;
+        _likeCount = fetchedPost.likeCount;
       });
 
       _loadBookmarkStatus();
@@ -213,6 +215,9 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       setState(() {
         _isLiked = !wasLiked;
         _isLikeWorking = false;
+        _likeCount = wasLiked
+            ? (_likeCount > 0 ? _likeCount - 1 : 0)
+            : _likeCount + 1;
       });
 
       showAppSnack(
@@ -515,14 +520,27 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
     final liked = _isLiked ?? false;
 
-    return IconButton(
-      onPressed: _toggleLike,
-      icon: Icon(
-        liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-        size: 22,
-      ),
-      color: liked ? const Color(0xFFE5484D) : null,
-      tooltip: liked ? 'Hapus like' : 'Suka artikel',
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: _toggleLike,
+          icon: Icon(
+            liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            size: 22,
+          ),
+          color: liked ? const Color(0xFFE5484D) : null,
+          tooltip: liked ? 'Hapus like' : 'Suka artikel',
+        ),
+        Text(
+          _likeCount.toString(),
+          style: TextStyle(
+            color: liked ? const Color(0xFFE5484D) : AppColors.textSecondary,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 

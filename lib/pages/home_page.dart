@@ -5,6 +5,34 @@ import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/pages/detail_post_screen.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 
+class _LikeCount extends StatelessWidget {
+  final int count;
+  const _LikeCount({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.favorite_border_rounded,
+          color: count > 0 ? const Color(0xFFE5484D) : AppColors.textMuted,
+          size: 14,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          count.toString(),
+          style: TextStyle(
+            color: count > 0 ? const Color(0xFFE5484D) : AppColors.textMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 

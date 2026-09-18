@@ -8,6 +8,7 @@ import 'package:belajar_flutter/widgets/profile_avatar.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'detail_post_screen.dart';
+import 'statistics_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -417,6 +418,22 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.numbers_outlined,
             title: 'Jumlah Artikel Saya',
             value: _articleCount?.toString() ?? '-',
+          ),
+
+          const SizedBox(height: 10),
+
+          _menuItem(
+            icon: Icons.bar_chart_rounded,
+            title: 'Statistik',
+            subtitle: 'Ringkasan artikel, views, likes & bookmark',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const StatisticsPage(),
+                ),
+              );
+            },
           ),
 
           const SizedBox(height: 28),

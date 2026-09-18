@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:belajar_flutter/pages/change_password_page.dart';
 import 'package:belajar_flutter/pages/profile_page.dart';
+import 'package:belajar_flutter/pages/statistics_page.dart';
 import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/services/socket_service.dart';
 import 'package:belajar_flutter/pages/login_page.dart';
@@ -90,6 +92,48 @@ class _SettingsPageState extends State<SettingsPage> {
       children: [
         // Profile
         _profileCard(context),
+
+        const SizedBox(height: 12),
+
+        // Statistik - dashboard ringkasan pengguna
+        _settingsSection(
+          children: [
+            _settingItemTappable(
+              icon: Icons.bar_chart_rounded,
+              title: 'Statistik',
+              subtitle: 'Ringkasan artikel, views, likes & bookmark',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const StatisticsPage(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Akun
+        _settingsSection(
+          children: [
+            _settingItemTappable(
+              icon: Icons.lock_outline_rounded,
+              title: 'Ubah Password',
+              subtitle: 'Ganti password akun kamu',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ChangePasswordPage(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
 
         const SizedBox(height: 12),
 
@@ -382,6 +426,69 @@ class _SettingsPageState extends State<SettingsPage> {
 
           trailing,
         ],
+      ),
+    );
+  }
+
+  Widget _settingItemTappable({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        height: 62,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.border,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.grey,
+              size: 21,
+            ),
+          ],
+        ),
       ),
     );
   }

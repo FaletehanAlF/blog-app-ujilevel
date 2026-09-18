@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/post.dart';
 import '../models/category.dart';
 import '../models/notification.dart';
+import '../models/statistics.dart';
 
 /// Urutan artikel yang didukung backend pada `GET /posts`.
 ///
@@ -1696,6 +1697,105 @@ class ApiService {
           'Gagal menghapus kategori: ${response.data}',
         );
       }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  // =========================
+  // Change Password
+  // =========================
+
+  /// Mengubah password user yang sedang login.
+  /// Backend memvalidasi via JWT dan field current/new/confirm.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await _dio.patch(
+        '/auth/change-password',
+        data: {
+          'current_password': currentPassword,
+          'new_password': newPassword,
+          'confirm_password': confirmPassword,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengubah password.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is Map && body['success'] == false) {
+        final message = body['message']?.toString();
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal mengubah password.',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  // =========================
+  // Statistics
+  // =========================
+
+  /// Statistik milik user yang sedang login.
+  /// Backend menentukan kepemilikan dari JWT via `GET /statistics`.
+  /// Response: `{success: true, data: {total_articles, total_views,
+  /// total_likes, total_bookmarks}}`.
+  Future<Statistics> getStatistics() async {
+    try {
+      final response = await _dio.get(
+        '/statistics',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengambil statistik.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is! Map) {
+        throw Exception(
+          'Response statistik tidak valid.',
+        );
+      }
+
+      if (body['success'] == false) {
+        final message = body['message']?.toString();
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal mengambil statistik.',
+        );
+      }
+
+      final data = body['data'];
+
+      if (data is! Map) {
+        throw Exception(
+          'Response statistik tidak valid.',
+        );
+      }
+
+      return Statistics.fromJson(
+        Map<String, dynamic>.from(data),
+      );
     } on DioException catch (e) {
       throw Exception(
         _extractDioError(e),

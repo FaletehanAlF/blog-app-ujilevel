@@ -3,7 +3,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../models/post.dart';
 import '../services/api.dart';
+import '../pages/public_profile_page.dart';
 import 'app_ui.dart';
+import 'profile_avatar.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -90,6 +92,8 @@ class PostCard extends StatelessWidget {
                       style: AppType.excerpt,
                     ),
                     const SizedBox(height: 12),
+                    _buildAuthor(context),
+                    const SizedBox(height: 12),
                     Container(height: 1, color: AppColors.border),
                     const SizedBox(height: 12),
                     Row(
@@ -133,8 +137,64 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
-    return Container(
+  /// Baris author: foto profil + nama. Ketuk untuk membuka profil
+  /// publik author. Tidak tampil jika tidak ada info author.
+  Widget _buildAuthor(BuildContext context) {
+    final authorId = post.author?.id ?? post.userId;
+    final name = post.authorName;
+
+    if ((authorId == null || authorId <= 0) &&
+        (name == null || name.isEmpty)) {
+      return const SizedBox.shrink();
+    }
+
+    final canOpenProfile = authorId != null && authorId > 0;
+
+    return GestureDetector(
+      onTap: canOpenProfile
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PublicProfilePage(userId: authorId),
+                ),
+              );
+            }
+          : null,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          ProfileAvatar(
+            imagePath: post.authorProfileImage,
+            size: 26,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              (name == null || name.isEmpty)
+                  ? 'Penulis tidak diketahui'
+                  : name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (canOpenProfile)
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textMuted,
+              size: 16,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _placeholder() {    return Container(
       width: double.infinity,
       height: double.infinity,
       color: AppColors.surface2,

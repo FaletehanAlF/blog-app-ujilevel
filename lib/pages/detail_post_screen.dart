@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../services/api.dart';
 import '../widgets/app_ui.dart';
+import '../widgets/profile_avatar.dart';
 import 'editproduct.dart';
+import 'public_profile_page.dart';
 
 class DetailPostScreen extends StatefulWidget {
   final int postId;
@@ -546,54 +548,63 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
   Widget _buildAuthorRow() {
     final name = post?.authorName;
+    final authorId = post?.author?.id ?? post?.userId;
+    final canOpenProfile = authorId != null && authorId > 0;
 
-    return Row(
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: AppColors.surface2,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.border,
+    return GestureDetector(
+      onTap: canOpenProfile ? () => _openAuthorProfile(authorId) : null,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          ProfileAvatar(
+            imagePath: post?.authorProfileImage,
+            size: 38,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Oleh',
+                  style: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  (name == null || name.isEmpty)
+                      ? 'Penulis tidak diketahui'
+                      : name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Icon(
-            Icons.person_outline_rounded,
-            color: AppColors.textSecondary,
-            size: 19,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Oleh',
-                style: TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 11,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                (name == null || name.isEmpty)
-                    ? 'Penulis tidak diketahui'
-                    : name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+          if (canOpenProfile)
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textMuted,
+              size: 20,
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _openAuthorProfile(int authorId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PublicProfilePage(userId: authorId),
+      ),
     );
   }
 

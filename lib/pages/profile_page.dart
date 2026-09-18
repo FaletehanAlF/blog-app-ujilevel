@@ -411,16 +411,46 @@ class _ProfilePageState extends State<ProfilePage> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            subtitle: Text(
-              post.category.isNotEmpty ? post.category : 'Tanpa kategori',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-            trailing: Icon(
+             subtitle: Row(
+               children: [
+                 Expanded(
+                   child: Text(
+                     post.category.isNotEmpty ? post.category : 'Tanpa kategori',
+                     maxLines: 1,
+                     overflow: TextOverflow.ellipsis,
+                     style: TextStyle(
+                       color: AppColors.textSecondary,
+                       fontSize: 12,
+                     ),
+                   ),
+                 ),
+                 const SizedBox(width: 8),
+                 Row(
+                   mainAxisSize: MainAxisSize.min,
+                   children: [
+                     Icon(
+                       Icons.favorite_border_rounded,
+                       color: post.likeCount > 0
+                           ? const Color(0xFFE5484D)
+                           : AppColors.textMuted,
+                       size: 12,
+                     ),
+                     const SizedBox(width: 2),
+                     Text(
+                       post.likeCount.toString(),
+                       style: TextStyle(
+                         color: post.likeCount > 0
+                             ? const Color(0xFFE5484D)
+                             : AppColors.textMuted,
+                         fontSize: 12,
+                         fontWeight: FontWeight.w600,
+                       ),
+                     ),
+                   ],
+                 ),
+               ],
+             ),
+             trailing: Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textSecondary,
               size: 21,

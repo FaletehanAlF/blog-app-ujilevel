@@ -273,7 +273,9 @@ class _LikePageState extends State<LikePage> {
           ),
           child: Icon(
             Icons.favorite_rounded,
-            color: AppColors.textSecondary,
+            color: post.likeCount > 0
+                ? const Color(0xFFE5484D)
+                : AppColors.textSecondary,
             size: 20,
           ),
         ),
@@ -296,10 +298,32 @@ class _LikePageState extends State<LikePage> {
             fontSize: 12,
           ),
         ),
-        trailing: Icon(
-          Icons.chevron_right_rounded,
-          color: AppColors.textSecondary,
-          size: 21,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (post.likeCount > 0) ...[
+              Icon(
+                Icons.favorite_border_rounded,
+                color: const Color(0xFFE5484D),
+                size: 14,
+              ),
+              const SizedBox(width: 3),
+              Text(
+                post.likeCount.toString(),
+                style: const TextStyle(
+                  color: Color(0xFFE5484D),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+              size: 21,
+            ),
+          ],
         ),
       ),
     );

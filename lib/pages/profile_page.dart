@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:belajar_flutter/models/post.dart';
 import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
+import 'package:belajar_flutter/widgets/profile_avatar.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'detail_post_screen.dart';
 
@@ -17,6 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String _name = 'Narata User';
   String _email = 'reader@blog.com';
   String _role = 'Pembaca';
+  String? _profileImage;
   int? _userId;
   int? _articleCount;
   List<Post> _myPosts = [];
@@ -36,6 +41,7 @@ class _ProfilePageState extends State<ProfilePage> {
     String? name = await _api.getUserName();
     String? email = await _api.getEmail();
     String? role = await _api.getRole();
+    String? profileImage;
     int? articleCount;
 
     // Data profil segar dari server, fallback ke cache lokal jika gagal.
@@ -48,6 +54,12 @@ class _ProfilePageState extends State<ProfilePage> {
       articleCount = int.tryParse(
         me['article_count']?.toString() ?? '',
       );
+
+      final serverImage = me['profile_image']?.toString();
+
+      if (serverImage != null && serverImage.isNotEmpty) {
+        profileImage = serverImage;
+      }
 
       // Sinkronkan userId dari server agar filter "Artikel Saya"
       // tetap benar walau cache lokal belum menyimpan id.
@@ -71,6 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
         // Tampilkan role apa adanya, misal admin / user
         _role = role;
       }
+      _profileImage = profileImage;
       _articleCount = articleCount;
     });
 
@@ -110,8 +123,172 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _openDetail(Post post) async {
-    await Navigator.push(
+  /// Dialog edit profil: ubah nama dan/atau foto dari gallery.
+  /// Foto bersifat opsional; nama saja tetap bisa disimpan.
+  Future<void> _showEditDialog() async {
+    final nameController = TextEditingController(text: _name);
+    final picker = ImagePicker();
+
+    XFile? selectedImage;
+    Uint8List? previewBytes;
+    String? errorText;
+    bool saving = false;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          Future<void> pickPhoto() async {
+            final image = await picker.pickImage(
+              source: ImageSource.gallery,
+              imageQuality: 80,
+            );
+
+            if (image == null) return;
+
+            final bytes = await image.readAsBytes();
+
+            setDialogState(() {
+              selectedImage = image;
+              previewBytes = bytes;
+            });
+          }
+
+          Future<void> save() async {
+            final newName = nameController.text.trim();
+
+            if (newName.isEmpty) {
+              setDialogState(() {
+                errorText = 'Nama tidak boleh kosong.';
+              });
+              return;
+            }
+
+            setDialogState(() {
+              saving = true;
+              errorText = null;
+            });
+
+            try {
+              await _api.updateProfile(
+                name: newName,
+                profileImage: selectedImage,
+              );
+
+              if (dialogContext.mounted) {
+                Navigator.pop(dialogContext, true);
+              }
+            } catch (error) {
+              setDialogState(() {
+                saving = false;
+                errorText =
+                    error.toString().replaceFirst('Exception: ', '');
+              });
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: AppColors.border),
+            ),
+            title: Text(
+              'Edit Profil',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (previewBytes != null)
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.memory(
+                        previewBytes!,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  else
+                    ProfileAvatar(
+                      imagePath: _profileImage,
+                      size: 72,
+                    ),
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    onPressed: saving ? null : pickPhoto,
+                    icon: const Icon(
+                      Icons.photo_library_outlined,
+                      size: 17,
+                    ),
+                    label: Text(
+                      selectedImage == null
+                          ? 'Ganti Foto'
+                          : selectedImage!.name,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: nameController,
+                    enabled: !saving,
+                    textCapitalization: TextCapitalization.words,
+                    style: TextStyle(color: AppColors.textPrimary),
+                    decoration: appInputDecoration(hint: 'Nama'),
+                  ),
+                  FieldError(message: errorText),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: saving ? null : () => Navigator.pop(context),
+                child: Text(
+                  'Batal',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+              FilledButton(
+                onPressed: saving ? null : save,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.onAccent,
+                ),
+                child: saving
+                    ? const SizedBox(
+                        width: 17,
+                        height: 17,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Simpan'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    nameController.dispose();
+
+    if (saved == true && mounted) {
+      await _loadUser();
+
+      if (!mounted) return;
+
+      showAppSnack(context, 'Profil berhasil diperbarui.');
+    }
+  }
+
+  Future<void> _openDetail(Post post) async {    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => DetailPostScreen(postId: post.id),
@@ -150,19 +327,9 @@ class _ProfilePageState extends State<ProfilePage> {
           Center(
             child: Column(
               children: [
-                Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface2,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border, width: 1),
-                  ),
-                  child: Icon(
-                    Icons.person_outline_rounded,
-                    color: AppColors.textPrimary,
-                    size: 42,
-                  ),
+                ProfileAvatar(
+                  imagePath: _profileImage,
+                  size: 88,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -187,6 +354,26 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                OutlinedButton.icon(
+                  onPressed: _showEditDialog,
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    size: 17,
+                  ),
+                  label: const Text('Edit Profil'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textPrimary,
+                    side: BorderSide(color: AppColors.border),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
                   ),
                 ),
               ],

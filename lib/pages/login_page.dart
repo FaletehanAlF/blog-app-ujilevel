@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:belajar_flutter/pages/forgot_password_page.dart';
 import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
 import 'package:belajar_flutter/pages/register_page.dart';
@@ -81,6 +82,13 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const RegisterPage()),
+    );
+  }
+
+  void goToForgotPassword() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
     );
   }
 
@@ -209,7 +217,30 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 FieldError(message: passwordError),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 10),
+
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: isLoading ? null : goToForgotPassword,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Lupa Password?',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
 
                 primaryButton(
                   label: 'Masuk',

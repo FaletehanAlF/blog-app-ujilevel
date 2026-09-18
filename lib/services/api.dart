@@ -1705,6 +1705,86 @@ class ApiService {
   }
 
   // =========================
+  // Forgot / Reset Password
+  // =========================
+
+  /// Meminta instruksi reset password via email.
+  /// Response selalu generik agar tidak membocorkan existence user.
+  Future<void> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/auth/forgot-password',
+        data: {
+          'email': email,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mengirim instruksi reset password.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is Map && body['success'] == false) {
+        final message = body['message']?.toString();
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal mengirim instruksi reset password.',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  /// Reset password menggunakan raw token dari PASSWORD_RESET_URL.
+  /// Token tidak disimpan lokal, hanya diteruskan ke backend.
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/auth/reset-password',
+        data: {
+          'token': token,
+          'new_password': newPassword,
+          'confirm_password': confirmPassword,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal mereset password.',
+        );
+      }
+
+      final body = response.data;
+
+      if (body is Map && body['success'] == false) {
+        final message = body['message']?.toString();
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal mereset password.',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractDioError(e),
+      );
+    }
+  }
+
+  // =========================
   // Change Password
   // =========================
 

@@ -573,6 +573,8 @@ class HomePageState extends State<HomePage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  _LikeCount(count: post.likeCount),
                 ],
               ),
             ),
@@ -659,6 +661,10 @@ class HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+
+            const SizedBox(width: 8),
+
+            _LikeCount(count: post.likeCount),
           ],
         ),
       ),

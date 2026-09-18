@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'pages/login_page.dart';
 import 'pages/main_shell.dart';
 import 'services/api.dart';
+import 'services/deep_link_service.dart';
 import 'widgets/app_ui.dart';
 
 Future<void> main() async {
@@ -17,6 +18,12 @@ Future<void> main() async {
   // agar Dio interceptor bisa langsung mengirim Authorization header
   final api = ApiService();
   await api.init();
+
+  // Inisialisasi deep link setelah binding ready, sebelum runApp
+  // agar initial link sempat dibaca. NavigatorKey dipasang di BlogApp.
+  // Jangan await blocking agar splash tetap cepat; cukup init async.
+  // ignore: unawaited_futures
+  DeepLinkService.instance.init();
 
   runApp(const BlogApp());
 }
@@ -81,6 +88,7 @@ class BlogApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'NARATA',
       theme: _buildTheme(),
+      navigatorKey: DeepLinkService.instance.navigatorKey,
       home: const AuthGate(),
     );
   }

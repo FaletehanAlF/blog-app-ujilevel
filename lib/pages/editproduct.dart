@@ -210,8 +210,11 @@ class _EditProductPageState extends State<EditProductPage> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(hPad, 24, hPad, 32),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
@@ -575,15 +578,17 @@ class _EditProductPageState extends State<EditProductPage> {
 
                 const SizedBox(height: 20),
 
-                primaryButton(
-                  label: 'Simpan Perubahan',
-                  loading: isLoading,
-                  onPressed: updatePost,
+                    primaryButton(
+                      label: 'Simpan Perubahan',
+                      loading: isLoading,
+                      onPressed: updatePost,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

@@ -301,6 +301,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -321,8 +322,11 @@ class _ProfilePageState extends State<ProfilePage> {
           icon: const Icon(Icons.arrow_back_rounded, size: 22),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 30),
         children: [
           // Profile header
           Center(
@@ -477,15 +481,17 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
 
-          _menuItem(
-            icon: Icons.settings_outlined,
-            title: 'Pengaturan',
-            subtitle: 'Atur preferensi aplikasi',
-            onTap: () {
-              Navigator.pop(context);
-            },
+              _menuItem(
+                icon: Icons.settings_outlined,
+                title: 'Pengaturan',
+                subtitle: 'Atur preferensi aplikasi',
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -577,16 +583,20 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    return Column(
-      children: _myPosts.map((post) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: ListTile(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        if (isMobile) {
+          return Column(
+            children: _myPosts.map((post) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: ListTile(
             onTap: () => _openDetail(post),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 15,
@@ -605,63 +615,112 @@ class _ProfilePageState extends State<ProfilePage> {
                 size: 20,
               ),
             ),
-            title: Text(
-              post.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-             subtitle: Row(
-               children: [
-                 Expanded(
-                   child: Text(
-                     post.category.isNotEmpty ? post.category : 'Tanpa kategori',
-                     maxLines: 1,
-                     overflow: TextOverflow.ellipsis,
-                     style: TextStyle(
-                       color: AppColors.textSecondary,
-                       fontSize: 12,
-                     ),
-                   ),
-                 ),
-                 const SizedBox(width: 8),
-                 Row(
-                   mainAxisSize: MainAxisSize.min,
-                   children: [
-                     Icon(
-                       Icons.favorite_border_rounded,
-                       color: post.likeCount > 0
-                           ? const Color(0xFFE5484D)
-                           : AppColors.textMuted,
-                       size: 12,
-                     ),
-                     const SizedBox(width: 2),
-                     Text(
-                       post.likeCount.toString(),
-                       style: TextStyle(
-                         color: post.likeCount > 0
-                             ? const Color(0xFFE5484D)
-                             : AppColors.textMuted,
-                         fontSize: 12,
-                         fontWeight: FontWeight.w600,
-                       ),
-                     ),
-                   ],
-                 ),
-               ],
-             ),
-             trailing: Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
-              size: 21,
-            ),
+                  title: Text(
+                    post.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          post.category.isNotEmpty ? post.category : 'Tanpa kategori',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.favorite_border_rounded,
+                            color: post.likeCount > 0
+                                ? const Color(0xFFE5484D)
+                                : AppColors.textMuted,
+                            size: 12,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            post.likeCount.toString(),
+                            style: TextStyle(
+                              color: post.likeCount > 0
+                                  ? const Color(0xFFE5484D)
+                                  : AppColors.textMuted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  trailing: Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                    size: 21,
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        }
+        // Desktop: 2 kolom grid
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _myPosts.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 3.6,
           ),
+          itemBuilder: (context, i) {
+            final post = _myPosts[i];
+            return Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: ListTile(
+                onTap: () => _openDetail(post),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface2,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(Icons.article_outlined, color: AppColors.textSecondary, size: 20),
+                ),
+                title: Text(post.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                subtitle: Row(
+                  children: [
+                    Expanded(child: Text(post.category.isNotEmpty ? post.category : 'Tanpa kategori', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
+                    const SizedBox(width: 8),
+                    Icon(Icons.favorite_border_rounded, color: post.likeCount > 0 ? const Color(0xFFE5484D) : AppColors.textMuted, size: 12),
+                    const SizedBox(width: 2),
+                    Text(post.likeCount.toString(), style: TextStyle(color: post.likeCount > 0 ? const Color(0xFFE5484D) : AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 21),
+              ),
+            );
+          },
         );
-      }).toList(),
+      },
     );
   }
 

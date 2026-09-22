@@ -103,14 +103,23 @@ class _ArticlesPageState extends State<ArticlesPage>
       return _buildError();
     }
 
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        24,
-        20,
-        32,
-      ),
+    // MediaQuery untuk padding responsive
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final hPad = screenWidth < 600 ? 20.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                hPad,
+                24,
+                hPad,
+                32,
+              ),
       children: [
         Row(
           children: [
@@ -142,9 +151,31 @@ class _ArticlesPageState extends State<ArticlesPage>
         const SizedBox(height: 24),
         if (categories.isEmpty)
           _buildEmpty()
+        else if (isMobile)
+          ...categories.map(_buildCategoryCard)
         else
-          ...categories.map(_buildCategoryCard),
+          // Desktop: 2 kolom Grid via LayoutBuilder
+          LayoutBuilder(
+            builder: (context, c) {
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: categories.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: 4.2,
+                ),
+                itemBuilder: (context, i) => _buildCategoryCard(categories[i]),
+              );
+            },
+          ),
       ],
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -203,14 +234,18 @@ class _ArticlesPageState extends State<ArticlesPage>
   }
 
   Widget _buildLoading() {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        24,
-        20,
-        32,
-      ),
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            hPad,
+            24,
+            hPad,
+            32,
+          ),
       children: [
         Container(
           width: 140,
@@ -245,7 +280,9 @@ class _ArticlesPageState extends State<ArticlesPage>
             ),
           ),
         ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 

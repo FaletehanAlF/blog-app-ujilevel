@@ -87,8 +87,12 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 18.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(hPad, 18, hPad, 30),
       children: [
         // Profile
         _profileCard(context),
@@ -265,16 +269,18 @@ class _SettingsPageState extends State<SettingsPage> {
 
         const SizedBox(height: 18),
 
-        Center(
-          child: Text(
-            'Blog Application • 2026',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 11,
+            Center(
+              child: Text(
+                'Blog Application • 2026',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 

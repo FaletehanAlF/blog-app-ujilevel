@@ -415,11 +415,14 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       );
     }
 
+    // MediaQuery untuk padding responsive, ConstrainedBox agar tidak terlalu lebar di desktop
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final hPad = screenWidth < 600 ? 20.0 : 32.0;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        20,
+      padding: EdgeInsets.fromLTRB(
+        hPad,
         24,
-        20,
+        hPad,
         32,
       ),
       child: Center(

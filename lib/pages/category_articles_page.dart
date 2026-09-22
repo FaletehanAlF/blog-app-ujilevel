@@ -184,9 +184,16 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
       return _buildEmpty();
     }
 
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= 600;
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(hPad, 24, hPad, 32),
       children: [
         Text(widget.categoryName, style: AppType.pageTitle),
 
@@ -202,24 +209,50 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
         ),
 
         const SizedBox(height: 24),
-        ...posts.map(
-          (post) => Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: PostCard(
-              post: post,
-              onDelete: () => confirmDelete(post),
-              onTap: () => openDetail(post),
+        if (!isDesktop)
+          ...posts.map(
+            (post) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: PostCard(
+                post: post,
+                onDelete: () => confirmDelete(post),
+                onTap: () => openDetail(post),
+              ),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: posts.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 1.05,
+            ),
+            itemBuilder: (context, i) => PostCard(
+              post: posts[i],
+              onDelete: () => confirmDelete(posts[i]),
+              onTap: () => openDetail(posts[i]),
             ),
           ),
-        ),
       ],
+            );
+          },
+        ),
+      ),
     );
   }
 
   Widget _buildLoading() {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(hPad, 24, hPad, 32),
       children: [
         Container(
           width: 150,
@@ -244,7 +277,9 @@ class _CategoryArticlesPageState extends State<CategoryArticlesPage> {
         const SizedBox(height: 24),
 
         const LoadingSkeletonList(),
-      ],
+          ],
+        ),
+      ),
     );
   }
 

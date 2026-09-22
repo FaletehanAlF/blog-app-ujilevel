@@ -25,6 +25,9 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // MediaQuery untuk padding proporsional
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final innerPadding = screenWidth < 600 ? 16.0 : 20.0;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -72,7 +75,7 @@ class PostCard extends StatelessWidget {
               ),
               // ── CATEGORY → TITLE → EXCERPT ──
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(innerPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -98,12 +101,16 @@ class PostCard extends StatelessWidget {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Text(
-                          'Baca artikel',
-                          style: TextStyle(
-                            color: AppColors.accent,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                        // Flexible untuk teks agar tidak overflow pada layar sempit
+                        Flexible(
+                          child: Text(
+                            'Baca artikel',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.accent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -116,7 +123,7 @@ class PostCard extends StatelessWidget {
                         InkWell(
                           onTap: onDelete,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          child: Padding(
+                          child: const Padding(
                             padding: EdgeInsets.all(4),
                             child: Icon(
                               Icons.delete_outline_rounded,

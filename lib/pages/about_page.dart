@@ -7,8 +7,9 @@ class AboutPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+      padding: EdgeInsets.fromLTRB(hPad, 24, hPad, 100),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),

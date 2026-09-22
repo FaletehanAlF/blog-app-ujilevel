@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+export 'responsive.dart';
+
 class AppColors {
   static const Color background = Color(0xFF0B0B0B);
   static const Color surface = Color(0xFF141414);

@@ -132,27 +132,33 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+      final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 30),
         children: [
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 48),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 48),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
               ),
-              child: const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
+            ],
           ),
-        ],
+        ),
       );
     }
 
@@ -171,13 +177,17 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
       );
     }
 
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
     return RefreshIndicator(
       backgroundColor: AppColors.surface2,
       color: Colors.blue,
       onRefresh: _fetchProfile,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 30),
         children: [
           Center(
             child: Column(
@@ -218,39 +228,60 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             ),
           ),
           const SizedBox(height: 10),
-          if (_articles.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 28,
-                horizontal: 20,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.article_outlined,
-                    color: AppColors.textMuted,
-                    size: 32,
+              if (_articles.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 28,
+                    horizontal: 20,
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Belum ada artikel',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
                   ),
-                ],
-              ),
-            )
-          else
-            ..._articles.map(_buildArticleItem),
-        ],
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.article_outlined,
+                        color: AppColors.textMuted,
+                        size: 32,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Belum ada artikel',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isMobile = constraints.maxWidth < 600;
+                    if (isMobile) {
+                      return Column(children: _articles.map(_buildArticleItem).toList());
+                    }
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _articles.length,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 3.5,
+                      ),
+                      itemBuilder: (context, i) => _buildArticleItem(_articles[i]),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

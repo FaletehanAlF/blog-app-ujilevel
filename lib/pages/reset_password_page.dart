@@ -135,7 +135,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+        padding: EdgeInsets.fromLTRB(
+          MediaQuery.sizeOf(context).width < 600 ? 20 : 32,
+          24,
+          MediaQuery.sizeOf(context).width < 600 ? 20 : 32,
+          40,
+        ),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),

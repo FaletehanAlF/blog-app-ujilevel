@@ -192,11 +192,15 @@ class _NotificationPageState extends State<NotificationPage> {
       return _buildEmpty();
     }
 
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-      children: [
-        Text('Notifikasi', style: AppType.pageTitle),
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(hPad, 24, hPad, 32),
+          children: [
+            Text('Notifikasi', style: AppType.pageTitle),
         const SizedBox(height: 6),
         Text(
           'Aktivitas terbaru pada artikel Anda.',
@@ -207,8 +211,29 @@ class _NotificationPageState extends State<NotificationPage> {
           ),
         ),
         const SizedBox(height: 24),
-        ...notifications.map(_buildNotificationItem),
-      ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = constraints.maxWidth < 600;
+                if (isMobile) {
+                  return Column(children: notifications.map(_buildNotificationItem).toList());
+                }
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: notifications.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 3.0,
+                  ),
+                  itemBuilder: (context, i) => _buildNotificationItem(notifications[i]),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -298,9 +323,13 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Widget _buildLoading() {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(hPad, 24, hPad, 32),
       children: [
         Container(
           width: 150,
@@ -320,8 +349,10 @@ class _NotificationPageState extends State<NotificationPage> {
           ),
         ),
         const SizedBox(height: 24),
-        const LoadingSkeletonList(),
-      ],
+            const LoadingSkeletonList(),
+          ],
+        ),
+      ),
     );
   }
 

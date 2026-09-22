@@ -98,7 +98,12 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: AppColors.background,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 40, 20, 40),
+          padding: EdgeInsets.fromLTRB(
+            MediaQuery.sizeOf(context).width < 600 ? 20 : 32,
+            40,
+            MediaQuery.sizeOf(context).width < 600 ? 20 : 32,
+            40,
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Column(

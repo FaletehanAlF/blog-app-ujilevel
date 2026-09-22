@@ -78,18 +78,24 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   Widget _buildBody() {
     if (_loading) {
-      return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+      final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeaderSkeleton(),
             const SizedBox(height: 16),
-            _buildSkeletonGrid(),
-            const SizedBox(height: 16),
-            _buildFooterSkeleton(),
-          ],
+                _buildSkeletonGrid(),
+                const SizedBox(height: 16),
+                _buildFooterSkeleton(),
+              ],
+            ),
+          ),
         ),
       );
     }
@@ -117,15 +123,19 @@ class _StatisticsPageState extends State<StatisticsPage> {
           totalBookmarks: 0,
         );
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Text(
-            'RINGKASAN',
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Text(
+                'RINGKASAN',
             style: TextStyle(
               color: AppColors.textMuted,
               fontSize: 11,
@@ -154,21 +164,28 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ),
           const SizedBox(height: 18),
           _buildStatsGrid(s),
-          const SizedBox(height: 16),
-          _buildInfoCard(),
-        ],
+              const SizedBox(height: 16),
+              _buildInfoCard(),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildStatsGrid(Statistics s) {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.08,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        final crossCount = isMobile ? 2 : 4;
+        final aspect = isMobile ? 1.08 : 0.95;
+        return GridView.count(
+          crossAxisCount: crossCount,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: aspect,
       children: [
         _statCard(
           icon: Icons.description_outlined,
@@ -188,13 +205,15 @@ class _StatisticsPageState extends State<StatisticsPage> {
           value: s.totalLikes,
           subtitle: 'Disukai',
         ),
-        _statCard(
-          icon: Icons.bookmark_border_rounded,
-          label: 'Total Bookmarks',
-          value: s.totalBookmarks,
-          subtitle: 'Disimpan',
-        ),
-      ],
+            _statCard(
+              icon: Icons.bookmark_border_rounded,
+              label: 'Total Bookmarks',
+              value: s.totalBookmarks,
+              subtitle: 'Disimpan',
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -390,14 +409,21 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   Widget _buildSkeletonGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.08,
-      children: List.generate(4, (_) => _skeletonCard()),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        final crossCount = isMobile ? 2 : 4;
+        final aspect = isMobile ? 1.08 : 0.95;
+        return GridView.count(
+          crossAxisCount: crossCount,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: aspect,
+          children: List.generate(4, (_) => _skeletonCard()),
+        );
+      },
     );
   }
 

@@ -189,13 +189,16 @@ class _AddProductPageState extends State<AddProductPage> {
         ),
       ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          20,
-          24,
-          20,
-          40,
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              hPad,
+              24,
+              hPad,
+              40,
+            ),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -306,16 +309,18 @@ class _AddProductPageState extends State<AddProductPage> {
 
                 const SizedBox(height: 28),
 
-                // BUTTON
-                primaryButton(
-                  label: 'Terbitkan Artikel',
-                  loading: isLoading,
-                  onPressed: createPost,
+                    // BUTTON
+                    primaryButton(
+                      label: 'Terbitkan Artikel',
+                      loading: isLoading,
+                      onPressed: createPost,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

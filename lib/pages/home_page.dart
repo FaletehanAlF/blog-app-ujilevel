@@ -231,10 +231,24 @@ class HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // MediaQuery untuk membaca ukuran layar dan menyesuaikan padding
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final horizontalPadding = screenWidth < 600 ? 16.0 : 32.0;
+
     return RefreshIndicator(
       onRefresh: () => fetchPosts(),
-      child: ListView(
-        padding: const EdgeInsets.all(18),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // LayoutBuilder untuk menentukan layout berdasarkan ruang parent
+          // breakpoint 600: digunakan di dalam GridView Artikel Terbaru
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: ListView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 18,
+                ),
         children: [
           // Header
           const Text(
@@ -329,9 +343,11 @@ class HomePageState extends State<HomePage> {
 
           Row(
             children: [
-              const Expanded(
+              // Flexible agar judul tidak overflow ketika sort button di samping
+              const Flexible(
                 child: Text(
                   'Artikel Pilihan',
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 19,
@@ -339,6 +355,7 @@ class HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
               PopupMenuButton<PostSort>(
                 tooltip: 'Urutkan artikel',
                 color: const Color(0xFF1C1C1C),
@@ -442,7 +459,8 @@ class HomePageState extends State<HomePage> {
 
           const SizedBox(height: 28),
 
-          // Artikel lainnya
+          // Artikel lainnya - Responsive dengan LayoutBuilder
+          // Mobile (<600): 1 kolom, Desktop (>=600): 2 kolom Grid
           if (posts.length > 1) ...[
             const Text(
               'Artikel Terbaru',
@@ -455,8 +473,31 @@ class HomePageState extends State<HomePage> {
 
             const SizedBox(height: 14),
 
-            ...posts.skip(1).map(
-              (post) => _articleItem(post),
+            LayoutBuilder(
+              builder: (context, c) {
+                final isMobile = c.maxWidth < 600;
+                final items = posts.skip(1).toList();
+                if (isMobile) {
+                  // Mobile: satu kolom, tetap nyaman, tidak overflow
+                  return Column(
+                    children: items.map((post) => _articleItem(post)).toList(),
+                  );
+                }
+                // Desktop/Web: 2 kolom, gunakan ruang lebih baik
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                    // Rasio agar card tidak terlalu tinggi di desktop
+                    childAspectRatio: 2.8,
+                  ),
+                  itemBuilder: (context, index) => _articleItem(items[index]),
+                );
+              },
             ),
           ],
 
@@ -529,15 +570,22 @@ class HomePageState extends State<HomePage> {
               ),
           ],
         ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _featuredArticle(Post post) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    // MediaQuery: tinggi card proporsional dengan lebar layar
+    final cardHeight = screenWidth < 600 ? 280.0 : 320.0;
     return GestureDetector(
       onTap: () => openDetail(post),
       child: Container(
-        height: 280,
+        height: cardHeight,
         decoration: BoxDecoration(
           color: const Color(0xFF1C1C1C),
           borderRadius: BorderRadius.circular(18),
@@ -619,93 +667,106 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget _articleItem(Post post) {
-    return GestureDetector(
-      onTap: () => openDetail(post),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1C),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            if (post.image != null && post.image!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(
-                  imageUrl: '${ApiService.baseUrl}${post.image}',
-                  width: 90,
-                  height: 90,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: 90,
-                    height: 90,
-                    color: const Color(0xFF1C1C1C),
-                    alignment: Alignment.center,
-                    child: const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.grey,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive image size via MediaQuery: adapt to available width
+        final screenWidth = MediaQuery.sizeOf(context).width;
+        final imageSize = screenWidth < 600 ? 90.0 : 100.0;
+        return GestureDetector(
+          onTap: () => openDetail(post),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1C1C1C),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                if (post.image != null && post.image!.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: '${ApiService.baseUrl}${post.image}',
+                      width: imageSize,
+                      height: imageSize,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: imageSize,
+                        height: imageSize,
+                        color: const Color(0xFF1C1C1C),
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        width: imageSize,
+                        height: imageSize,
+                        color: const Color(0xFF1C1C1C),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.image_outlined,
+                          color: Colors.grey,
+                          size: 22,
+                        ),
                       ),
                     ),
                   ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 90,
-                    height: 90,
-                    color: const Color(0xFF1C1C1C),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.image_outlined,
-                      color: Colors.grey,
-                      size: 22,
-                    ),
+
+                const SizedBox(width: 12),
+
+                // Expanded untuk mengisi sisa ruang pada Row (mencegah overflow)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Flexible agar category tidak memaksa layout melebar
+                      Flexible(
+                        child: Text(
+                          post.category,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 5),
+
+                      Text(
+                        post.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
 
-            const SizedBox(width: 12),
+                const SizedBox(width: 8),
 
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    post.category,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                    ),
-                  ),
+                _ViewCount(count: post.viewCount),
 
-                  const SizedBox(height: 5),
+                const SizedBox(width: 10),
 
-                  Text(
-                    post.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+                _LikeCount(count: post.likeCount),
+              ],
             ),
-
-            const SizedBox(width: 8),
-
-            _ViewCount(count: post.viewCount),
-
-            const SizedBox(width: 10),
-
-            _LikeCount(count: post.likeCount),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -174,9 +174,13 @@ class _BookmarkPageState extends State<BookmarkPage> {
       return _buildEmpty();
     }
 
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(hPad, 24, hPad, 32),
       children: [
         Text('Bookmark', style: AppType.pageTitle),
         const SizedBox(height: 6),
@@ -189,7 +193,26 @@ class _BookmarkPageState extends State<BookmarkPage> {
           ),
         ),
         const SizedBox(height: 24),
-        ...posts.map(_buildBookmarkItem),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+            if (isMobile) {
+              return Column(children: posts.map(_buildBookmarkItem).toList());
+            }
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: posts.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 4.2,
+              ),
+              itemBuilder: (context, i) => _buildBookmarkItem(posts[i]),
+            );
+          },
+        ),
         if (_isLoadingMore)
           const Center(
             child: Padding(
@@ -231,25 +254,27 @@ class _BookmarkPageState extends State<BookmarkPage> {
               ),
             ],
           )
-        else if (_hasMore)
-          Center(
-            child: OutlinedButton(
-              onPressed: loadMore,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textPrimary,
-                side: BorderSide(color: AppColors.border),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+            else if (_hasMore)
+              Center(
+                child: OutlinedButton(
+                  onPressed: loadMore,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textPrimary,
+                    side: BorderSide(color: AppColors.border),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  child: const Text('Muat Lebih Banyak'),
                 ),
               ),
-              child: const Text('Muat Lebih Banyak'),
-            ),
-          ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -309,9 +334,13 @@ class _BookmarkPageState extends State<BookmarkPage> {
   }
 
   Widget _buildLoading() {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+    final hPad = MediaQuery.sizeOf(context).width < 600 ? 20.0 : 32.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(hPad, 24, hPad, 32),
       children: [
         Container(
           width: 150,
@@ -331,8 +360,10 @@ class _BookmarkPageState extends State<BookmarkPage> {
           ),
         ),
         const SizedBox(height: 24),
-        const LoadingSkeletonList(),
-      ],
+            const LoadingSkeletonList(),
+          ],
+        ),
+      ),
     );
   }
 

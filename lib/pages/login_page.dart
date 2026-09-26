@@ -22,10 +22,8 @@ class _LoginPageState extends State<LoginPage> {
   bool obscure = true;
 
   // State khusus email belum terverifikasi (HTTP 403 dari POST /auth/login).
-  // Dipisah dari error login lain agar tahap berikutnya mudah melanjutkan
-  // (mis. navigasi ke halaman verifikasi / resend verification).
-  // Halaman verifikasi email belum ada pada tahap ini, jadi state ini
-  // disiapkan dulu tanpa membuat halaman baru.
+  // Dipisah dari error login lain; dipakai untuk navigasi ke
+  // EmailVerificationPage via goToEmailVerification.
   bool isEmailUnverified = false;
   String? unverifiedEmail;
 
@@ -87,9 +85,8 @@ class _LoginPageState extends State<LoginPage> {
       showAppSnack(context, 'Login berhasil');
     } on EmailNotVerifiedException catch (e) {
       // HTTP 403 dari POST /auth/login: email belum diverifikasi.
-      // Bukan error server biasa — tampilkan pesan khusus verifikasi.
-      // Halaman verifikasi email belum ada, jadi belum ada navigasi;
-      // state disiapkan agar mudah dilanjutkan (lihat goToEmailVerification).
+      // Bukan error server biasa — tampilkan pesan khusus verifikasi,
+      // lalu arahkan ke halaman verifikasi email (tahap 8).
       if (!mounted) return;
       setState(() {
         isLoading = false;
@@ -97,9 +94,7 @@ class _LoginPageState extends State<LoginPage> {
         unverifiedEmail = e.email;
       });
       showAppSnack(context, e.message, isError: true);
-      // TODO(stage-2): panggil goToEmailVerification(e.email) setelah halaman
-      // verifikasi email tersedia. Routing existing memakai Navigator.push
-      // imperatif (tanpa named route), jadi tinggal isi method tersebut.
+      goToEmailVerification(e.email);
     } catch (e) {
       if (!mounted) return;
       setState(() => isLoading = false);
@@ -108,21 +103,15 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // TAHAP BERIKUTNYA: hook navigasi ke halaman verifikasi email.
-  //
-  // Halaman tersebut BELUM ADA pada tahap ini (scope: hanya handle 403 di
-  // login), jadi method ini sengaja belum melakukan Navigator.push agar tidak
-  // membuat halaman baru. Saat halaman verifikasi sudah dibuat, cukup isi
-  // body method ini, contoh:
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(builder: (_) => VerifyEmailPage(email: email)),
-  //   );
-  // dan panggil goToEmailVerification(unverifiedEmail) dari branch 403 di atas.
-  // Parameter [email] sudah tersedia dari EmailNotVerifiedException untuk
-  // keperluan POST /auth/resend-verification pada tahap berikutnya.
+  // Navigasi ke halaman verifikasi email (tahap 8).
+  // Dipanggil saat login 403 (EmailNotVerifiedException) dengan membawa
+  // email untuk keperluan POST /auth/resend-verification.
+  // Routing mengikuti pola existing: Navigator.push imperatif.
   void goToEmailVerification(String email) {
-    // TODO(stage-2): arahkan ke halaman verifikasi email dengan membawa email.
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EmailVerificationPage(email: email)),
+    );
   }
 
   void goToRegister() {

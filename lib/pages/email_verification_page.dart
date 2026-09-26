@@ -60,8 +60,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
       setState(() {
         _isLoading = false;
         _isSuccess = true;
-        _resultMessage =
-            'Jika email terdaftar dan belum diverifikasi, link verifikasi telah dikirim.';
+        _resultMessage = 'Jika email terdaftar dan belum diverifikasi, link verifikasi telah dikirim.';
       });
       _startCooldown();
     } catch (e) {
@@ -293,9 +292,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                 const SizedBox(height: 12),
                 Center(
                   child: TextButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () => Navigator.pop(context),
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
                     child: Text(
                       'Kembali ke Login',
                       style: TextStyle(

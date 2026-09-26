@@ -198,6 +198,9 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  /// Lebar layar saat bottom bar diganti sidebar (web/desktop).
+  static const double _railBreakpoint = 900;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -277,70 +280,164 @@ class _MainShellState extends State<MainShell> {
         ),
       ),
 
-      body: IndexedStack(index: _pageIndex, children: _pages),
-
-      bottomNavigationBar: NavigationBarTheme(
-        data: NavigationBarThemeData(
-          backgroundColor: AppColors.surface,
-          indicatorColor: AppColors.textPrimary.withValues(alpha: 0.12),
-          elevation: 0,
-
-          iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
-            if (states.contains(WidgetState.selected)) {
-              return IconThemeData(color: AppColors.textPrimary);
-            }
-
-            return IconThemeData(color: AppColors.textMuted);
-          }),
-
-          labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
-            if (states.contains(WidgetState.selected)) {
-              return TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              );
-            }
-
-            return TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+      // Web/desktop lebar: sidebar kiri; mobile: bottom bar.
+      // LayoutBuilder agar tidak ada overflow saat jendela di-resize.
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= _railBreakpoint) {
+            return Row(
+              children: [
+                _buildRail(),
+                Container(width: 1, color: AppColors.border),
+                Expanded(
+                  child: IndexedStack(index: _pageIndex, children: _pages),
+                ),
+              ],
             );
-          }),
-        ),
+          }
+          return IndexedStack(index: _pageIndex, children: _pages);
+        },
+      ),
 
-        child: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: _onTap,
+      bottomNavigationBar: LayoutBuilder(
+        builder: (context, constraints) {
+          // Sidebar aktif di layar lebar: bottom bar disembunyikan
+          // agar tidak ganda dan tidak overflow.
+          if (constraints.maxWidth >= _railBreakpoint) {
+            return const SizedBox.shrink();
+          }
+          return _buildBottomBar();
+        },
+      ),
+    );
+  }
 
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.article_outlined),
-              selectedIcon: Icon(Icons.article_rounded),
-              label: 'Articles',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.add_rounded, size: 28),
-              label: 'Tambah',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.info_outline_rounded),
-              selectedIcon: Icon(Icons.info_rounded),
-              label: 'About',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings_rounded),
-              label: 'Settings',
-            ),
-          ],
+  /// Sidebar web/desktop: destinasi sama dengan bottom bar, aksen emas.
+  Widget _buildRail() {
+    return NavigationRail(
+      backgroundColor: AppColors.surface,
+      selectedIndex: _index,
+      onDestinationSelected: _onTap,
+      labelType: NavigationRailLabelType.all,
+      groupAlignment: 0.0,
+      useIndicator: true,
+      indicatorColor: AppColors.gold.withValues(alpha: 0.15),
+      selectedIconTheme: IconThemeData(color: AppColors.gold, size: 24),
+      unselectedIconTheme: IconThemeData(color: AppColors.textMuted, size: 24),
+      selectedLabelTextStyle: TextStyle(
+        color: AppColors.gold,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+      ),
+      unselectedLabelTextStyle: TextStyle(
+        color: AppColors.textMuted,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      ),
+      leading: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.surface2,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.goldBorder),
+          ),
+          child: Icon(Icons.article_outlined, color: AppColors.gold, size: 22),
         ),
+      ),
+      destinations: const [
+        NavigationRailDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home_rounded),
+          label: Text('Home'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.article_outlined),
+          selectedIcon: Icon(Icons.article_rounded),
+          label: Text('Articles'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.add_rounded, size: 28),
+          label: Text('Tambah'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.info_outline_rounded),
+          selectedIcon: Icon(Icons.info_rounded),
+          label: Text('About'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings_rounded),
+          label: Text('Settings'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomBar() {
+    return NavigationBarTheme(
+      data: NavigationBarThemeData(
+        backgroundColor: AppColors.surface,
+        indicatorColor: AppColors.gold.withValues(alpha: 0.15),
+        elevation: 0,
+
+        iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: AppColors.gold);
+          }
+
+          return IconThemeData(color: AppColors.textMuted);
+        }),
+
+        labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return TextStyle(
+              color: AppColors.gold,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            );
+          }
+
+          return TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          );
+        }),
+      ),
+
+      child: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: _onTap,
+
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.article_outlined),
+            selectedIcon: Icon(Icons.article_rounded),
+            label: 'Articles',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.add_rounded, size: 28),
+            label: 'Tambah',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.info_outline_rounded),
+            selectedIcon: Icon(Icons.info_rounded),
+            label: 'About',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings_rounded),
+            label: 'Settings',
+          ),
+        ],
       ),
     );
   }

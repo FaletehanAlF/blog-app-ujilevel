@@ -11,10 +11,7 @@ import 'public_profile_page.dart';
 class DetailPostScreen extends StatefulWidget {
   final int postId;
 
-  const DetailPostScreen({
-    super.key,
-    required this.postId,
-  });
+  const DetailPostScreen({super.key, required this.postId});
 
   @override
   State<DetailPostScreen> createState() => _DetailPostScreenState();
@@ -134,8 +131,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   /// aksi toggle akan menampilkan error sebenarnya jika ada.
   Future<void> _loadBookmarkStatus() async {
     try {
-      final bookmarked =
-          await apiService.getBookmarkStatus(widget.postId);
+      final bookmarked = await apiService.getBookmarkStatus(widget.postId);
 
       if (!mounted) return;
 
@@ -201,8 +197,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
 
   Future<void> _loadLikeStatus() async {
     try {
-      final liked =
-          await apiService.getLikeStatus(widget.postId);
+      final liked = await apiService.getLikeStatus(widget.postId);
 
       if (!mounted) return;
 
@@ -250,10 +245,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
             : _likeCount + 1;
       });
 
-      showAppSnack(
-        context,
-        wasLiked ? 'Like dihapus' : 'Like ditambahkan',
-      );
+      showAppSnack(context, wasLiked ? 'Like dihapus' : 'Like ditambahkan');
     } catch (error) {
       if (!mounted) return;
 
@@ -312,10 +304,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       return;
     }
 
-    final ok = await showDeleteDialog(
-      context,
-      title: post!.title,
-    );
+    final ok = await showDeleteDialog(context, title: post!.title);
 
     if (!ok) return;
 
@@ -336,56 +325,20 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         isDeleting = false;
       });
 
-      showAppSnack(
-        context,
-        error.toString(),
-        isError: true,
-      );
+      showAppSnack(context, error.toString(), isError: true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Ala referensi: tanpa AppBar, hero gambar penuh + kartu sheet.
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            size: 22,
-          ),
-          tooltip: 'Kembali',
-        ),
-        title: const Text(
-          'Detail Artikel',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        actions: [
-          if (post != null && !isLoading && errorMessage == null)
-            _buildLikeButton(),
-          if (post != null && !isLoading && errorMessage == null)
-            _buildBookmarkButton(),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: AppColors.border,
-          ),
-        ),
-      ),
       body: _buildBody(),
       bottomNavigationBar:
           post != null && !isLoading && errorMessage == null && _canManage
-              ? _buildActionBar()
-              : null,
+          ? _buildActionBar()
+          : null,
     );
   }
 
@@ -395,9 +348,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
         child: SizedBox(
           width: 28,
           height: 28,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2.5),
         ),
       );
     }
@@ -415,129 +366,234 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       );
     }
 
-    // MediaQuery untuk padding responsive, ConstrainedBox agar tidak terlalu lebar di desktop
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final hPad = screenWidth < 600 ? 20.0 : 32.0;
+    // Konten dibatasi agar nyaman di tablet/desktop (anti melebar).
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        hPad,
-        24,
-        hPad,
-        32,
-      ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 680,
-          ),
+          constraints: const BoxConstraints(maxWidth: 720),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (post!.image != null && post!.image!.isNotEmpty)
-                _buildHeroImage(),
-
-              CategoryLabel(
-                label: post!.category,
-              ),
-
-              const SizedBox(height: 14),
-
-              Text(
-                post!.title,
-                style: AppType.detailTitle,
-              ),
-
-              const SizedBox(height: 12),
-
-              _buildAuthorRow(),
-
-              const SizedBox(height: 8),
-
-              _buildViewRow(),
-
-              const SizedBox(height: 20),
-
-              Container(
-                height: 1,
-                color: AppColors.border,
-              ),
-
-              const SizedBox(height: 20),
-
-              Text(
-                post!.content,
-                style: AppType.body,
-              ),
-
-              const SizedBox(height: 24),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(
-                    AppRadius.md,
-                  ),
-                  border: Border.all(
-                    color: AppColors.border,
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color: AppColors.textSecondary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Gunakan tombol di bawah untuk mengedit atau menghapus artikel.',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [_buildHero(), _buildSheet()],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBookmarkButton() {
-    if (_isBookmarkWorking || _isBookmarked == null) {
-      return const Padding(
-        padding: EdgeInsets.only(right: 12),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
+  /// Hero gambar ala referensi: tinggi proporsional terbatas,
+  /// tombol kembali + bookmark melayang, gradien bawah menyatu ke sheet.
+  Widget _buildHero() {
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    // Tinggi terbatas (clamp) agar tidak overflow di layar pendek/lebar.
+    final heroHeight = (screenHeight * 0.42).clamp(280.0, 480.0);
+    final imageUrl = (post!.image != null && post!.image!.isNotEmpty)
+        ? '${ApiService.baseUrl}${post!.image}'
+        : '';
+
+    return SizedBox(
+      height: heroHeight,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (imageUrl.isNotEmpty)
+            CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: AppColors.surface2,
+                alignment: Alignment.center,
+                child: const SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
+                color: AppColors.surface2,
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.image_not_supported_outlined,
+                  color: AppColors.textMuted,
+                  size: 34,
+                ),
+              ),
+            )
+          else
+            Container(
+              color: AppColors.surface2,
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.article_outlined,
+                color: AppColors.textMuted,
+                size: 40,
+              ),
+            ),
+
+          // Gradien atas (tombol terbaca) dan bawah (menyatu ke sheet)
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.55),
+                    Colors.transparent,
+                    Colors.transparent,
+                    AppColors.background.withValues(alpha: 0.9),
+                  ],
+                  stops: const [0.0, 0.3, 0.65, 1.0],
+                ),
+              ),
+            ),
           ),
+
+          // Tombol melayang
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 12,
+            left: 16,
+            right: 16,
+            child: Row(
+              children: [
+                _heroCircleButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: 'Kembali',
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const Spacer(),
+                _buildHeroBookmark(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _heroCircleButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onPressed,
+    Color? iconColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.black.withValues(alpha: 0.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 20),
+        color: iconColor ?? Colors.white,
+        tooltip: tooltip,
+      ),
+    );
+  }
+
+  /// Tombol bookmark melayang ala referensi (emas saat tersimpan).
+  Widget _buildHeroBookmark() {
+    if (_isBookmarkWorking || _isBookmarked == null) {
+      return Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black.withValues(alpha: 0.5),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
         ),
       );
     }
 
     final bookmarked = _isBookmarked ?? false;
-
-    return IconButton(
-      onPressed: _toggleBookmark,
-      icon: Icon(
-        bookmarked
-            ? Icons.bookmark_rounded
-            : Icons.bookmark_border_rounded,
-        size: 22,
-      ),
-      color: bookmarked ? Colors.blue : null,
+    return _heroCircleButton(
+      icon: bookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+      iconColor: bookmarked ? AppColors.gold : Colors.white,
       tooltip: bookmarked ? 'Hapus bookmark' : 'Simpan bookmark',
+      onPressed: _toggleBookmark,
+    );
+  }
+
+  /// Kartu sheet ala referensi yang menumpuk hero.
+  Widget _buildSheet() {
+    return Container(
+      margin: const EdgeInsets.only(top: -28),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CategoryLabel(
+            label: post!.category.isEmpty ? 'Artikel' : post!.category,
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(post!.title, style: AppType.detailTitle),
+
+          const SizedBox(height: 14),
+
+          _buildAuthorRow(),
+
+          const SizedBox(height: 12),
+
+          // Meta: views + like (logika like tidak berubah)
+          Row(
+            children: [
+              Flexible(child: _buildViewRow()),
+              const SizedBox(width: 16),
+              Flexible(child: _buildLikeButton()),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          Container(height: 1, color: AppColors.border),
+
+          const SizedBox(height: 18),
+
+          Text(post!.content, style: AppType.body),
+
+          const SizedBox(height: 24),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Gunakan tombol di bawah untuk mengedit atau menghapus artikel.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -591,10 +647,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
       behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
-          ProfileAvatar(
-            imagePath: post?.authorProfileImage,
-            size: 38,
-          ),
+          ProfileAvatar(imagePath: post?.authorProfileImage, size: 38),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -602,10 +655,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
               children: [
                 Text(
                   'Oleh',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -637,9 +687,7 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   void _openAuthorProfile(int authorId) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => PublicProfilePage(userId: authorId),
-      ),
+      MaterialPageRoute(builder: (_) => PublicProfilePage(userId: authorId)),
     );
   }
 
@@ -648,118 +696,37 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
   Widget _buildViewRow() {
     return Row(
       children: [
-        Icon(
-          Icons.visibility_outlined,
-          color: AppColors.textMuted,
-          size: 14,
-        ),
+        Icon(Icons.visibility_outlined, color: AppColors.textMuted, size: 14),
         const SizedBox(width: 6),
         Text(
           '$_viewCount dilihat',
-          style: TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
         ),
       ],
-    );
-  }
-
-  Widget _buildHeroImage() {
-    return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 24,
-      ),
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(
-            AppRadius.lg,
-          ),
-          child: CachedNetworkImage(
-            imageUrl: '${ApiService.baseUrl}${post!.image}',
-            width: double.infinity,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Container(
-              color: AppColors.surface2,
-              alignment: Alignment.center,
-              child: const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
-              ),
-            ),
-            errorWidget: (context, url, error) => Container(
-              color: AppColors.surface2,
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.image_not_supported_outlined,
-                    color: AppColors.textMuted,
-                    size: 30,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Gambar tidak dapat dimuat',
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
   Widget _buildActionBar() {
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(
-          20,
-          12,
-          20,
-          12,
-        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          border: Border(
-            top: BorderSide(
-              color: AppColors.border,
-            ),
-          ),
+          border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: Row(
           children: [
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: isDeleting ? null : openEdit,
-                icon: const Icon(
-                  Icons.edit_outlined,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Edit Artikel',
-                ),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit Artikel'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.textPrimary,
-                  side: BorderSide(
-                    color: AppColors.border,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 13,
-                  ),
+                  side: BorderSide(color: AppColors.border),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppRadius.md,
-                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
               ),
@@ -772,31 +739,16 @@ class _DetailPostScreenState extends State<DetailPostScreen> {
                     ? const SizedBox(
                         width: 17,
                         height: 17,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(
-                        Icons.delete_outline_rounded,
-                        size: 18,
-                      ),
-                label: Text(
-                  isDeleting
-                      ? 'Menghapus...'
-                      : 'Hapus Artikel',
-                ),
+                    : const Icon(Icons.delete_outline_rounded, size: 18),
+                label: Text(isDeleting ? 'Menghapus...' : 'Hapus Artikel'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.danger,
-                  side: BorderSide(
-                    color: AppColors.danger,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 13,
-                  ),
+                  side: BorderSide(color: AppColors.danger),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppRadius.md,
-                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
               ),

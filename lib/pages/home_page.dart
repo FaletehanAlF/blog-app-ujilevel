@@ -7,25 +7,32 @@ import 'package:belajar_flutter/widgets/app_ui.dart';
 
 class _LikeCount extends StatelessWidget {
   final int count;
-  const _LikeCount({required this.count});
+
+  /// True saat tampil di atas gambar (teks selalu terang).
+  final bool light;
+
+  const _LikeCount({required this.count, this.light = false});
 
   @override
   Widget build(BuildContext context) {
+    final color = light
+        ? Colors.white70
+        : (count > 0 ? const Color(0xFFE5484D) : AppColors.textMuted);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.favorite_border_rounded,
-          color: count > 0 ? const Color(0xFFE5484D) : AppColors.textMuted,
-          size: 14,
-        ),
+        Icon(Icons.favorite_border_rounded, color: color, size: 14),
         const SizedBox(width: 4),
-        Text(
-          count.toString(),
-          style: TextStyle(
-            color: count > 0 ? const Color(0xFFE5484D) : AppColors.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+        Flexible(
+          child: Text(
+            count.toString(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -35,25 +42,30 @@ class _LikeCount extends StatelessWidget {
 
 class _ViewCount extends StatelessWidget {
   final int count;
-  const _ViewCount({required this.count});
+
+  /// True saat tampil di atas gambar (teks selalu terang).
+  final bool light;
+
+  const _ViewCount({required this.count, this.light = false});
 
   @override
   Widget build(BuildContext context) {
+    final color = light ? Colors.white70 : AppColors.textMuted;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.visibility_outlined,
-          color: AppColors.textMuted,
-          size: 14,
-        ),
+        Icon(Icons.visibility_outlined, color: color, size: 14),
         const SizedBox(width: 4),
-        Text(
-          count.toString(),
-          style: TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+        Flexible(
+          child: Text(
+            count.toString(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -71,8 +83,7 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   final ApiService apiService = ApiService();
 
-  final TextEditingController searchController =
-      TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
   List<Post> posts = [];
   bool isLoading = true;
@@ -84,6 +95,12 @@ class HomePageState extends State<HomePage> {
   int _currentPage = 1;
   int _totalPages = 1;
   bool _showClear = false;
+
+  /// Toggle kolom pencarian ala referensi (ikon search di header).
+  bool _showSearch = false;
+
+  /// Index carousel unggulan untuk titik indikator.
+  int _featuredIndex = 0;
 
   static const int _pageSize = 10;
 
@@ -196,9 +213,7 @@ class HomePageState extends State<HomePage> {
         final existingIds = posts.map((post) => post.id).toSet();
         posts = [
           ...posts,
-          ...result.posts.where(
-            (post) => !existingIds.contains(post.id),
-          ),
+          ...result.posts.where((post) => !existingIds.contains(post.id)),
         ];
         _currentPage = result.page;
         _totalPages = result.totalPages;
@@ -218,9 +233,7 @@ class HomePageState extends State<HomePage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DetailPostScreen(
-          postId: post.id,
-        ),
+        builder: (context) => DetailPostScreen(postId: post.id),
       ),
     );
 
@@ -228,6 +241,14 @@ class HomePageState extends State<HomePage> {
     // Refresh setelah kembali dari detail (edit/hapus dari halaman detail).
     fetchPosts();
   }
+
+  /// Tab urutan ala referensi, dipetakan ke sort yang didukung backend.
+  /// "Populer" tidak dibuat karena backend tidak menyediakan sort views/likes.
+  List<({String label, PostSort sort})> get _tabs => const [
+    (label: 'Rekomendasi', sort: PostSort.latest),
+    (label: 'Terlama', sort: PostSort.oldest),
+    (label: 'A-Z', sort: PostSort.titleAsc),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -240,336 +261,251 @@ class HomePageState extends State<HomePage> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           // LayoutBuilder untuk menentukan layout berdasarkan ruang parent
-          // breakpoint 600: digunakan di dalam GridView Artikel Terbaru
+          // breakpoint 600: konten dibatasi agar nyaman di tablet/desktop
           return Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
+              constraints: const BoxConstraints(maxWidth: 880),
               child: ListView(
                 padding: EdgeInsets.symmetric(
                   horizontal: horizontalPadding,
                   vertical: 18,
                 ),
-        children: [
-          // Header
-          const Text(
-            'Selamat datang di RuangKata!',
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-            ),
-          ),
-
-          const SizedBox(height: 5),
-
-          const Text(
-            'Temukan sesuatu untuk dibaca.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Search bar
-          TextField(
-            controller: searchController,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (value) {
-              FocusScope.of(context).unfocus();
-              fetchPosts(keyword: value);
-            },
-            onChanged: (value) {
-              // Jika dikosongkan saat mengetik, kembali ke semua artikel.
-              if (value.trim().isEmpty && searchQuery.isNotEmpty) {
-                fetchPosts(keyword: '');
-              }
-            },
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
-            cursorColor: Colors.white,
-            decoration: InputDecoration(
-              hintText: 'Cari artikel...',
-              hintStyle: const TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: Colors.grey,
-                size: 21,
-              ),
-              suffixIcon: _showClear
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.clear_rounded,
-                        color: Colors.grey,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        searchController.clear();
-                        FocusScope.of(context).unfocus();
-                        fetchPosts(keyword: '');
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: const Color(0xFF1C1C1C),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 14,
-                horizontal: 16,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.15),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 28),
-
-          Row(
-            children: [
-              // Flexible agar judul tidak overflow ketika sort button di samping
-              const Flexible(
-                child: Text(
-                  'Artikel Pilihan',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              PopupMenuButton<PostSort>(
-                tooltip: 'Urutkan artikel',
-                color: const Color(0xFF1C1C1C),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                onSelected: (value) {
-                  if (value != _sort) fetchPosts(sort: value);
-                },
-                itemBuilder: (context) => PostSort.values
-                    .map(
-                      (option) => PopupMenuItem<PostSort>(
-                        value: option,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                option.label,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                            if (option == _sort)
-                              const Icon(
-                                Icons.check_rounded,
-                                color: Colors.grey,
-                                size: 18,
-                              ),
-                          ],
-                        ),
-                      ),
-                    )
-                    .toList(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1C1C1C),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header ala referensi: judul besar + ikon pencarian
+                  Row(
                     children: [
-                      const Icon(
-                        Icons.sort_rounded,
-                        color: Colors.grey,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _sort.label,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
+                      Expanded(
+                        child: Text(
+                          'Temukan',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Colors.grey,
-                        size: 18,
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            setState(() => _showSearch = !_showSearch);
+                            if (!_showSearch) {
+                              FocusScope.of(context).unfocus();
+                            }
+                          },
+                          icon: Icon(
+                            _showSearch
+                                ? Icons.close_rounded
+                                : Icons.search_rounded,
+                            color: AppColors.textSecondary,
+                            size: 21,
+                          ),
+                          tooltip: 'Cari artikel',
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 14),
-          // Artikel utama
-          if (isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
-            )
-          else if (errorMessage != null && posts.isEmpty)
-            ErrorStateView(
-              message: errorMessage!,
-              onRetry: () => fetchPosts(),
-            )
-          else if (posts.isNotEmpty)
-            _featuredArticle(posts.first)
-          else if (searchQuery.isNotEmpty)
-            Text(
-              'Tidak ada artikel ditemukan untuk "$searchQuery".',
-              style: const TextStyle(
-                color: Colors.grey,
-              ),
-            )
-          else
-            const Text(
-              'Belum ada artikel.',
-              style: TextStyle(
-                color: Colors.grey,
-              ),
-            ),
-
-          const SizedBox(height: 28),
-
-          // Artikel lainnya - Responsive dengan LayoutBuilder
-          // Mobile (<600): 1 kolom, Desktop (>=600): 2 kolom Grid
-          if (posts.length > 1) ...[
-            const Text(
-              'Artikel Terbaru',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            LayoutBuilder(
-              builder: (context, c) {
-                final isMobile = c.maxWidth < 600;
-                final items = posts.skip(1).toList();
-                if (isMobile) {
-                  // Mobile: satu kolom, tetap nyaman, tidak overflow
-                  return Column(
-                    children: items.map((post) => _articleItem(post)).toList(),
-                  );
-                }
-                // Desktop/Web: 2 kolom, gunakan ruang lebih baik
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: items.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 14,
-                    mainAxisSpacing: 14,
-                    // Rasio agar card tidak terlalu tinggi di desktop
-                    childAspectRatio: 2.8,
-                  ),
-                  itemBuilder: (context, index) => _articleItem(items[index]),
-                );
-              },
-            ),
-          ],
-
-          // Pagination: Muat Lebih Banyak.
-          // Hanya tampil jika masih ada halaman berikutnya.
-          if (!isLoading && errorMessage == null && posts.isNotEmpty) ...[
-            const SizedBox(height: 8),
-
-            if (_isLoadingMore)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-              )
-            else if (loadMoreError != null)
-              Column(
-                children: [
-                  Text(
-                    loadMoreError!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: loadMore,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.25),
+                  // Search bar (expandable)
+                  if (_showSearch) ...[
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: searchController,
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (value) {
+                        FocusScope.of(context).unfocus();
+                        fetchPosts(keyword: value);
+                      },
+                      onChanged: (value) {
+                        // Jika dikosongkan saat mengetik, kembali ke semua artikel.
+                        if (value.trim().isEmpty && searchQuery.isNotEmpty) {
+                          fetchPosts(keyword: '');
+                        }
+                      },
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                      cursorColor: AppColors.gold,
+                      decoration: InputDecoration(
+                        hintText: 'Cari artikel...',
+                        hintStyle: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 14,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: AppColors.textMuted,
+                          size: 21,
+                        ),
+                        suffixIcon: _showClear
+                            ? IconButton(
+                                icon: Icon(
+                                  Icons.clear_rounded,
+                                  color: AppColors.textMuted,
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  searchController.clear();
+                                  FocusScope.of(context).unfocus();
+                                  fetchPosts(keyword: '');
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                          horizontal: 16,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide(color: AppColors.gold),
+                        ),
                       ),
                     ),
-                    child: const Text('Coba Lagi'),
+                  ],
+
+                  const SizedBox(height: 18),
+
+                  // Artikel utama: carousel ala referensi
+                  if (isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (errorMessage != null && posts.isEmpty)
+                    ErrorStateView(
+                      message: errorMessage!,
+                      onRetry: () => fetchPosts(),
+                    )
+                  else if (posts.isNotEmpty)
+                    _featuredCarousel(posts.take(5).toList())
+                  else if (searchQuery.isNotEmpty)
+                    Text(
+                      'Tidak ada artikel ditemukan untuk "$searchQuery".',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    )
+                  else
+                    Text(
+                      'Belum ada artikel.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+
+                  const SizedBox(height: 22),
+
+                  // Tab urutan ala referensi (scroll horizontal anti-overflow)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final tab in _tabs)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 24),
+                            child: _sortTab(
+                              label: tab.label,
+                              selected: _sort == tab.sort,
+                              onTap: () {
+                                if (tab.sort != _sort) {
+                                  fetchPosts(sort: tab.sort);
+                                }
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
+
+                  const SizedBox(height: 14),
+
+                  // Daftar artikel: baris thumbnail + teks ala referensi
+                  if (!isLoading && errorMessage == null && posts.isNotEmpty)
+                    Column(
+                      children: posts.map((post) => _articleRow(post)).toList(),
+                    ),
+
+                  // Pagination: Muat Lebih Banyak.
+                  // Hanya tampil jika masih ada halaman berikutnya.
+                  if (!isLoading &&
+                      errorMessage == null &&
+                      posts.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+
+                    if (_isLoadingMore)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      )
+                    else if (loadMoreError != null)
+                      Column(
+                        children: [
+                          Text(
+                            loadMoreError!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton(
+                            onPressed: loadMore,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.25),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: const Text('Coba Lagi'),
+                          ),
+                        ],
+                      )
+                    else if (_hasMore)
+                      Center(
+                        child: OutlinedButton(
+                          onPressed: loadMore,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.25),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: const Text('Muat Lebih Banyak'),
+                        ),
+                      ),
+                  ],
                 ],
-              )
-            else if (_hasMore)
-              Center(
-                child: OutlinedButton(
-                  onPressed: loadMore,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.25),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: const Text('Muat Lebih Banyak'),
-                ),
-              ),
-          ],
-        ],
               ),
             ),
           );
@@ -578,83 +514,191 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _featuredArticle(Post post) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    // MediaQuery: tinggi card proporsional dengan lebar layar
-    final cardHeight = screenWidth < 600 ? 280.0 : 320.0;
+  /// Tab urutan dengan garis bawah emas untuk tab aktif (ala referensi).
+  Widget _sortTab({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: selected ? AppColors.textPrimary : AppColors.textMuted,
+              fontSize: 14,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Container(
+            height: 3,
+            width: 26,
+            decoration: BoxDecoration(
+              color: selected ? AppColors.gold : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Carousel unggulan ala referensi: gambar + gradien + judul overlay.
+  /// AspectRatio menjaga tinggi proporsional di semua ukuran layar.
+  Widget _featuredCarousel(List<Post> items) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AspectRatio(
+          aspectRatio: 16 / 10,
+          child: PageView.builder(
+            itemCount: items.length,
+            onPageChanged: (index) {
+              if (mounted) {
+                setState(() => _featuredIndex = index);
+              }
+            },
+            itemBuilder: (context, index) => _featuredCard(items[index]),
+          ),
+        ),
+        if (items.length > 1) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (int i = 0; i < items.length; i++)
+                Container(
+                  width: _featuredIndex == i ? 20 : 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: _featuredIndex == i
+                        ? AppColors.gold
+                        : AppColors.border,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _featuredCard(Post post) {
+    final imageUrl = (post.image != null && post.image!.isNotEmpty)
+        ? '${ApiService.baseUrl}${post.image}'
+        : '';
+
     return GestureDetector(
       onTap: () => openDetail(post),
       child: Container(
-        height: cardHeight,
+        margin: const EdgeInsets.only(right: 2),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1C),
-          borderRadius: BorderRadius.circular(18),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: AppColors.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
+          fit: StackFit.expand,
           children: [
-            if (post.image != null && post.image!.isNotEmpty)
+            if (imageUrl.isNotEmpty)
               CachedNetworkImage(
-                imageUrl: '${ApiService.baseUrl}${post.image}',
-                width: double.infinity,
-                height: double.infinity,
+                imageUrl: imageUrl,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
-                  color: const Color(0xFF1C1C1C),
+                  color: AppColors.surface2,
                   alignment: Alignment.center,
                   child: const SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.grey,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
-                errorWidget: (context, url, error) => Container(
-                  color: const Color(0xFF1C1C1C),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.image_not_supported_outlined,
-                    color: Colors.grey,
-                    size: 28,
+                errorWidget: (context, url, error) =>
+                    _imageFallback(iconSize: 30),
+              )
+            else
+              _imageFallback(iconSize: 30),
+
+            // Gradien agar judul terbaca di atas gambar
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.35),
+                      Colors.black.withValues(alpha: 0.85),
+                    ],
                   ),
                 ),
               ),
+            ),
 
             Positioned(
               left: 16,
               right: 16,
-              bottom: 16,
+              bottom: 14,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    post.category,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: AppColors.gold.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Text(
+                      post.category.isEmpty ? 'Artikel' : post.category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.gold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                      ),
                     ),
                   ),
-
-                  const SizedBox(height: 5),
-
+                  const SizedBox(height: 8),
                   Text(
                     post.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 21,
-                      fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      _ViewCount(count: post.viewCount),
+                      Flexible(
+                        child: _ViewCount(count: post.viewCount, light: true),
+                      ),
                       const SizedBox(width: 12),
-                      _LikeCount(count: post.likeCount),
+                      Flexible(
+                        child: _LikeCount(count: post.likeCount, light: true),
+                      ),
                     ],
                   ),
                 ],
@@ -666,107 +710,106 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _articleItem(Post post) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Responsive image size via MediaQuery: adapt to available width
-        final screenWidth = MediaQuery.sizeOf(context).width;
-        final imageSize = screenWidth < 600 ? 90.0 : 100.0;
-        return GestureDetector(
-          onTap: () => openDetail(post),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 14),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1C),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                if (post.image != null && post.image!.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: CachedNetworkImage(
-                      imageUrl: '${ApiService.baseUrl}${post.image}',
-                      width: imageSize,
-                      height: imageSize,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        width: imageSize,
-                        height: imageSize,
-                        color: const Color(0xFF1C1C1C),
-                        alignment: Alignment.center,
-                        child: const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.grey,
+  /// Baris artikel ala referensi: thumbnail kiri + judul + meta.
+  /// Expanded/Flexible di semua teks agar tidak overflow di layar sempit.
+  Widget _articleRow(Post post) {
+    final imageUrl = (post.image != null && post.image!.isNotEmpty)
+        ? '${ApiService.baseUrl}${post.image}'
+        : '';
+
+    return GestureDetector(
+      onTap: () => openDetail(post),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: 84,
+                height: 84,
+                child: imageUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: AppColors.surface2,
+                          alignment: Alignment.center,
+                          child: const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: imageSize,
-                        height: imageSize,
-                        color: const Color(0xFF1C1C1C),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.image_outlined,
-                          color: Colors.grey,
-                          size: 22,
-                        ),
-                      ),
+                        errorWidget: (context, url, error) =>
+                            _imageFallback(iconSize: 22),
+                      )
+                    : _imageFallback(iconSize: 22),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    post.category.isEmpty ? 'Artikel' : post.category,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
                     ),
                   ),
-
-                const SizedBox(width: 12),
-
-                // Expanded untuk mengisi sisa ruang pada Row (mencegah overflow)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 4),
+                  Text(
+                    post.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
                     children: [
-                      // Flexible agar category tidak memaksa layout melebar
-                      Flexible(
-                        child: Text(
-                          post.category,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 5),
-
-                      Text(
-                        post.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      Flexible(child: _ViewCount(count: post.viewCount)),
+                      const SizedBox(width: 12),
+                      Flexible(child: _LikeCount(count: post.likeCount)),
                     ],
                   ),
-                ),
-
-                const SizedBox(width: 8),
-
-                _ViewCount(count: post.viewCount),
-
-                const SizedBox(width: 10),
-
-                _LikeCount(count: post.likeCount),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _imageFallback({required double iconSize}) {
+    return Container(
+      color: AppColors.surface2,
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.image_outlined,
+        color: AppColors.textMuted,
+        size: iconSize,
+      ),
     );
   }
 }

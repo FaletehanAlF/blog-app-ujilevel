@@ -12,7 +12,14 @@ class AppColors {
   static const Color textSecondary = Color(0xFFA3A3A3);
   static const Color textMuted = Color(0xFF737373);
 
-  static const Color accent = Color(0xFFF5F5F5);
+  /// Emas RuangKata: aksen utama di atas hitam-putih.
+  /// Dipakai tombol primer, tab aktif, indikator, dan ikon terpilih
+  /// di seluruh halaman.
+  static const Color gold = Color(0xFFD4AF37);
+  static const Color goldSoft = Color(0xFF2A2113);
+  static const Color goldBorder = Color(0xFF5A4517);
+
+  static const Color accent = gold;
   static const Color onAccent = Color(0xFF0B0B0B);
 
   static const Color danger = Color(0xFFE5484D);

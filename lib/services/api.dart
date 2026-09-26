@@ -60,6 +60,22 @@ class EmailNotVerifiedException implements Exception {
   String toString() => message;
 }
 
+/// Exception khusus untuk token/session tidak valid (HTTP 401).
+///
+/// Dipakai agar pemanggil `getMe()` (mis. AuthGate tahap 10) dapat
+/// membedakan "token invalid → kembali ke Login" dari network error biasa.
+/// Mengikuti pola [EmailNotVerifiedException]: tetap `implements Exception`
+/// sehingga pemanggil existing dengan `catch` generik (mis. profile_page)
+/// tidak berubah perilakunya.
+class UnauthorizedException implements Exception {
+  final String message;
+
+  const UnauthorizedException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class ApiService {
   static String get baseUrl => dotenv.env['API_URL'] ?? '';
 
@@ -1354,6 +1370,11 @@ class ApiService {
 
       throw Exception('Response profil tidak valid.');
     } on DioException catch (e) {
+      // HTTP 401: token invalid/kedaluwarsa. Dilempar sebagai tipe khusus
+      // agar AuthGate dapat kembali ke Login; error lain tetap generik.
+      if (e.response?.statusCode == 401) {
+        throw UnauthorizedException(_extractDioError(e));
+      }
       throw Exception(_extractDioError(e));
     }
   }

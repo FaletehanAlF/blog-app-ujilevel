@@ -229,12 +229,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline_rounded,
-                  size: 16, color: AppColors.textMuted),
+              Icon(
+                Icons.info_outline_rounded,
+                size: 16,
+                color: AppColors.textMuted,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Untuk pengembangan saat ini, link reset dengan token tersedia di console backend (PASSWORD_RESET_URL?token=<raw_token>). Buka link tersebut untuk melanjutkan reset.',
+                  'Jika email terdaftar, instruksi reset password akan dikirim ke email kamu. Silakan cek inbox atau folder spam.',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,

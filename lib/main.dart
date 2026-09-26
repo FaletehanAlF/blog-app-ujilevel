@@ -86,7 +86,7 @@ class BlogApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'NARATA',
+      title: 'RuangKata',
       theme: _buildTheme(),
       navigatorKey: DeepLinkService.instance.navigatorKey,
       home: const AuthGate(),

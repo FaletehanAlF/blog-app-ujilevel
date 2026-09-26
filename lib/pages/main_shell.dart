@@ -229,7 +229,7 @@ class _MainShellState extends State<MainShell> {
 
         title: _index == 0
             ? Text(
-                'NARATA',
+                'RuangKata',
                 style: GoogleFonts.playfairDisplay(
                   color: AppColors.textPrimary,
                   fontSize: 21,

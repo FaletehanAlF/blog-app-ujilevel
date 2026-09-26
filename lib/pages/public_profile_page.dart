@@ -24,7 +24,7 @@ class PublicProfilePage extends StatefulWidget {
 class _PublicProfilePageState extends State<PublicProfilePage> {
   final ApiService _api = ApiService();
 
-  String _name = 'Pengguna Narata';
+  String _name = 'Pengguna RuangKata';
   String? _profileImage;
   int? _articleCount;
   List<Post> _articles = [];

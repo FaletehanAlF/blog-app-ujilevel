@@ -17,7 +17,7 @@ class AboutPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Tentang NARATA',
+                'Tentang RuangKata',
                 style: AppType.pageTitle,
               ),
               const SizedBox(height: 8),
@@ -61,7 +61,7 @@ class AboutPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'NARATA',
+                            'RuangKata',
                             style: TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 17,
@@ -79,7 +79,7 @@ class AboutPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'NARATA membantu pengguna membaca, menulis, dan mengelola artikel berdasarkan kategori. Data aplikasi terhubung dengan REST API dan database.',
+                            'RuangKata membantu pengguna membaca, menulis, dan mengelola artikel berdasarkan kategori. Data aplikasi terhubung dengan REST API dan database.',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,

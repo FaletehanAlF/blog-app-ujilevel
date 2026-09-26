@@ -26,6 +26,40 @@ enum PostSort {
   final String label;
 }
 
+/// Exception khusus untuk login yang ditolak backend dengan HTTP 403
+/// karena email belum diverifikasi (`POST /auth/login`).
+///
+/// Dibedakan dari [Exception] biasa agar UI login dapat menampilkan pesan
+/// khusus verifikasi email dan (pada tahap berikutnya) mengarahkan user ke
+/// halaman verifikasi email / memanggil `POST /auth/resend-verification`.
+/// Error login lain (400, 401, network error) tetap memakai [Exception]
+/// dengan pesan dari `_extractDioError` dan tidak masuk ke tipe ini.
+class EmailNotVerifiedException implements Exception {
+  /// Pesan yang ditampilkan ke user saat login terblokir verifikasi email.
+  static const String defaultMessage =
+      'Email belum diverifikasi. Silakan cek email Anda untuk melakukan verifikasi.';
+
+  /// Email yang dipakai saat login; disimpan agar tahap berikutnya mudah
+  /// melanjutkan ke resend-verification / halaman verifikasi tanpa
+  /// meminta user mengetik ulang.
+  final String email;
+
+  /// Pesan final untuk UI. Default memakai [defaultMessage].
+  final String message;
+
+  /// Status HTTP dari backend. Selalu 403 untuk kasus ini.
+  final int statusCode;
+
+  const EmailNotVerifiedException({
+    required this.email,
+    this.message = defaultMessage,
+    this.statusCode = 403,
+  });
+
+  @override
+  String toString() => message;
+}
+
 class ApiService {
   static String get baseUrl => dotenv.env['API_URL'] ?? '';
 
@@ -54,12 +88,7 @@ class ApiService {
   // =========================
 
   final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      headers: {
-        'Accept': 'application/json',
-      },
-    ),
+    BaseOptions(baseUrl: baseUrl, headers: {'Accept': 'application/json'}),
   );
 
   ApiService() {
@@ -192,9 +221,7 @@ class ApiService {
         return null;
       }
 
-      final decoded = utf8.decode(
-        base64.decode(payload),
-      );
+      final decoded = utf8.decode(base64.decode(payload));
 
       final data = jsonDecode(decoded);
 
@@ -233,10 +260,7 @@ class ApiService {
           payload['username']?.toString() ??
           payload['user']?.toString();
 
-      final rawId =
-          payload['id'] ??
-          payload['userId'] ??
-          payload['user_id'];
+      final rawId = payload['id'] ?? payload['userId'] ?? payload['user_id'];
 
       if (id == null && rawId != null) {
         id = int.tryParse(rawId.toString());
@@ -342,32 +366,21 @@ class ApiService {
   // Authentication
   // =========================
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     try {
       final response = await _dio.post(
         '/auth/login',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
-      if (response.statusCode != 200 &&
-          response.statusCode != 201) {
-        throw Exception(
-          'Login gagal: ${response.statusCode}',
-        );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Login gagal: ${response.statusCode}');
       }
 
       final data = response.data;
 
       if (data is! Map) {
-        throw Exception(
-          'Response login tidak valid.',
-        );
+        throw Exception('Response login tidak valid.');
       }
 
       String? token;
@@ -413,10 +426,7 @@ class ApiService {
             user['username']?.toString() ??
             user['nama']?.toString();
 
-        final rawId =
-            user['id'] ??
-            user['userId'] ??
-            user['user_id'];
+        final rawId = user['id'] ?? user['userId'] ?? user['user_id'];
 
         if (rawId != null) {
           id = int.tryParse(rawId.toString());
@@ -428,15 +438,11 @@ class ApiService {
       name ??= data['name']?.toString();
 
       if (id == null && data['id'] != null) {
-        id = int.tryParse(
-          data['id'].toString(),
-        );
+        id = int.tryParse(data['id'].toString());
       }
 
       if (token == null || token.isEmpty) {
-        throw Exception(
-          'Token tidak ditemukan pada response server.',
-        );
+        throw Exception('Token tidak ditemukan pada response server.');
       }
 
       await _saveAuthData(
@@ -447,9 +453,15 @@ class ApiService {
         name: name,
       );
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      // HTTP 403 dari POST /auth/login berarti email belum diverifikasi
+      // (bukan error server/role biasa). Dilempar sebagai tipe khusus agar
+      // LoginPage dapat menanganinya secara terpisah dari 400/401/network.
+      // Behavior HTTP 200 di atas tidak berubah: token tetap disimpan via
+      // _saveAuthData seperti sebelumnya.
+      if (e.response?.statusCode == 403) {
+        throw EmailNotVerifiedException(email: email);
+      }
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -461,18 +473,11 @@ class ApiService {
     try {
       final response = await _dio.post(
         '/auth/register',
-        data: {
-          'name': name,
-          'email': email,
-          'password': password,
-        },
+        data: {'name': name, 'email': email, 'password': password},
       );
 
-      if (response.statusCode != 200 &&
-          response.statusCode != 201) {
-        throw Exception(
-          'Registrasi gagal: ${response.statusCode}',
-        );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Registrasi gagal: ${response.statusCode}');
       }
 
       final data = response.data;
@@ -519,39 +524,24 @@ class ApiService {
         role = user['role']?.toString();
         responseEmail = user['email']?.toString();
 
-        responseName =
-            user['name']?.toString() ??
-            user['username']?.toString();
+        responseName = user['name']?.toString() ?? user['username']?.toString();
 
-        final rawId =
-            user['id'] ??
-            user['userId'] ??
-            user['user_id'];
+        final rawId = user['id'] ?? user['userId'] ?? user['user_id'];
 
         if (rawId != null) {
-          id = int.tryParse(
-            rawId.toString(),
-          );
+          id = int.tryParse(rawId.toString());
         }
       }
 
       await _saveAuthData(
         token,
         role: role ?? data['role']?.toString(),
-        email:
-            responseEmail ??
-            data['email']?.toString() ??
-            email,
+        email: responseEmail ?? data['email']?.toString() ?? email,
         id: id,
-        name:
-            responseName ??
-            data['name']?.toString() ??
-            name,
+        name: responseName ?? data['name']?.toString() ?? name,
       );
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -572,6 +562,39 @@ class ApiService {
   }
 
   // =========================
+  // Email Verification
+  // =========================
+
+  /// Mengirim ulang link verifikasi email via `POST /auth/resend-verification`.
+  /// Body: `{"email": email}`. Response backend selalu generik agar tidak
+  /// membocorkan existence user; UI menampilkan pesan generik yang sama.
+  Future<void> resendVerification({required String email}) async {
+    try {
+      final response = await _dio.post(
+        '/auth/resend-verification',
+        data: {'email': email},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Gagal mengirim ulang email verifikasi.');
+      }
+
+      final body = response.data;
+
+      if (body is Map && body['success'] == false) {
+        final message = body['message']?.toString();
+        throw Exception(
+          message != null && message.isNotEmpty
+              ? message
+              : 'Gagal mengirim ulang email verifikasi.',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractDioError(e));
+    }
+  }
+
+  // =========================
   // Posts
   // =========================
 
@@ -585,9 +608,7 @@ class ApiService {
       );
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil data artikel.',
-        );
+        throw Exception('Gagal mengambil data artikel.');
       }
 
       final body = response.data;
@@ -604,16 +625,10 @@ class ApiService {
 
       return data
           .whereType<Map>()
-          .map(
-            (item) => Post.fromJson(
-              Map<String, dynamic>.from(item),
-            ),
-          )
+          .map((item) => Post.fromJson(Map<String, dynamic>.from(item)))
           .toList();
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -648,9 +663,7 @@ class ApiService {
       );
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil data artikel.',
-        );
+        throw Exception('Gagal mengambil data artikel.');
       }
 
       final body = response.data;
@@ -672,11 +685,7 @@ class ApiService {
       if (rawData is List) {
         posts = rawData
             .whereType<Map>()
-            .map(
-              (item) => Post.fromJson(
-                Map<String, dynamic>.from(item),
-              ),
-            )
+            .map((item) => Post.fromJson(Map<String, dynamic>.from(item)))
             .toList();
       } else {
         posts = [];
@@ -708,39 +717,27 @@ class ApiService {
         totalPages: posts.length < limit ? page : page + 1,
       );
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
   Future<Post> getPostById(int id) async {
     try {
-      final response = await _dio.get(
-        '/posts/$id',
-      );
+      final response = await _dio.get('/posts/$id');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil detail artikel.',
-        );
+        throw Exception('Gagal mengambil detail artikel.');
       }
 
       final body = response.data;
 
       if (body is! Map || body['data'] is! Map) {
-        throw Exception(
-          'Response detail artikel tidak valid.',
-        );
+        throw Exception('Response detail artikel tidak valid.');
       }
 
-      return Post.fromJson(
-        Map<String, dynamic>.from(body['data'] as Map),
-      );
+      return Post.fromJson(Map<String, dynamic>.from(body['data'] as Map));
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -749,22 +746,16 @@ class ApiService {
   /// via JWT.
   Future<int> addPostView(int postId) async {
     try {
-      final response = await _dio.post(
-        '/posts/$postId/view',
-      );
+      final response = await _dio.post('/posts/$postId/view');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal menambahkan view.',
-        );
+        throw Exception('Gagal menambahkan view.');
       }
 
       final body = response.data;
 
       if (body is! Map) {
-        throw Exception(
-          'Response view tidak valid.',
-        );
+        throw Exception('Response view tidak valid.');
       }
 
       if (body['success'] == false) {
@@ -787,13 +778,9 @@ class ApiService {
         }
       }
 
-      throw Exception(
-        'Response view tidak valid.',
-      );
+      throw Exception('Response view tidak valid.');
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -808,38 +795,25 @@ class ApiService {
 
   Future<void> addBookmark(int postId) async {
     try {
-      final response = await _dio.post(
-        '/bookmarks/$postId',
-      );
+      final response = await _dio.post('/bookmarks/$postId');
 
-      if (response.statusCode != 200 &&
-          response.statusCode != 201) {
-        throw Exception(
-          'Gagal menambahkan bookmark.',
-        );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Gagal menambahkan bookmark.');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
   Future<void> removeBookmark(int postId) async {
     try {
-      final response = await _dio.delete(
-        '/bookmarks/$postId',
-      );
+      final response = await _dio.delete('/bookmarks/$postId');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal menghapus bookmark.',
-        );
+        throw Exception('Gagal menghapus bookmark.');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -848,9 +822,7 @@ class ApiService {
   /// (mis. 401 sesi habis) tetap dilempar agar tidak disamarkan.
   Future<bool> getBookmarkStatus(int postId) async {
     try {
-      final response = await _dio.get(
-        '/bookmarks/$postId',
-      );
+      final response = await _dio.get('/bookmarks/$postId');
 
       if (response.statusCode != 200) {
         return false;
@@ -866,7 +838,8 @@ class ApiService {
 
       for (final source in [data, body]) {
         if (source is Map) {
-          final flag = source['bookmarked'] ??
+          final flag =
+              source['bookmarked'] ??
               source['is_bookmarked'] ??
               source['isBookmarked'];
 
@@ -902,29 +875,19 @@ class ApiService {
         return false;
       }
 
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
-  Future<PaginatedPosts> getBookmarks({
-    int page = 1,
-    int limit = 10,
-  }) async {
+  Future<PaginatedPosts> getBookmarks({int page = 1, int limit = 10}) async {
     try {
       final response = await _dio.get(
         '/bookmarks',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: {'page': page, 'limit': limit},
       );
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil data bookmark.',
-        );
+        throw Exception('Gagal mengambil data bookmark.');
       }
 
       final body = response.data;
@@ -982,9 +945,7 @@ class ApiService {
         totalPages: posts.length < limit ? page : page + 1,
       );
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -995,38 +956,25 @@ class ApiService {
   /// Tambah Like pada artikel. Kepemilikan ditentukan backend via JWT.
   Future<void> addLike(int postId) async {
     try {
-      final response = await _dio.post(
-        '/likes/$postId',
-      );
+      final response = await _dio.post('/likes/$postId');
 
-      if (response.statusCode != 200 &&
-          response.statusCode != 201) {
-        throw Exception(
-          'Gagal menambahkan like.',
-        );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Gagal menambahkan like.');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
   Future<void> removeLike(int postId) async {
     try {
-      final response = await _dio.delete(
-        '/likes/$postId',
-      );
+      final response = await _dio.delete('/likes/$postId');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal menghapus like.',
-        );
+        throw Exception('Gagal menghapus like.');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1035,9 +983,7 @@ class ApiService {
   /// (mis. 401 sesi habis) tetap dilempar.
   Future<bool> getLikeStatus(int postId) async {
     try {
-      final response = await _dio.get(
-        '/likes/$postId',
-      );
+      final response = await _dio.get('/likes/$postId');
 
       if (response.statusCode != 200) {
         return false;
@@ -1053,9 +999,8 @@ class ApiService {
 
       for (final source in [data, body]) {
         if (source is Map) {
-          final flag = source['liked'] ??
-              source['is_liked'] ??
-              source['isLiked'];
+          final flag =
+              source['liked'] ?? source['is_liked'] ?? source['isLiked'];
 
           if (flag is bool) {
             return flag;
@@ -1087,31 +1032,21 @@ class ApiService {
         return false;
       }
 
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
   /// Daftar artikel yang di-like user yang sedang login.
   /// Backend menentukan kepemilikan dari JWT.
-  Future<PaginatedPosts> getLikes({
-    int page = 1,
-    int limit = 10,
-  }) async {
+  Future<PaginatedPosts> getLikes({int page = 1, int limit = 10}) async {
     try {
       final response = await _dio.get(
         '/likes',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: {'page': page, 'limit': limit},
       );
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil data like.',
-        );
+        throw Exception('Gagal mengambil data like.');
       }
 
       final body = response.data;
@@ -1168,9 +1103,7 @@ class ApiService {
         totalPages: posts.length < limit ? page : page + 1,
       );
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1183,14 +1116,10 @@ class ApiService {
   /// secara hardcode di Flutter.
   Future<List<NotificationModel>> getNotifications() async {
     try {
-      final response = await _dio.get(
-        '/notifications',
-      );
+      final response = await _dio.get('/notifications');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil data notifikasi.',
-        );
+        throw Exception('Gagal mengambil data notifikasi.');
       }
 
       final body = response.data;
@@ -1218,15 +1147,12 @@ class ApiService {
       return data
           .whereType<Map>()
           .map(
-            (item) => NotificationModel.fromJson(
-              Map<String, dynamic>.from(item),
-            ),
+            (item) =>
+                NotificationModel.fromJson(Map<String, dynamic>.from(item)),
           )
           .toList();
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1235,14 +1161,10 @@ class ApiService {
   /// secara hardcode di Flutter. Gagal parsing aman: fallback 0.
   Future<int> getUnreadNotificationCount() async {
     try {
-      final response = await _dio.get(
-        '/notifications/unread-count',
-      );
+      final response = await _dio.get('/notifications/unread-count');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil jumlah notifikasi.',
-        );
+        throw Exception('Gagal mengambil jumlah notifikasi.');
       }
 
       final body = response.data;
@@ -1275,9 +1197,7 @@ class ApiService {
 
       return 0;
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1286,14 +1206,10 @@ class ApiService {
   /// secara hardcode di Flutter.
   Future<void> markAllNotificationsAsRead() async {
     try {
-      final response = await _dio.patch(
-        '/notifications/read-all',
-      );
+      final response = await _dio.patch('/notifications/read-all');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal menandai notifikasi sebagai dibaca.',
-        );
+        throw Exception('Gagal menandai notifikasi sebagai dibaca.');
       }
 
       final body = response.data;
@@ -1312,9 +1228,7 @@ class ApiService {
         );
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1341,28 +1255,18 @@ class ApiService {
         formData.files.add(
           MapEntry(
             'image',
-            MultipartFile.fromBytes(
-              bytes,
-              filename: image.name,
-            ),
+            MultipartFile.fromBytes(bytes, filename: image.name),
           ),
         );
       }
 
-      final response = await _dio.post(
-        '/posts',
-        data: formData,
-      );
+      final response = await _dio.post('/posts', data: formData);
 
       if (response.statusCode != 201) {
-        throw Exception(
-          'Gagal menambahkan artikel: ${response.data}',
-        );
+        throw Exception('Gagal menambahkan artikel: ${response.data}');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1390,28 +1294,18 @@ class ApiService {
         formData.files.add(
           MapEntry(
             'image',
-            MultipartFile.fromBytes(
-              bytes,
-              filename: image.name,
-            ),
+            MultipartFile.fromBytes(bytes, filename: image.name),
           ),
         );
       }
 
-      final response = await _dio.put(
-        '/posts/$id',
-        data: formData,
-      );
+      final response = await _dio.put('/posts/$id', data: formData);
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal memperbarui artikel: ${response.data}',
-        );
+        throw Exception('Gagal memperbarui artikel: ${response.data}');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1421,19 +1315,13 @@ class ApiService {
 
   Future<void> deletePost(int id) async {
     try {
-      final response = await _dio.delete(
-        '/posts/$id',
-      );
+      final response = await _dio.delete('/posts/$id');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal menghapus artikel.',
-        );
+        throw Exception('Gagal menghapus artikel.');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1446,22 +1334,16 @@ class ApiService {
   /// memakai posts.user_id == userId.
   Future<Map<String, dynamic>> getMe() async {
     try {
-      final response = await _dio.get(
-        '/auth/me',
-      );
+      final response = await _dio.get('/auth/me');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil profil.',
-        );
+        throw Exception('Gagal mengambil profil.');
       }
 
       final body = response.data;
 
       if (body is! Map) {
-        throw Exception(
-          'Response profil tidak valid.',
-        );
+        throw Exception('Response profil tidak valid.');
       }
 
       final data = body['data'];
@@ -1470,13 +1352,9 @@ class ApiService {
         return Map<String, dynamic>.from(data);
       }
 
-      throw Exception(
-        'Response profil tidak valid.',
-      );
+      throw Exception('Response profil tidak valid.');
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1485,22 +1363,16 @@ class ApiService {
   /// daftar artikel); tidak ada password/JWT di response backend.
   Future<Map<String, dynamic>> getPublicProfile(int userId) async {
     try {
-      final response = await _dio.get(
-        '/profile/$userId',
-      );
+      final response = await _dio.get('/profile/$userId');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil profil pengguna.',
-        );
+        throw Exception('Gagal mengambil profil pengguna.');
       }
 
       final body = response.data;
 
       if (body is! Map) {
-        throw Exception(
-          'Response profil tidak valid.',
-        );
+        throw Exception('Response profil tidak valid.');
       }
 
       if (body['success'] == false) {
@@ -1519,13 +1391,9 @@ class ApiService {
         return Map<String, dynamic>.from(data);
       }
 
-      throw Exception(
-        'Response profil tidak valid.',
-      );
+      throw Exception('Response profil tidak valid.');
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1539,9 +1407,7 @@ class ApiService {
     XFile? profileImage,
   }) async {
     try {
-      final formData = FormData.fromMap({
-        'name': name,
-      });
+      final formData = FormData.fromMap({'name': name});
 
       if (profileImage != null) {
         final bytes = await profileImage.readAsBytes();
@@ -1549,23 +1415,15 @@ class ApiService {
         formData.files.add(
           MapEntry(
             'profile_image',
-            MultipartFile.fromBytes(
-              bytes,
-              filename: profileImage.name,
-            ),
+            MultipartFile.fromBytes(bytes, filename: profileImage.name),
           ),
         );
       }
 
-      final response = await _dio.put(
-        '/profile',
-        data: formData,
-      );
+      final response = await _dio.put('/profile', data: formData);
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal memperbarui profil.',
-        );
+        throw Exception('Gagal memperbarui profil.');
       }
 
       final body = response.data;
@@ -1586,9 +1444,7 @@ class ApiService {
 
       await prefs.setString(_kName, name);
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1600,14 +1456,10 @@ class ApiService {
   /// Backend memfilter berdasarkan JWT, jadi tidak ada kategori user lain.
   Future<List<Category>> getCategories() async {
     try {
-      final response = await _dio.get(
-        '/categories',
-      );
+      final response = await _dio.get('/categories');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil data kategori.',
-        );
+        throw Exception('Gagal mengambil data kategori.');
       }
 
       final body = response.data;
@@ -1621,86 +1473,49 @@ class ApiService {
       if (data is List) {
         return data
             .whereType<Map>()
-            .map(
-              (item) => Category.fromJson(
-                Map<String, dynamic>.from(item),
-              ),
-            )
+            .map((item) => Category.fromJson(Map<String, dynamic>.from(item)))
             .toList();
       }
 
       return [];
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
-  Future<void> createCategory(
-    String name,
-  ) async {
+  Future<void> createCategory(String name) async {
     try {
-      final response = await _dio.post(
-        '/categories',
-        data: {
-          'name': name,
-        },
-      );
+      final response = await _dio.post('/categories', data: {'name': name});
 
       if (response.statusCode != 201) {
-        throw Exception(
-          'Gagal menambahkan kategori: ${response.data}',
-        );
+        throw Exception('Gagal menambahkan kategori: ${response.data}');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
-  Future<void> updateCategory(
-    int id,
-    String name,
-  ) async {
+  Future<void> updateCategory(int id, String name) async {
     try {
-      final response = await _dio.put(
-        '/categories/$id',
-        data: {
-          'name': name,
-        },
-      );
+      final response = await _dio.put('/categories/$id', data: {'name': name});
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal memperbarui kategori: ${response.data}',
-        );
+        throw Exception('Gagal memperbarui kategori: ${response.data}');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
-  Future<void> deleteCategory(
-    int id,
-  ) async {
+  Future<void> deleteCategory(int id) async {
     try {
-      final response = await _dio.delete(
-        '/categories/$id',
-      );
+      final response = await _dio.delete('/categories/$id');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal menghapus kategori: ${response.data}',
-        );
+        throw Exception('Gagal menghapus kategori: ${response.data}');
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1710,21 +1525,15 @@ class ApiService {
 
   /// Meminta instruksi reset password via email.
   /// Response selalu generik agar tidak membocorkan existence user.
-  Future<void> forgotPassword({
-    required String email,
-  }) async {
+  Future<void> forgotPassword({required String email}) async {
     try {
       final response = await _dio.post(
         '/auth/forgot-password',
-        data: {
-          'email': email,
-        },
+        data: {'email': email},
       );
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengirim instruksi reset password.',
-        );
+        throw Exception('Gagal mengirim instruksi reset password.');
       }
 
       final body = response.data;
@@ -1738,9 +1547,7 @@ class ApiService {
         );
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1762,9 +1569,7 @@ class ApiService {
       );
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mereset password.',
-        );
+        throw Exception('Gagal mereset password.');
       }
 
       final body = response.data;
@@ -1778,9 +1583,7 @@ class ApiService {
         );
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1806,9 +1609,7 @@ class ApiService {
       );
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengubah password.',
-        );
+        throw Exception('Gagal mengubah password.');
       }
 
       final body = response.data;
@@ -1822,9 +1623,7 @@ class ApiService {
         );
       }
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 
@@ -1838,22 +1637,16 @@ class ApiService {
   /// total_likes, total_bookmarks}}`.
   Future<Statistics> getStatistics() async {
     try {
-      final response = await _dio.get(
-        '/statistics',
-      );
+      final response = await _dio.get('/statistics');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal mengambil statistik.',
-        );
+        throw Exception('Gagal mengambil statistik.');
       }
 
       final body = response.data;
 
       if (body is! Map) {
-        throw Exception(
-          'Response statistik tidak valid.',
-        );
+        throw Exception('Response statistik tidak valid.');
       }
 
       if (body['success'] == false) {
@@ -1868,18 +1661,12 @@ class ApiService {
       final data = body['data'];
 
       if (data is! Map) {
-        throw Exception(
-          'Response statistik tidak valid.',
-        );
+        throw Exception('Response statistik tidak valid.');
       }
 
-      return Statistics.fromJson(
-        Map<String, dynamic>.from(data),
-      );
+      return Statistics.fromJson(Map<String, dynamic>.from(data));
     } on DioException catch (e) {
-      throw Exception(
-        _extractDioError(e),
-      );
+      throw Exception(_extractDioError(e));
     }
   }
 }

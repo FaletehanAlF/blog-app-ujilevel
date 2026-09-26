@@ -252,7 +252,7 @@ class HomePageState extends State<HomePage> {
         children: [
           // Header
           const Text(
-            'Selamat datang di Narata!',
+            'Selamat datang di RuangKata!',
             style: TextStyle(
               color: Colors.grey,
               fontSize: 14,

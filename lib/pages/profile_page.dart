@@ -19,7 +19,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final ApiService _api = ApiService();
-  String _name = 'Narata User';
+  String _name = 'RuangKata User';
   String _email = 'reader@blog.com';
   String _role = 'Pembaca';
   String? _profileImage;

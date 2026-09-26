@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:belajar_flutter/pages/email_verification_page.dart';
 import 'package:belajar_flutter/pages/forgot_password_page.dart';
 import 'package:belajar_flutter/services/api.dart';
 import 'package:belajar_flutter/widgets/app_ui.dart';
@@ -20,6 +21,14 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
   bool obscure = true;
 
+  // State khusus email belum terverifikasi (HTTP 403 dari POST /auth/login).
+  // Dipisah dari error login lain agar tahap berikutnya mudah melanjutkan
+  // (mis. navigasi ke halaman verifikasi / resend verification).
+  // Halaman verifikasi email belum ada pada tahap ini, jadi state ini
+  // disiapkan dulu tanpa membuat halaman baru.
+  bool isEmailUnverified = false;
+  String? unverifiedEmail;
+
   String? emailError;
   String? passwordError;
 
@@ -38,13 +47,13 @@ class _LoginPageState extends State<LoginPage> {
       emailError = email.isEmpty
           ? 'Email wajib diisi'
           : !email.contains('@')
-              ? 'Format email tidak valid'
-              : null;
+          ? 'Format email tidak valid'
+          : null;
       passwordError = password.isEmpty
           ? 'Password wajib diisi'
           : password.length < 6
-              ? 'Password minimal 6 karakter'
-              : null;
+          ? 'Password minimal 6 karakter'
+          : null;
     });
 
     return emailError == null && passwordError == null;
@@ -53,7 +62,12 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> doLogin() async {
     if (!validate()) return;
 
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      // Reset penanda 403 setiap percobaan login baru.
+      isEmailUnverified = false;
+      unverifiedEmail = null;
+    });
 
     try {
       await apiService.login(
@@ -63,19 +77,52 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      // Masuk ke halaman utama dan hapus stack login
+      // HTTP 200: behavior dipertahankan — token sudah disimpan di
+      // ApiService.login, lanjut ke halaman utama dan hapus stack login.
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MainShell()),
         (route) => false,
       );
       showAppSnack(context, 'Login berhasil');
+    } on EmailNotVerifiedException catch (e) {
+      // HTTP 403 dari POST /auth/login: email belum diverifikasi.
+      // Bukan error server biasa — tampilkan pesan khusus verifikasi.
+      // Halaman verifikasi email belum ada, jadi belum ada navigasi;
+      // state disiapkan agar mudah dilanjutkan (lihat goToEmailVerification).
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        isEmailUnverified = true;
+        unverifiedEmail = e.email;
+      });
+      showAppSnack(context, e.message, isError: true);
+      // TODO(stage-2): panggil goToEmailVerification(e.email) setelah halaman
+      // verifikasi email tersedia. Routing existing memakai Navigator.push
+      // imperatif (tanpa named route), jadi tinggal isi method tersebut.
     } catch (e) {
       if (!mounted) return;
       setState(() => isLoading = false);
       final msg = e.toString().replaceFirst('Exception: ', '');
       showAppSnack(context, msg, isError: true);
     }
+  }
+
+  // TAHAP BERIKUTNYA: hook navigasi ke halaman verifikasi email.
+  //
+  // Halaman tersebut BELUM ADA pada tahap ini (scope: hanya handle 403 di
+  // login), jadi method ini sengaja belum melakukan Navigator.push agar tidak
+  // membuat halaman baru. Saat halaman verifikasi sudah dibuat, cukup isi
+  // body method ini, contoh:
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(builder: (_) => VerifyEmailPage(email: email)),
+  //   );
+  // dan panggil goToEmailVerification(unverifiedEmail) dari branch 403 di atas.
+  // Parameter [email] sudah tersedia dari EmailNotVerifiedException untuk
+  // keperluan POST /auth/resend-verification pada tahap berikutnya.
+  void goToEmailVerification(String email) {
+    // TODO(stage-2): arahkan ke halaman verifikasi email dengan membawa email.
   }
 
   void goToRegister() {
@@ -129,7 +176,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'NARATA',
+                        'RuangKata',
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 22,
@@ -179,10 +226,7 @@ class _LoginPageState extends State<LoginPage> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   enabled: !isLoading,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
                   cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'contoh@email.com',
@@ -200,10 +244,7 @@ class _LoginPageState extends State<LoginPage> {
                   obscureText: obscure,
                   textInputAction: TextInputAction.done,
                   enabled: !isLoading,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
                   cursorColor: AppColors.accent,
                   decoration: appInputDecoration(
                     hint: 'Minimal 6 karakter',
@@ -230,7 +271,9 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: isLoading ? null : goToForgotPassword,
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 4),
+                        horizontal: 4,
+                        vertical: 4,
+                      ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),

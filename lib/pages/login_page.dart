@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:belajar_flutter/pages/email_verification_page.dart';
 import 'package:belajar_flutter/pages/forgot_password_page.dart';
 import 'package:belajar_flutter/services/api.dart';
@@ -154,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
                         height: 56,
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(18),
                           border: Border.all(color: AppColors.border),
                         ),
                         child: Icon(
@@ -166,11 +167,11 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 16),
                       Text(
                         'RuangKata',
-                        style: TextStyle(
+                        style: GoogleFonts.playfairDisplay(
                           color: AppColors.textPrimary,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
                         ),
                       ),
                       const SizedBox(height: 6),

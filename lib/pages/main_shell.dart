@@ -35,12 +35,7 @@ class _MainShellState extends State<MainShell> {
 
   late final List<Widget> _pages;
 
-  final List<String> _titles = [
-    'Home',
-    'Articles',
-    'About',
-    'Settings',
-  ];
+  final List<String> _titles = ['Home', 'Articles', 'About', 'Settings'];
 
   @override
   void initState() {
@@ -68,9 +63,7 @@ class _MainShellState extends State<MainShell> {
   Future<void> _openAddArticle() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddProductPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddProductPage()),
     );
 
     // Refresh daftar setelah tambah artikel agar Home/Articles tidak basi.
@@ -103,36 +96,28 @@ class _MainShellState extends State<MainShell> {
   void _openProfile() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const ProfilePage(),
-      ),
+      MaterialPageRoute(builder: (context) => const ProfilePage()),
     );
   }
 
   void _openBookmarks() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const BookmarkPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const BookmarkPage()),
     );
   }
 
   void _openLikes() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const LikePage(),
-      ),
+      MaterialPageRoute(builder: (context) => const LikePage()),
     );
   }
 
   void _openNotifications() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const NotificationPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const NotificationPage()),
     );
 
     if (!mounted) return;
@@ -194,10 +179,7 @@ class _MainShellState extends State<MainShell> {
     final label = count > 99 ? '99+' : count.toString();
 
     return Container(
-      constraints: const BoxConstraints(
-        minWidth: 16,
-        minHeight: 16,
-      ),
+      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
       padding: const EdgeInsets.symmetric(horizontal: 4),
       alignment: Alignment.center,
       decoration: BoxDecoration(
@@ -255,10 +237,7 @@ class _MainShellState extends State<MainShell> {
                 icon: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    const Icon(
-                      Icons.notifications_none_rounded,
-                      size: 22,
-                    ),
+                    const Icon(Icons.notifications_none_rounded, size: 22),
                     if (_unreadCount > 0)
                       Positioned(
                         right: -2,
@@ -276,26 +255,17 @@ class _MainShellState extends State<MainShell> {
             ? [
                 IconButton(
                   onPressed: _openLikes,
-                  icon: const Icon(
-                    Icons.favorite_border_rounded,
-                    size: 22,
-                  ),
+                  icon: const Icon(Icons.favorite_border_rounded, size: 22),
                   tooltip: 'Like',
                 ),
                 IconButton(
                   onPressed: _openBookmarks,
-                  icon: const Icon(
-                    Icons.bookmark_border_rounded,
-                    size: 22,
-                  ),
+                  icon: const Icon(Icons.bookmark_border_rounded, size: 22),
                   tooltip: 'Bookmark',
                 ),
                 IconButton(
                   onPressed: _openProfile,
-                  icon: const Icon(
-                    Icons.person_outline_rounded,
-                    size: 22,
-                  ),
+                  icon: const Icon(Icons.person_outline_rounded, size: 22),
                   tooltip: 'Profile',
                 ),
               ]
@@ -303,54 +273,41 @@ class _MainShellState extends State<MainShell> {
 
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: AppColors.border,
-          ),
+          child: Container(height: 1, color: AppColors.border),
         ),
       ),
 
-      body: IndexedStack(
-        index: _pageIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _pageIndex, children: _pages),
 
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           backgroundColor: AppColors.surface,
-          indicatorColor: Colors.blue.withValues(alpha: 0.15),
+          indicatorColor: AppColors.textPrimary.withValues(alpha: 0.12),
+          elevation: 0,
 
-          iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-            (states) {
-              if (states.contains(WidgetState.selected)) {
-                return const IconThemeData(
-                  color: Colors.blue,
-                );
-              }
+          iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+            if (states.contains(WidgetState.selected)) {
+              return IconThemeData(color: AppColors.textPrimary);
+            }
 
-              return const IconThemeData(
-                color: Colors.grey,
-              );
-            },
-          ),
+            return IconThemeData(color: AppColors.textMuted);
+          }),
 
-          labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
-            (states) {
-              if (states.contains(WidgetState.selected)) {
-                return const TextStyle(
-                  color: Colors.blue,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                );
-              }
-
-              return const TextStyle(
-                color: Colors.grey,
+          labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
+            if (states.contains(WidgetState.selected)) {
+              return TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               );
-            },
-          ),
+            }
+
+            return TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            );
+          }),
         ),
 
         child: NavigationBar(
@@ -369,10 +326,7 @@ class _MainShellState extends State<MainShell> {
               label: 'Articles',
             ),
             NavigationDestination(
-              icon: Icon(
-                Icons.add_rounded,
-                size: 28,
-              ),
+              icon: Icon(Icons.add_rounded, size: 28),
               label: 'Tambah',
             ),
             NavigationDestination(

@@ -35,7 +35,8 @@ class AppSpace {
 class AppRadius {
   static const double sm = 8;
   static const double md = 12;
-  static const double lg = 16;
+  static const double lg = 18;
+  static const double xl = 28;
 }
 
 class AppType {
@@ -87,11 +88,19 @@ class CategoryLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: AppType.category,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppType.category,
+      ),
     );
   }
 }
@@ -163,23 +172,27 @@ InputDecoration appInputDecoration({
   bool hasError = false,
   Widget? suffixIcon,
 }) {
-  OutlineInputBorder border(Color color) => OutlineInputBorder(
-    borderRadius: BorderRadius.circular(AppRadius.md),
-    borderSide: BorderSide(color: color),
-  );
+  OutlineInputBorder border(Color color, [double width = 1]) =>
+      OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderSide: BorderSide(color: color, width: width),
+      );
   return InputDecoration(
     hintText: hint,
     hintStyle: AppType.hint,
     filled: true,
     fillColor: AppColors.surface,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
     suffixIcon: suffixIcon,
     suffixIconColor: AppColors.textMuted,
     prefixIconColor: AppColors.textMuted,
     enabledBorder: border(hasError ? AppColors.danger : AppColors.border),
-    focusedBorder: border(hasError ? AppColors.danger : AppColors.accent),
+    focusedBorder: border(
+      hasError ? AppColors.danger : AppColors.textMuted,
+      1.2,
+    ),
     errorBorder: border(AppColors.danger),
-    focusedErrorBorder: border(AppColors.danger),
+    focusedErrorBorder: border(AppColors.danger, 1.2),
   );
 }
 
@@ -324,7 +337,7 @@ Widget primaryButton({
 }) {
   return SizedBox(
     width: double.infinity,
-    height: 50,
+    height: 54,
     child: FilledButton(
       onPressed: loading ? null : onPressed,
       style: FilledButton.styleFrom(
@@ -332,8 +345,9 @@ Widget primaryButton({
         foregroundColor: AppColors.onAccent,
         disabledBackgroundColor: AppColors.surface2,
         disabledForegroundColor: AppColors.textMuted,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
       ),
       child: loading
@@ -350,14 +364,15 @@ Widget primaryButton({
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 17),
+                  Icon(icon, size: 18),
                   const SizedBox(width: 8),
                 ],
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ],

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'pages/email_verification_page.dart';
-import 'pages/login_page.dart';
+import 'pages/welcome_page.dart';
 import 'pages/main_shell.dart';
 import 'services/api.dart';
 import 'services/deep_link_service.dart';
@@ -92,10 +92,10 @@ class BlogApp extends StatelessWidget {
 }
 
 /// Menentukan halaman awal aplikasi.
-/// - Tanpa token -> LoginPage (tanpa request).
+/// - Tanpa token -> WelcomePage (pilih login / register).
 /// - Token ada -> validasi via GET /auth/me (tahap 10):
 ///   verified -> MainShell, unverified -> EmailVerificationPage,
-///   401 -> token dihapus lalu LoginPage.
+///   401 -> token dihapus lalu WelcomePage.
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
@@ -121,7 +121,7 @@ class _AuthGateState extends State<AuthGate> {
   Future<void> _checkAuth() async {
     await _api.init();
 
-    // Tanpa token -> Login, tanpa request (perilaku existing).
+    // Tanpa token -> WelcomePage, tanpa request (tanpa login langsung).
     if (!await _api.isLoggedIn()) {
       if (!mounted) return;
       setState(() => _checking = false);
@@ -163,7 +163,7 @@ class _AuthGateState extends State<AuthGate> {
         _checking = false;
       });
     } on UnauthorizedException catch (_) {
-      // HTTP 401: token invalid/kedaluwarsa -> hapus session, ke Login.
+      // HTTP 401: token invalid/kedaluwarsa -> hapus session, ke Welcome.
       await _api.logout();
       if (!mounted) return;
       setState(() => _checking = false);
@@ -199,7 +199,7 @@ class _AuthGateState extends State<AuthGate> {
     if (unverifiedEmail != null) {
       return EmailVerificationPage(email: unverifiedEmail);
     }
-    return _loggedIn ? const MainShell() : const LoginPage();
+    return _loggedIn ? const MainShell() : const WelcomePage();
   }
 }
 
